@@ -140,6 +140,9 @@ class FinderItem: CustomStringConvertible {
         self.path = path
     }
     
+    init(at url: URL) {
+        self.path = url.absoluteString
+    }
     
     //MARK: - Instance Methods
     
