@@ -13,22 +13,57 @@ struct ContentView: View {
     var body: some View {
         if finderItems.isEmpty {
             welcomeView(finderItems: $finderItems)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
-            ScrollView {
-                GeometryReader { geometry in
-                    
-                    LazyVGrid(columns: Array(repeating: .init(.flexible()), count: 3)) {
+            GeometryReader { geometry in
+                
+                ScrollView {
+                    LazyVGrid(columns: Array(repeating: .init(.flexible()), count: 5)) {
                         ForEach(finderItems) { item in
                             let image = item.image!
-                            Image(nsImage: image)
+                            VStack {
+                                Image(nsImage: image)
+                                    .resizable()
+                                    .cornerRadius(5)
+                                    .aspectRatio(contentMode: .fit)
+                                    .padding(/*@START_MENU_TOKEN@*/.all/*@END_MENU_TOKEN@*/)
+                                
+                                
+                                Text(item.fileName ?? item.path)
+                                    .padding(.all)
+                            }
+                                .frame(width: geometry.size.width / 5, height: geometry.size.width / 5)
+                            
                         }
                     }
-                        .frame(width: geometry.size.width, height: geometry.size.height)
-                    
                 }
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                    .onDrop(of: [.fileURL], isTargeted: nil) { providers in
+                        for i in providers {
+                            i.loadItem(forTypeIdentifier: "public.file-url", options: nil) { urlData, error in
+                                guard error == nil else { return }
+                                guard let urlData = urlData as? Data else { return }
+                                guard let url = URL(dataRepresentation: urlData, relativeTo: nil) else { return }
+                                
+                                let item = FinderItem(at: url)
+                                guard !finderItems.contains(item) else { return }
+                                
+                                if item.isFile {
+                                    guard item.image != nil else { return }
+                                    finderItems.append(item)
+                                } else {
+                                    item.iteratedOver { child in
+                                        guard !finderItems.contains(child) else { return }
+                                        guard child.image != nil else { return }
+                                        finderItems.append(child)
+                                    }
+                                }
+                                
+                            }
+                        }
+                        
+                        return true
+                    }
             }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
     
@@ -54,6 +89,7 @@ struct welcomeView: View {
                 .multilineTextAlignment(.center)
                 .padding(.all)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.all, 0.0)
         .onDrop(of: [.fileURL], isTargeted: nil) { providers in
             for i in providers {

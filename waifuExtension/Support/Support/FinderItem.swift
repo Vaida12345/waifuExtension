@@ -10,7 +10,7 @@ import Foundation
 import PDFKit
 import Cocoa
 
-class FinderItem: CustomStringConvertible, Identifiable {
+class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     
     
     //MARK: - Basic Properties
@@ -283,6 +283,13 @@ class FinderItem: CustomStringConvertible, Identifiable {
         let imageData = NSBitmapImageRep(data: image.tiffRepresentation!)!.representation(using: .png, properties: [:])!
         self.path = self.path.replacingOccurrences(of: self.extensionName!, with: ".png")
         try imageData.write(to: self.url)
+    }
+    
+    
+    //MARK: - Comparing two instances
+    
+    static func == (lhs: FinderItem, rhs: FinderItem) -> Bool {
+        return lhs.path == rhs.path
     }
     
     
