@@ -107,7 +107,10 @@ struct welcomeView: View {
     var body: some View {
         VStack {
             Image(systemName: "square.and.arrow.down.fill")
+                .resizable()
+                .scaledToFit()
                 .padding(.all)
+                .frame(width: 100, height: 100, alignment: .center)
             Text("Drag files or folder \n or \n click to add files.")
                 .font(.title)
                 .multilineTextAlignment(.center)
@@ -265,13 +268,6 @@ struct ConfigurationView: View {
             Spacer()
             
             HStack {
-                Button {
-                    
-                } label: {
-                    Text("Save as default")
-                        .frame(width: 120)
-                }
-                .padding(.trailing)
                 
                 Spacer()
                 
@@ -293,7 +289,7 @@ struct ConfigurationView: View {
                 .padding(.all)
         }
             .padding(.all)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(width: 600, height: 300)
     }
     
 }
