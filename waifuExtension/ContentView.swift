@@ -259,6 +259,14 @@ struct ConfigurationView: View {
             Spacer()
             
             HStack {
+                Button {
+                    
+                } label: {
+                    Text("Save as default")
+                        .frame(width: 120)
+                }
+                .padding(.trailing)
+                
                 Spacer()
                 
                 Button {
