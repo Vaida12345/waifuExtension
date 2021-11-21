@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @State var finderItems: [FinderItem] = []
+    @State var isSheetShown: Bool = false
     
     var body: some View {
         VStack {
@@ -41,9 +42,9 @@ struct ContentView: View {
                     .padding(.all)
                 
                 Button("Done") {
-                    
+                    isSheetShown = true
                 }
-                    .disabled(finderItems.isEmpty)
+                    .disabled(finderItems.isEmpty || isSheetShown)
                     .padding([.top, .bottom, .trailing])
             }
             
@@ -91,6 +92,9 @@ struct ContentView: View {
                     }
                 }
             }
+        }
+        .sheet(isPresented: $isSheetShown, onDismiss: nil) {
+            ConfigurationView(finderItems: finderItems, isShown: $isSheetShown)
         }
     }
     
@@ -190,7 +194,9 @@ struct GridItemView: View {
 
 struct ConfigurationView: View {
     
-    var finderItems: [FinderItem] = []
+    var finderItems: [FinderItem]
+    
+    @Binding var isShown: Bool
     
     let modelNames: [String] = ["srcnn_mps", "srcnn_coreml", "cunet"]
     @State var chosenModel = "srcnn_mps"
@@ -270,7 +276,7 @@ struct ConfigurationView: View {
                 Spacer()
                 
                 Button {
-                    
+                    isShown = false
                 } label: {
                     Text("Cancel")
                         .frame(width: 80)
@@ -296,6 +302,7 @@ struct ConfigurationView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ConfigurationView()
+        ContentView()
+        
     }
 }
