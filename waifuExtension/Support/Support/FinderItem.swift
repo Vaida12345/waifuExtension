@@ -10,7 +10,7 @@ import Foundation
 import PDFKit
 import Cocoa
 
-class FinderItem: CustomStringConvertible {
+class FinderItem: CustomStringConvertible, Identifiable {
     
     
     //MARK: - Basic Properties
