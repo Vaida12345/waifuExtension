@@ -26,6 +26,7 @@ struct ContentView: View {
                     }
                     
                 }
+                    .padding(.top, 30)
                     .frame(width: geometry.size.width, height: geometry.size.height)
                     .onDrop(of: [.fileURL], isTargeted: nil) { providers in
                         for i in providers {
@@ -127,7 +128,6 @@ struct GridItemView: View {
     let item: FinderItem
     let geometry: GeometryProxy
     @Binding var finderItems: [FinderItem]
-    @State var isPopoverShown = false
     
     var body: some View {
         let image = item.image!
@@ -144,10 +144,7 @@ struct GridItemView: View {
                 .padding(.all)
         }
         .frame(width: geometry.size.width / 5, height: geometry.size.width / 5)
-        .onTapGesture {
-            isPopoverShown.toggle()
-        }
-        .popover(isPresented: $isPopoverShown) {
+        .contextMenu {
             Button("Delete") {
                 finderItems.remove(at: finderItems.firstIndex(of: item)!)
             }
