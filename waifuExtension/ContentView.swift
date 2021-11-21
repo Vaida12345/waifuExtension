@@ -11,22 +11,56 @@ struct ContentView: View {
     @State var finderItems: [FinderItem] = []
     
     var body: some View {
-        if finderItems.isEmpty {
-            welcomeView(finderItems: $finderItems)
-        } else {
-            GeometryReader { geometry in
+        VStack {
+            HStack {
+                Spacer()
                 
-                ScrollView {
-                    LazyVGrid(columns: Array(repeating: .init(.flexible()), count: 5)) {
-                        ForEach(finderItems) { item in
+                Button("Add Item") {
+                    let panel = NSOpenPanel()
+                    panel.allowsMultipleSelection = true
+                    panel.canChooseDirectories = true
+                    if panel.runModal() == .OK {
+                        for i in panel.urls {
+                            let item = FinderItem(at: i)
                             
-                            GridItemView(item: item, geometry: geometry, finderItems: $finderItems)
+                            guard !finderItems.contains(item) else { return }
                             
+                            if item.isFile {
+                                guard item.image != nil else { return }
+                                finderItems.append(item)
+                            } else {
+                                item.iteratedOver { child in
+                                    guard !finderItems.contains(child) else { return }
+                                    guard child.image != nil else { return }
+                                    finderItems.append(child)
+                                }
+                            }
                         }
                     }
+                }
+                    .padding(.all)
+                
+                Button("Done") {
                     
                 }
-                    .padding(.top, 30)
+                .padding([.top, .bottom, .trailing])
+            }
+            
+            if finderItems.isEmpty {
+                welcomeView(finderItems: $finderItems)
+            } else {
+                GeometryReader { geometry in
+                    
+                    ScrollView {
+                        LazyVGrid(columns: Array(repeating: .init(.flexible()), count: 5)) {
+                            ForEach(finderItems) { item in
+                                
+                                GridItemView(item: item, geometry: geometry, finderItems: $finderItems)
+                                
+                            }
+                        }
+                        
+                    }
                     .frame(width: geometry.size.width, height: geometry.size.height)
                     .onDrop(of: [.fileURL], isTargeted: nil) { providers in
                         for i in providers {
@@ -54,6 +88,7 @@ struct ContentView: View {
                         
                         return true
                     }
+                }
             }
         }
     }
