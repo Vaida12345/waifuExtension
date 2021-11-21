@@ -20,14 +20,44 @@ struct ContentView: View {
                     i.loadItem(forTypeIdentifier: "public.file-url", options: nil) { urlData, error in
                         guard error == nil else { return }
                         guard let urlData = urlData as? Data else { return }
-                        let url = URL(dataRepresentation: urlData, relativeTo: nil)
+                        guard let url = URL(dataRepresentation: urlData, relativeTo: nil) else { return }
                         
-                        print(url)
+                        let item = FinderItem(at: url)
+                        
+                        if item.isFile {
+                            guard item.image != nil else { return }
+                            finderItems.append(item)
+                        } else {
+                            item.iteratedOver { child in
+                                guard child.image != nil else { return }
+                                finderItems.append(child)
+                            }
+                        }
                         
                     }
                 }
                 
                 return true
+            }
+            .onTapGesture {
+                let panel = NSOpenPanel()
+                panel.allowsMultipleSelection = true
+                panel.canChooseDirectories = true
+                if panel.runModal() == .OK {
+                    for i in panel.urls {
+                        let item = FinderItem(at: i)
+                        
+                        if item.isFile {
+                            guard item.image != nil else { return }
+                            finderItems.append(item)
+                        } else {
+                            item.iteratedOver { child in
+                                guard child.image != nil else { return }
+                                finderItems.append(child)
+                            }
+                        }
+                    }
+                }
             }
         
     }
