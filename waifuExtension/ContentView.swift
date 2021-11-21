@@ -43,7 +43,8 @@ struct ContentView: View {
                 Button("Done") {
                     
                 }
-                .padding([.top, .bottom, .trailing])
+                    .disabled(finderItems.isEmpty)
+                    .padding([.top, .bottom, .trailing])
             }
             
             if finderItems.isEmpty {
@@ -185,12 +186,108 @@ struct GridItemView: View {
             }
         }
     }
+}
+
+struct ConfigurationView: View {
+    
+    var finderItems: [FinderItem] = []
+    
+    let modelNames: [String] = ["srcnn_mps", "srcnn_coreml", "cunet"]
+    @State var chosenModel = "srcnn_mps"
+    
+    let styleNames: [String] = ["anime", "photo"]
+    @State var chosenStyle = "anime"
+    
+    let noiceLevels: [Int] = [Int](0...3)
+    @State var chosenNoiceLevel = 3
+    
+    let scaleLevels: [Int] = [2, 4]
+    @State var chosenScaleLevel = 2
+    
+    var body: some View {
+        VStack {
+            
+            Spacer()
+            
+            HStack(spacing: 10) {
+                VStack(spacing: 19) {
+                    Text("        Model:")
+                    Text("         Style:")
+                        .padding(.bottom)
+                    Text("Noice Level:")
+                    Text("Scale Level:")
+                }
+                
+                VStack(spacing: 15) {
+                    Menu(chosenModel) {
+                        ForEach(modelNames, id: \.self) { item in
+                            Button(item) {
+                                chosenModel = item
+                            }
+                        }
+                    }
+                    
+                    Menu(chosenStyle) {
+                        ForEach(styleNames, id: \.self) { item in
+                            Button(item) {
+                                chosenStyle = item
+                            }
+                        }
+                    }
+                    .padding(.bottom)
+                    
+                    Menu(chosenNoiceLevel.description) {
+                        ForEach(noiceLevels, id: \.self) { item in
+                            Button(item.description) {
+                                chosenNoiceLevel = item
+                            }
+                        }
+                    }
+                    
+                    Menu(chosenScaleLevel.description) {
+                        ForEach(scaleLevels, id: \.self) { item in
+                            Button(item.description) {
+                                chosenScaleLevel = item
+                            }
+                        }
+                    }
+                }
+                
+            }
+                .padding(.horizontal, 50.0)
+            
+            Spacer()
+            
+            HStack {
+                Spacer()
+                
+                Button {
+                    
+                } label: {
+                    Text("Cancel")
+                        .frame(width: 80)
+                }
+                .padding(.trailing)
+                
+                Button {
+                    
+                } label: {
+                    Text("OK")
+                        .frame(width: 80)
+                }
+            }
+                .padding(.all)
+        }
+            .padding(.all)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
     
 }
 
 
+
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        ConfigurationView()
     }
 }
