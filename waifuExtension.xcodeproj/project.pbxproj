@@ -11,6 +11,25 @@
 		B41C473E274AA7850024ECB7 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C473D274AA7850024ECB7 /* ContentView.swift */; };
 		B41C4740274AA7850024ECB7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B41C473F274AA7850024ECB7 /* Assets.xcassets */; };
 		B41C4743274AA7850024ECB7 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B41C4742274AA7850024ECB7 /* Preview Assets.xcassets */; };
+		B41C4762274AAF6A0024ECB7 /* Fraction.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C474C274AAF6A0024ECB7 /* Fraction.swift */; };
+		B41C4763274AAF6A0024ECB7 /* Int10.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C474D274AAF6A0024ECB7 /* Int10.swift */; };
+		B41C4764274AAF6A0024ECB7 /* Complex.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C474E274AAF6A0024ECB7 /* Complex.swift */; };
+		B41C4765274AAF6A0024ECB7 /* PreciseFloat.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C474F274AAF6A0024ECB7 /* PreciseFloat.swift */; };
+		B41C4766274AAF6A0024ECB7 /* Arithmetical.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C4750274AAF6A0024ECB7 /* Arithmetical.swift */; };
+		B41C4767274AAF6A0024ECB7 /* PreciseInt.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C4751274AAF6A0024ECB7 /* PreciseInt.swift */; };
+		B41C4768274AAF6A0024ECB7 /* CommentCreator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C4753274AAF6A0024ECB7 /* CommentCreator.swift */; };
+		B41C4769274AAF6A0024ECB7 /* Bechmark.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C4754274AAF6A0024ECB7 /* Bechmark.swift */; };
+		B41C476A274AAF6A0024ECB7 /* Point.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C4755274AAF6A0024ECB7 /* Point.swift */; };
+		B41C476B274AAF6A0024ECB7 /* Canvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C4756274AAF6A0024ECB7 /* Canvas.swift */; };
+		B41C476C274AAF6A0024ECB7 /* MachineLearning.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C4757274AAF6A0024ECB7 /* MachineLearning.swift */; };
+		B41C476D274AAF6A0024ECB7 /* FinderItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C4758274AAF6A0024ECB7 /* FinderItem.swift */; };
+		B41C476E274AAF6A0024ECB7 /* Support.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C4759274AAF6A0024ECB7 /* Support.swift */; };
+		B41C4770274AAF6A0024ECB7 /* LinearTransformation.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C475C274AAF6A0024ECB7 /* LinearTransformation.swift */; };
+		B41C4771274AAF6A0024ECB7 /* Expression.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C475D274AAF6A0024ECB7 /* Expression.swift */; };
+		B41C4772274AAF6A0024ECB7 /* Polynomial.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C475E274AAF6A0024ECB7 /* Polynomial.swift */; };
+		B41C4773274AAF6A0024ECB7 /* Matrix.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C475F274AAF6A0024ECB7 /* Matrix.swift */; };
+		B41C4774274AAF6A0024ECB7 /* Plane.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C4760274AAF6A0024ECB7 /* Plane.swift */; };
+		B41C4775274AAF6A0024ECB7 /* Algebra.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C4761274AAF6A0024ECB7 /* Algebra.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -20,6 +39,25 @@
 		B41C473F274AA7850024ECB7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B41C4742274AA7850024ECB7 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		B41C4744274AA7850024ECB7 /* waifuExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = waifuExtension.entitlements; sourceTree = "<group>"; };
+		B41C474C274AAF6A0024ECB7 /* Fraction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Fraction.swift; sourceTree = "<group>"; };
+		B41C474D274AAF6A0024ECB7 /* Int10.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Int10.swift; sourceTree = "<group>"; };
+		B41C474E274AAF6A0024ECB7 /* Complex.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Complex.swift; sourceTree = "<group>"; };
+		B41C474F274AAF6A0024ECB7 /* PreciseFloat.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PreciseFloat.swift; sourceTree = "<group>"; };
+		B41C4750274AAF6A0024ECB7 /* Arithmetical.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Arithmetical.swift; sourceTree = "<group>"; };
+		B41C4751274AAF6A0024ECB7 /* PreciseInt.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PreciseInt.swift; sourceTree = "<group>"; };
+		B41C4753274AAF6A0024ECB7 /* CommentCreator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CommentCreator.swift; sourceTree = "<group>"; };
+		B41C4754274AAF6A0024ECB7 /* Bechmark.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Bechmark.swift; sourceTree = "<group>"; };
+		B41C4755274AAF6A0024ECB7 /* Point.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Point.swift; sourceTree = "<group>"; };
+		B41C4756274AAF6A0024ECB7 /* Canvas.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Canvas.swift; sourceTree = "<group>"; };
+		B41C4757274AAF6A0024ECB7 /* MachineLearning.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MachineLearning.swift; sourceTree = "<group>"; };
+		B41C4758274AAF6A0024ECB7 /* FinderItem.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FinderItem.swift; sourceTree = "<group>"; };
+		B41C4759274AAF6A0024ECB7 /* Support.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Support.swift; sourceTree = "<group>"; };
+		B41C475C274AAF6A0024ECB7 /* LinearTransformation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LinearTransformation.swift; sourceTree = "<group>"; };
+		B41C475D274AAF6A0024ECB7 /* Expression.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Expression.swift; sourceTree = "<group>"; };
+		B41C475E274AAF6A0024ECB7 /* Polynomial.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Polynomial.swift; sourceTree = "<group>"; };
+		B41C475F274AAF6A0024ECB7 /* Matrix.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Matrix.swift; sourceTree = "<group>"; };
+		B41C4760274AAF6A0024ECB7 /* Plane.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Plane.swift; sourceTree = "<group>"; };
+		B41C4761274AAF6A0024ECB7 /* Algebra.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Algebra.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -54,6 +92,7 @@
 			children = (
 				B41C473B274AA7850024ECB7 /* waifuExtensionApp.swift */,
 				B41C473D274AA7850024ECB7 /* ContentView.swift */,
+				B41C474A274AAF6A0024ECB7 /* Support */,
 				B41C473F274AA7850024ECB7 /* Assets.xcassets */,
 				B41C4744274AA7850024ECB7 /* waifuExtension.entitlements */,
 				B41C4741274AA7850024ECB7 /* Preview Content */,
@@ -67,6 +106,56 @@
 				B41C4742274AA7850024ECB7 /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		B41C474A274AAF6A0024ECB7 /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				B41C474B274AAF6A0024ECB7 /* Numerics */,
+				B41C4752274AAF6A0024ECB7 /* Support */,
+				B41C4759274AAF6A0024ECB7 /* Support.swift */,
+				B41C475B274AAF6A0024ECB7 /* Algebra */,
+			);
+			path = Support;
+			sourceTree = "<group>";
+		};
+		B41C474B274AAF6A0024ECB7 /* Numerics */ = {
+			isa = PBXGroup;
+			children = (
+				B41C474C274AAF6A0024ECB7 /* Fraction.swift */,
+				B41C474D274AAF6A0024ECB7 /* Int10.swift */,
+				B41C474E274AAF6A0024ECB7 /* Complex.swift */,
+				B41C474F274AAF6A0024ECB7 /* PreciseFloat.swift */,
+				B41C4750274AAF6A0024ECB7 /* Arithmetical.swift */,
+				B41C4751274AAF6A0024ECB7 /* PreciseInt.swift */,
+			);
+			path = Numerics;
+			sourceTree = "<group>";
+		};
+		B41C4752274AAF6A0024ECB7 /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				B41C4753274AAF6A0024ECB7 /* CommentCreator.swift */,
+				B41C4754274AAF6A0024ECB7 /* Bechmark.swift */,
+				B41C4755274AAF6A0024ECB7 /* Point.swift */,
+				B41C4756274AAF6A0024ECB7 /* Canvas.swift */,
+				B41C4757274AAF6A0024ECB7 /* MachineLearning.swift */,
+				B41C4758274AAF6A0024ECB7 /* FinderItem.swift */,
+			);
+			path = Support;
+			sourceTree = "<group>";
+		};
+		B41C475B274AAF6A0024ECB7 /* Algebra */ = {
+			isa = PBXGroup;
+			children = (
+				B41C475C274AAF6A0024ECB7 /* LinearTransformation.swift */,
+				B41C475D274AAF6A0024ECB7 /* Expression.swift */,
+				B41C475E274AAF6A0024ECB7 /* Polynomial.swift */,
+				B41C475F274AAF6A0024ECB7 /* Matrix.swift */,
+				B41C4760274AAF6A0024ECB7 /* Plane.swift */,
+				B41C4761274AAF6A0024ECB7 /* Algebra.swift */,
+			);
+			path = Algebra;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -139,8 +228,27 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B41C4772274AAF6A0024ECB7 /* Polynomial.swift in Sources */,
+				B41C4765274AAF6A0024ECB7 /* PreciseFloat.swift in Sources */,
+				B41C4767274AAF6A0024ECB7 /* PreciseInt.swift in Sources */,
+				B41C4762274AAF6A0024ECB7 /* Fraction.swift in Sources */,
+				B41C4768274AAF6A0024ECB7 /* CommentCreator.swift in Sources */,
+				B41C476C274AAF6A0024ECB7 /* MachineLearning.swift in Sources */,
+				B41C4769274AAF6A0024ECB7 /* Bechmark.swift in Sources */,
+				B41C4770274AAF6A0024ECB7 /* LinearTransformation.swift in Sources */,
+				B41C4775274AAF6A0024ECB7 /* Algebra.swift in Sources */,
+				B41C476D274AAF6A0024ECB7 /* FinderItem.swift in Sources */,
 				B41C473E274AA7850024ECB7 /* ContentView.swift in Sources */,
+				B41C4763274AAF6A0024ECB7 /* Int10.swift in Sources */,
+				B41C476A274AAF6A0024ECB7 /* Point.swift in Sources */,
+				B41C4771274AAF6A0024ECB7 /* Expression.swift in Sources */,
+				B41C4774274AAF6A0024ECB7 /* Plane.swift in Sources */,
+				B41C4764274AAF6A0024ECB7 /* Complex.swift in Sources */,
+				B41C476E274AAF6A0024ECB7 /* Support.swift in Sources */,
+				B41C4773274AAF6A0024ECB7 /* Matrix.swift in Sources */,
 				B41C473C274AA7850024ECB7 /* waifuExtensionApp.swift in Sources */,
+				B41C4766274AAF6A0024ECB7 /* Arithmetical.swift in Sources */,
+				B41C476B274AAF6A0024ECB7 /* Canvas.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
