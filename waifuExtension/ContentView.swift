@@ -19,22 +19,12 @@ struct ContentView: View {
                 ScrollView {
                     LazyVGrid(columns: Array(repeating: .init(.flexible()), count: 5)) {
                         ForEach(finderItems) { item in
-                            let image = item.image!
-                            VStack {
-                                Image(nsImage: image)
-                                    .resizable()
-                                    .cornerRadius(5)
-                                    .aspectRatio(contentMode: .fit)
-                                    .padding(/*@START_MENU_TOKEN@*/.all/*@END_MENU_TOKEN@*/)
-                                
-                                
-                                Text(item.fileName ?? item.path)
-                                    .padding(.all)
-                            }
-                                .frame(width: geometry.size.width / 5, height: geometry.size.width / 5)
+                            
+                            GridItemView(item: item, geometry: geometry, finderItems: $finderItems)
                             
                         }
                     }
+                    
                 }
                     .frame(width: geometry.size.width, height: geometry.size.height)
                     .onDrop(of: [.fileURL], isTargeted: nil) { providers in
@@ -67,13 +57,6 @@ struct ContentView: View {
         }
     }
     
-//    var body: some View {
-//        GeometryReader { geometry in
-//            VStack {
-//                Text("\(geometry.size.width) x \(geometry.size.height)")
-//            }
-//        }
-//    }
 }
 
 struct welcomeView: View {
@@ -137,6 +120,42 @@ struct welcomeView: View {
         }
     }
 }
+
+
+struct GridItemView: View {
+    
+    let item: FinderItem
+    let geometry: GeometryProxy
+    @Binding var finderItems: [FinderItem]
+    @State var isPopoverShown = false
+    
+    var body: some View {
+        let image = item.image!
+        
+        VStack {
+            Image(nsImage: image)
+                .resizable()
+                .cornerRadius(5)
+                .aspectRatio(contentMode: .fit)
+                .padding(/*@START_MENU_TOKEN@*/.all/*@END_MENU_TOKEN@*/)
+            
+            
+            Text(item.fileName ?? item.path)
+                .padding(.all)
+        }
+        .frame(width: geometry.size.width / 5, height: geometry.size.width / 5)
+        .onTapGesture {
+            isPopoverShown.toggle()
+        }
+        .popover(isPresented: $isPopoverShown) {
+            Button("Delete") {
+                finderItems.remove(at: finderItems.firstIndex(of: item)!)
+            }
+        }
+    }
+    
+}
+
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
