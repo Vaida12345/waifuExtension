@@ -180,11 +180,11 @@ struct GridItemView: View {
                 .resizable()
                 .cornerRadius(5)
                 .aspectRatio(contentMode: .fit)
-                .padding(/*@START_MENU_TOKEN@*/.all/*@END_MENU_TOKEN@*/)
+                .padding([.top, .leading, .trailing])
             
             
             Text(item.fileName ?? item.path)
-                .padding(.all)
+                .padding([.leading, .bottom, .trailing])
         }
         .frame(width: geometry.size.width / 5, height: geometry.size.width / 5)
         .contextMenu {
