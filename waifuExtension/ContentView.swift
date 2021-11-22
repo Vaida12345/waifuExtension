@@ -14,6 +14,7 @@ struct ContentView: View {
     @State var isProcessing: Bool = false
     @State var modelUsed: Model? = nil
     @State var background = DispatchQueue(label: "Background")
+    @State var chosenScaleLevel: Int = 2
     
     var body: some View {
         VStack {
@@ -108,10 +109,10 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $isSheetShown, onDismiss: nil) {
-            ConfigurationView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed)
+            ConfigurationView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel)
         }
         .sheet(isPresented: $isProcessing, onDismiss: nil) {
-            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, background: $background)
+            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, background: $background, chosenScaleLevel: $chosenScaleLevel)
         }
     }
     
@@ -221,6 +222,7 @@ struct ConfigurationView: View {
     @Binding var isShown: Bool
     @Binding var isProcessing: Bool
     @Binding var modelUsed: Model?
+    @Binding var chosenScaleLevel: Int
     
     //TODO: edit models
     
@@ -230,8 +232,7 @@ struct ConfigurationView: View {
     let noiceLevels: [String] = ["none", "0", "1", "2", "3"]
     @State var chosenNoiceLevel = "3"
     
-    let scaleLevels: [Int] = [2]
-    @State var chosenScaleLevel = 2
+    let scaleLevels: [Int] = [Int](0...5).map({ pow(2, $0) })
     
     var body: some View {
         VStack {
@@ -295,7 +296,7 @@ struct ConfigurationView: View {
                     isProcessing = true
                     isShown = false
                     
-                    let modelName = "up_\(chosenStyle)_noise\(chosenNoiceLevel)_scale2x_model"
+                    let modelName = (chosenScaleLevel == 1 ? "" : "up_") + "\(chosenStyle)_noise\(chosenNoiceLevel)_scale2x_model"
                     
                     self.modelUsed = Model(rawValue: modelName)!
                     
@@ -320,6 +321,7 @@ struct ProcessingView: View {
     @Binding var modelUsed: Model?
     @Binding var isSheetShown: Bool
     @Binding var background: DispatchQueue
+    @Binding var chosenScaleLevel: Int
     
     @State var processedItems: [FinderItem] = []
     @State var currentTimeTaken: Double = 0 // up to 1s
@@ -520,11 +522,15 @@ struct ProcessingView: View {
                 for i in finderItems {
                     background.async {
                         currentProcessingItem = i
-                        guard i.image != nil else { return }
-                        let image = Waifu2x.run(i.image!, model: modelUsed!)
+                        guard var image = i.image else { return }
+                        
+                        for _ in 1...(chosenScaleLevel / 2) {
+                            image = Waifu2x.run(image, model: modelUsed!)!.reload()
+                        }
+                        
                         let finderItem = FinderItem(at: "/Users/vaida/Downloads/Waifu Output/\(i.relativePath ?? i.fileName! + ".png")")
                         finderItem.generateDirectory()
-                        image?.write(to: "/Users/vaida/Downloads/Waifu Output/\(i.relativePath ?? i.fileName! + ".png")")
+                        image.write(to: "/Users/vaida/Downloads/Waifu Output/\(i.relativePath ?? i.fileName! + ".png")")
 
                         // when finished
                         DispatchQueue.main.async {

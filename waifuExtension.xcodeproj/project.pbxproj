@@ -64,6 +64,7 @@
 		B49BFDB3274B4BC50046FDDF /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B49BFD91274B4BC50046FDDF /* Info.plist */; };
 		B49BFDB4274B4BC50046FDDF /* NSImage+Bicubic.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD92274B4BC50046FDDF /* NSImage+Bicubic.swift */; };
 		B49BFDB5274B4BC50046FDDF /* MetalBicubic.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD93274B4BC50046FDDF /* MetalBicubic.swift */; };
+		B4B9EFF0274BC50400A8D380 /* UIImage+Reload.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4B9EFEF274BC50400A8D380 /* UIImage+Reload.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -127,6 +128,7 @@
 		B49BFD91274B4BC50046FDDF /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B49BFD92274B4BC50046FDDF /* NSImage+Bicubic.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSImage+Bicubic.swift"; sourceTree = "<group>"; };
 		B49BFD93274B4BC50046FDDF /* MetalBicubic.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MetalBicubic.swift; sourceTree = "<group>"; };
+		B4B9EFEF274BC50400A8D380 /* UIImage+Reload.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIImage+Reload.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -249,6 +251,7 @@
 				B49BFD91274B4BC50046FDDF /* Info.plist */,
 				B49BFD92274B4BC50046FDDF /* NSImage+Bicubic.swift */,
 				B49BFD93274B4BC50046FDDF /* MetalBicubic.swift */,
+				B4B9EFEF274BC50400A8D380 /* UIImage+Reload.swift */,
 			);
 			path = "waifu2x-mac";
 			sourceTree = "<group>";
@@ -363,6 +366,7 @@
 				B41C4762274AAF6A0024ECB7 /* Fraction.swift in Sources */,
 				B49BFD97274B4BC50046FDDF /* NSImage+PNG.swift in Sources */,
 				B49BFDA7274B4BC50046FDDF /* photo_noise1_model.mlmodel in Sources */,
+				B4B9EFF0274BC50400A8D380 /* UIImage+Reload.swift in Sources */,
 				B49BFD9A274B4BC50046FDDF /* anime_noise1_model.mlmodel in Sources */,
 				B41C4768274AAF6A0024ECB7 /* CommentCreator.swift in Sources */,
 				B41C476C274AAF6A0024ECB7 /* MachineLearning.swift in Sources */,
