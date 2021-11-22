@@ -215,6 +215,7 @@ struct ConfigurationView: View {
     
     @State var isProcessing = true
     @State var processProgress = 0.0
+    @State var processItem: FinderItem? = nil
     
     var body: some View {
         VStack {
@@ -298,6 +299,7 @@ struct ConfigurationView: View {
                     for i in finderItems {
                         
                         background.async {
+                            processItem = i
                             let image = Waifu2x.run(i.image!, model: .init(rawValue: modelName)!)
                             image?.write(to: "/Users/vaida/Downloads/\(i.fileName!).png")
                             
@@ -307,8 +309,6 @@ struct ConfigurationView: View {
                             }
                         }
                     }
-                    
-                    
                     
                 } label: {
                     Text("OK")
