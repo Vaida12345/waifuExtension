@@ -9,7 +9,6 @@ import SwiftUI
 import CoreML
 
 struct ContentView: View {
-    //TODO: also add relative path
     @State var finderItems: [FinderItem] = []
     @State var isSheetShown: Bool = false
     @State var isProcessing: Bool = false
@@ -19,6 +18,14 @@ struct ContentView: View {
     var body: some View {
         VStack {
             HStack {
+                if !finderItems.isEmpty {
+                    Button("Remove All") {
+                        finderItems = []
+                    }
+                    .padding(.all)
+                }
+                
+                
                 Spacer()
                 
                 Button("Add Item") {
@@ -38,6 +45,7 @@ struct ContentView: View {
                                 item.iteratedOver { child in
                                     guard !finderItems.contains(child) else { return }
                                     guard child.image != nil else { return }
+                                    child.relativePath = child.relativePath(to: item)
                                     finderItems.append(child)
                                 }
                             }
@@ -86,6 +94,7 @@ struct ContentView: View {
                                     item.iteratedOver { child in
                                         guard !finderItems.contains(child) else { return }
                                         guard child.image != nil else { return }
+                                        child.relativePath = child.relativePath(to: item)
                                         finderItems.append(child)
                                     }
                                 }
@@ -141,6 +150,7 @@ struct welcomeView: View {
                     } else {
                         item.iteratedOver { child in
                             guard child.image != nil else { return }
+                            child.relativePath = child.relativePath(to: item)
                             finderItems.append(child)
                         }
                     }
@@ -164,6 +174,7 @@ struct welcomeView: View {
                     } else {
                         item.iteratedOver { child in
                             guard child.image != nil else { return }
+                            child.relativePath = child.relativePath(to: item)
                             finderItems.append(child)
                         }
                     }
@@ -190,8 +201,7 @@ struct GridItemView: View {
                 .aspectRatio(contentMode: .fit)
                 .padding([.top, .leading, .trailing])
             
-            //TODO: add relative path
-            Text((item.fileName ?? item.path) + "\n" + "\(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.width) × \(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.height)")
+            Text(((item.relativePath ?? item.fileName) ?? item.path) + "\n" + "\(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.width) × \(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.height)")
                 .multilineTextAlignment(.center)
                 .padding([.leading, .bottom, .trailing])
         }
@@ -285,7 +295,26 @@ struct ConfigurationView: View {
                     isProcessing = true
                     isShown = false
                     
-                    let modelName = "up_\(chosenStyle)_noise\(noiceLevels)_scale2x_model"
+                    let modelName = "up_\(chosenStyle)_noise\(chosenNoiceLevel)_scale2x_model"
+                    
+//                case anime_noise0 = "anime_noise0_model"
+//                case anime_noise1 = "anime_noise1_model"
+//                case anime_noise2 = "anime_noise2_model"
+//                case anime_noise3 = "anime_noise3_model"
+//                case anime_scale2x = "up_anime_scale2x_model"
+//                case anime_noise0_scale2x = "up_anime_noise0_scale2x_model"
+//                case anime_noise1_scale2x = "up_anime_noise1_scale2x_model"
+//                case anime_noise2_scale2x = "up_anime_noise2_scale2x_model"
+//                case anime_noise3_scale2x = "up_anime_noise3_scale2x_model"
+//                case photo_noise0 = "photo_noise0_model"
+//                case photo_noise1 = "photo_noise1_model"
+//                case photo_noise2 = "photo_noise2_model"
+//                case photo_noise3 = "photo_noise3_model"
+//                case photo_scale2x = "up_photo_scale2x_model"
+//                case photo_noise0_scale2x = "up_photo_noise0_scale2x_model"
+//                case photo_noise1_scale2x = "up_photo_noise1_scale2x_model"
+//                case photo_noise2_scale2x = "up_photo_noise2_scale2x_model"
+//                case photo_noise3_scale2x = "up_photo_noise3_scale2x_model"
                     
                     self.modelUsed = Model(rawValue: modelName)!
                     
@@ -384,8 +413,8 @@ struct ProcessingView: View {
                 
                 VStack(spacing: 10) {
                     HStack {
-                        if let name = currentProcessingItem?.fileName {
-                            Text(name)
+                        if let currentProcessingItem = currentProcessingItem {
+                            Text(currentProcessingItem.relativePath ?? currentProcessingItem.fileName ?? "error")
                         } else {
                             Text("Error: \(currentProcessingItem.debugDescription)")
                         }
@@ -508,7 +537,9 @@ struct ProcessingView: View {
                         currentProcessingItem = i
                         guard i.image != nil else { return }
                         let image = Waifu2x.run(i.image!, model: modelUsed!)
-                        image?.write(to: "/Users/vaida/Downloads/\(i.fileName!).png")
+                        let finderItem = FinderItem(at: "/Users/vaida/Downloads/Waifu Output/\(i.relativePath ?? i.fileName! + ".png")")
+                        finderItem.generateDirectory()
+                        image?.write(to: "/Users/vaida/Downloads/Waifu Output/\(i.relativePath ?? i.fileName! + ".png")")
 
                         // when finished
                         DispatchQueue.main.async {

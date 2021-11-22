@@ -20,6 +20,8 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     
     var parent: FinderItem? = nil
     
+    var relativePath: String? = nil
+    
     
     //MARK: - Instance Properties
     

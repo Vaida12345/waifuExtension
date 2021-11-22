@@ -189,6 +189,7 @@ public struct Waifu2x {
                 }
             }
         }
+        
         // Prepare for model pipeline
         // Run prediction on each block
         let mlmodel = model.getMLModel()
