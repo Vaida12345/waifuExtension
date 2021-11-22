@@ -281,12 +281,17 @@ struct ConfigurationView: View {
                 
                 Button {
                     for i in finderItems {
-                        let a = shell(["cd /Applications/waifu2x.app/Contents/MacOS\nls"])
-                        print(a)
                         let outputPath = "/Users/vaida/Downloads/waifu2x output/" + i.fileName! + ".png" // store relative path !!!!
                         FinderItem(at: outputPath).generateDirectory()
-                        let cmd = shell(["./waifu2x --model \(chosenModel) --style \(chosenStyle) -s \(chosenScaleLevel) -n \(chosenNoiceLevel) -i \(i.path) -o \(outputPath)"])
+                        
+                        let command = "/Applications/waifu2x.app/Contents/MacOS/waifu2x --model \(chosenModel) --style \(chosenStyle) -s \(chosenScaleLevel) -n \(chosenNoiceLevel) -i \(i.path.replacingOccurrences(of: " ", with: "\\ ")) -o \(outputPath.replacingOccurrences(of: " ", with: "\\ "))"
+                        
+                        let cmd = shell([command])
+                        print(command)
                         print(cmd)
+                        
+                        break
+                        
                     }
                     
                 } label: {
