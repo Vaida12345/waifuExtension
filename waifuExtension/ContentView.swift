@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoreML
 
 struct ContentView: View {
     //TODO: also add relative path
@@ -346,6 +347,11 @@ struct ProcessingView: View {
                         Text("Time Spent:")
                     }
                     
+                    HStack {
+                        Spacer()
+                        Text("ML Model:")
+                    }
+                    
                     Spacer()
                     
                     HStack {
@@ -390,6 +396,11 @@ struct ProcessingView: View {
                     HStack {
                         Text(currentTimeTaken.expressedAsTime())
                         
+                        Spacer()
+                    }
+                    
+                    HStack {
+                        Text(modelUsed!.rawValue)
                         Spacer()
                     }
                     
@@ -483,7 +494,7 @@ struct ProcessingView: View {
             }
         }
             .padding(.all)
-            .frame(width: 600, height: 300)
+            .frame(width: 600, height: 350)
             .onAppear {
                 for i in finderItems {
                     background.async {
