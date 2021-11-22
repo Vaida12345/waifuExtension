@@ -329,7 +329,7 @@ struct ProcessingView: View {
     @State var isPaused: Bool = false
     @State var background = DispatchQueue(label: "Background")
     @State var currentProcessingItem: FinderItem? = nil
-    @State var timer: Timer = Timer()
+    @State var timer = Timer.publish(every: 0.1, on: .current, in: .common).autoconnect()
     
     var body: some View {
         VStack {
@@ -471,14 +471,7 @@ struct ProcessingView: View {
             .padding(.all)
             .frame(width: 600, height: 300)
             .onAppear {
-                
-                timer = Timer(timeInterval: 0.1, repeats: true) { timer in
-                    currentTimeTaken += 0.1
-                }
-                timer.fire()
-                
                 for i in finderItems {
-
                     background.async {
                         currentProcessingItem = i
                         let image = Waifu2x.run(i.image!, model: modelUsed!)
@@ -492,6 +485,9 @@ struct ProcessingView: View {
                         }
                     }
                 }
+            }
+            .onReceive(timer) { timer in
+                currentTimeTaken += 0.1
             }
     }
     
