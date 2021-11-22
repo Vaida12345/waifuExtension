@@ -183,15 +183,16 @@ struct GridItemView: View {
     var body: some View {
         let image = item.image!
         
-        VStack {
+        VStack(alignment: .center) {
             Image(nsImage: image)
                 .resizable()
                 .cornerRadius(5)
                 .aspectRatio(contentMode: .fit)
                 .padding([.top, .leading, .trailing])
             
-            //TODO: add dimension, relative path
-            Text(item.fileName ?? item.path)
+            //TODO: add relative path
+            Text((item.fileName ?? item.path) + "\n" + "\(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.width) × \(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.height)")
+                .multilineTextAlignment(.center)
                 .padding([.leading, .bottom, .trailing])
         }
         .frame(width: geometry.size.width / 5, height: geometry.size.width / 5)
@@ -212,8 +213,6 @@ struct ConfigurationView: View {
     @Binding var modelUsed: Model?
     
     //TODO: edit models
-    let modelNames: [String] = ["srcnn_mps", "srcnn_coreml", "cunet"]
-    @State var chosenModel = "srcnn_mps"
     
     let styleNames: [String] = ["anime", "photo"]
     @State var chosenStyle = "anime"
@@ -231,7 +230,6 @@ struct ConfigurationView: View {
             
             HStack(spacing: 10) {
                 VStack(spacing: 19) {
-                    Text("        Model:")
                     Text("         Style:")
                         .padding(.bottom)
                     Text("Noice Level:")
@@ -239,13 +237,6 @@ struct ConfigurationView: View {
                 }
                 
                 VStack(spacing: 15) {
-                    Menu(chosenModel) {
-                        ForEach(modelNames, id: \.self) { item in
-                            Button(item) {
-                                chosenModel = item
-                            }
-                        }
-                    }
                     
                     Menu(chosenStyle) {
                         ForEach(styleNames, id: \.self) { item in
@@ -294,14 +285,7 @@ struct ConfigurationView: View {
                     isProcessing = true
                     isShown = false
                     
-                    var modelName = chosenStyle
-                    if chosenNoiceLevel != "none" {
-                        modelName += "_noise" + chosenNoiceLevel
-                    }
-                    if chosenModel != "none" {
-                        modelName = "up_" + modelName + "_scale2x"
-                    }
-                    modelName += "_model"
+                    let modelName = "up_\(chosenStyle)_noise\(noiceLevels)_scale2x_model"
                     
                     self.modelUsed = Model(rawValue: modelName)!
                     
@@ -349,6 +333,8 @@ struct ProcessingView: View {
     
     var body: some View {
         VStack {
+            Spacer()
+            
             HStack {
                 VStack(spacing: 10) {
                     HStack {
