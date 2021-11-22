@@ -329,6 +329,7 @@ struct ProcessingView: View {
     @State var isPaused: Bool = false
     @State var background = DispatchQueue(label: "Background")
     @State var currentProcessingItem: FinderItem? = nil
+    @State var timer: Timer = Timer()
     
     var body: some View {
         VStack {
@@ -469,21 +470,29 @@ struct ProcessingView: View {
         }
             .padding(.all)
             .frame(width: 600, height: 300)
-//            .onAppear {
-//                for i in finderItems {
-//
-//                    background.async {
-//                        currentProcessingItem = i
-//                        let image = Waifu2x.run(i.image!, model: modelUsed!)
-//                        image?.write(to: "/Users/vaida/Downloads/\(i.fileName!).png")
-//
-//                        // when finished
-//                        DispatchQueue.main.async {
-//
-//                        }
-//                    }
-//                }
-//            }
+            .onAppear {
+                
+                timer = Timer(timeInterval: 0.1, repeats: true) { timer in
+                    currentTimeTaken += 0.1
+                }
+                timer.fire()
+                
+                for i in finderItems {
+
+                    background.async {
+                        currentProcessingItem = i
+                        let image = Waifu2x.run(i.image!, model: modelUsed!)
+                        image?.write(to: "/Users/vaida/Downloads/\(i.fileName!).png")
+
+                        // when finished
+                        DispatchQueue.main.async {
+                            processedItems.append(i)
+                            pastTimeTaken += currentTimeTaken
+                            currentTimeTaken = 0
+                        }
+                    }
+                }
+            }
     }
     
 }
@@ -491,7 +500,7 @@ struct ProcessingView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ProcessingView(isProcessing: .constant(false), finderItems: .constant([]), modelUsed: .constant(nil))
+        ContentView()
         
     }
 }
