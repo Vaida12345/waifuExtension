@@ -100,7 +100,7 @@ struct ContentView: View {
             ConfigurationView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed)
         }
         .sheet(isPresented: $isProcessing, onDismiss: nil) {
-            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed)
+            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown)
         }
     }
     
@@ -322,6 +322,7 @@ struct ProcessingView: View {
     @Binding var isProcessing: Bool
     @Binding var finderItems: [FinderItem]
     @Binding var modelUsed: Model?
+    @Binding var isSheetShown: Bool
     
     @State var processedItems: [FinderItem] = []
     @State var currentTimeTaken: Double = 1 // up to 1s
@@ -461,7 +462,9 @@ struct ProcessingView: View {
                 Spacer()
                 
                 Button("Cancel") {
-                    
+                    isPaused = true
+                    isProcessing = false
+                    isSheetShown = true
                 }
                     .padding(.trailing)
                 
