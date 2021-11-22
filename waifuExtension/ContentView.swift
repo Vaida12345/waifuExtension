@@ -280,6 +280,14 @@ struct ConfigurationView: View {
                 .padding(.trailing)
                 
                 Button {
+                    for i in finderItems {
+                        let a = shell(["cd /Applications/waifu2x.app/Contents/MacOS\nls"])
+                        print(a)
+                        let outputPath = "/Users/vaida/Downloads/waifu2x output/" + i.fileName! + ".png" // store relative path !!!!
+                        FinderItem(at: outputPath).generateDirectory()
+                        let cmd = shell(["./waifu2x --model \(chosenModel) --style \(chosenStyle) -s \(chosenScaleLevel) -n \(chosenNoiceLevel) -i \(i.path) -o \(outputPath)"])
+                        print(cmd)
+                    }
                     
                 } label: {
                     Text("OK")
