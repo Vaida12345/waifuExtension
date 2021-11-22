@@ -397,8 +397,8 @@ struct ProcessingView: View {
                 
                 VStack(spacing: 10) {
                     HStack {
-                        if let currentProcessingItem = currentProcessingItem {
-                            Text(currentProcessingItem.fileName!)
+                        if let name = currentProcessingItem?.fileName {
+                            Text(name)
                         } else {
                             Text("Error")
                         }
@@ -503,6 +503,7 @@ struct ProcessingView: View {
                     }
                 } else {
                     Button("Done") {
+                        isPaused = true
                         finderItems = []
                         isProcessing = false
                     }
@@ -515,6 +516,7 @@ struct ProcessingView: View {
                 for i in finderItems {
                     background.async {
                         currentProcessingItem = i
+                        guard i.image != nil else { return }
                         let image = Waifu2x.run(i.image!, model: modelUsed!)
                         image?.write(to: "/Users/vaida/Downloads/\(i.fileName!).png")
 
@@ -540,7 +542,7 @@ struct ProcessingView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ProcessingView(isProcessing: .constant(false), finderItems: .constant([]), modelUsed: .constant(Model.anime_noise3_scale2x), isSheetShown: .constant(false))
+        ProcessingView(isProcessing: .constant(false), finderItems: .constant([FinderItem(at: "123")]), modelUsed: .constant(Model.anime_noise3_scale2x), isSheetShown: .constant(false), isFinished: true)
         
     }
 }
