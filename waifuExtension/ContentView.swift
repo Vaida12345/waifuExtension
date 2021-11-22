@@ -324,12 +324,12 @@ struct ProcessingView: View {
     @Binding var modelUsed: Model?
     
     @State var processedItems: [FinderItem] = []
-    @State var currentTimeTaken: Double = 0.0 // up to 0.1s
-    @State var pastTimeTaken: Double = 0.0 // up to 0.1s
+    @State var currentTimeTaken: Double = 1 // up to 1s
+    @State var pastTimeTaken: Double = 1 // up to 1s
     @State var isPaused: Bool = false
     @State var background = DispatchQueue(label: "Background")
     @State var currentProcessingItem: FinderItem? = nil
-    @State var timer = Timer.publish(every: 0.1, on: .current, in: .common).autoconnect()
+    @State var timer = Timer.publish(every: 1, on: .current, in: .common).autoconnect()
     
     var body: some View {
         VStack {
@@ -401,7 +401,7 @@ struct ProcessingView: View {
                     }
                     
                     HStack {
-                        Text("\(finderItems.count - processedItems.count - 1) items")
+                        Text("\(finderItems.count - processedItems.count) items")
                         
                         Spacer()
                     }
@@ -414,9 +414,10 @@ struct ProcessingView: View {
                     
                     HStack {
                         Text({ ()-> String in
+                            guard !isPaused else { return "paused" }
                             guard !processedItems.isEmpty else { return "calculating..." }
                             
-                            var value = Double(finderItems.count) * pastTimeTaken / Double(finderItems.count - processedItems.count - 1)
+                            var value = Double(finderItems.count) * pastTimeTaken / Double(processedItems.count)
                             value -= pastTimeTaken + currentTimeTaken
                             
                             return value.expressedAsTime()
@@ -427,9 +428,10 @@ struct ProcessingView: View {
                     
                     HStack {
                         Text({ ()-> String in
+                            guard !isPaused else { return "paused" }
                             guard !processedItems.isEmpty else { return "calculating..." }
                             
-                            var value = Double(finderItems.count) * pastTimeTaken / Double(finderItems.count - processedItems.count - 1)
+                            var value = Double(finderItems.count) * pastTimeTaken / Double(processedItems.count)
                             value -= pastTimeTaken + currentTimeTaken
                             
                             let date = Date().addingTimeInterval(value)
@@ -463,8 +465,17 @@ struct ProcessingView: View {
                 }
                     .padding(.trailing)
                 
-                Button("Pause") {
+                Button(isPaused ? "Resume" : "Pause") {
                     isPaused.toggle()
+                    if isPaused {
+                        timer.upstream.connect().cancel()
+                        
+                        background.suspend()
+                    } else {
+                        timer = Timer.publish(every: 1, on: .current, in: .common).autoconnect()
+                        
+                        background.resume()
+                    }
                 }
             }
         }
@@ -484,14 +495,14 @@ struct ProcessingView: View {
                             currentTimeTaken = 0
                             
                             if processedItems.count == finderItems.count {
-                                
+                                isPaused = true
                             }
                         }
                     }
                 }
             }
             .onReceive(timer) { timer in
-                currentTimeTaken += 0.1
+                currentTimeTaken += 1
             }
     }
     
