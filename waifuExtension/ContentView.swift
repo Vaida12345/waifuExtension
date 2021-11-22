@@ -10,6 +10,7 @@ import SwiftUI
 struct ContentView: View {
     @State var finderItems: [FinderItem] = []
     @State var isSheetShown: Bool = false
+    @State var isProcessing: Bool = false
     
     var body: some View {
         VStack {
@@ -94,7 +95,7 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $isSheetShown, onDismiss: nil) {
-            ConfigurationView(finderItems: finderItems, isShown: $isSheetShown)
+            ConfigurationView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing)
         }
     }
     
@@ -213,7 +214,7 @@ struct ConfigurationView: View {
     let scaleLevels: [Int] = [2, 4]
     @State var chosenScaleLevel = 2
     
-    @State var isProcessing = true
+    @Binding var isProcessing: Bool
     @State var processProgress = 0.0
     @State var processItem: FinderItem? = nil
     
@@ -286,13 +287,14 @@ struct ConfigurationView: View {
                 Button {
                     let background = DispatchQueue(label: "background")
                     isProcessing = true
+                    isShown = false
                     
                     var modelName = chosenStyle
                     if chosenNoiceLevel != "none" {
                         modelName += "_noise" + chosenNoiceLevel
                     }
                     if chosenModel != "none" {
-                        modelName = "up_" + modelName + "x" + "_scale2x"
+                        modelName = "up_" + modelName + "_scale2x"
                     }
                     modelName += "_model"
                     
@@ -327,7 +329,7 @@ struct ConfigurationView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ConfigurationView(finderItems: [FinderItem(at: "/Users/vaida/Downloads/Miyano 2.png")], isShown: .constant(true))
+        ContentView()
         
     }
 }
