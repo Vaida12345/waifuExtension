@@ -12,6 +12,7 @@ struct ContentView: View {
     @State var finderItems: [FinderItem] = []
     @State var isSheetShown: Bool = false
     @State var isProcessing: Bool = false
+    @State var isCreatingPDF: Bool = false
     @State var modelUsed: Model? = nil
     @State var background = DispatchQueue(label: "Background")
     @State var chosenScaleLevel: Int = 2
@@ -112,7 +113,10 @@ struct ContentView: View {
             ConfigurationView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel)
         }
         .sheet(isPresented: $isProcessing, onDismiss: nil) {
-            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, background: $background, chosenScaleLevel: $chosenScaleLevel)
+            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, background: $background, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF)
+        }
+        .sheet(isPresented: $isCreatingPDF, onDismiss: nil) {
+            ProcessingPDFView(isCreatingPDF: $isCreatingPDF, background: $background)
         }
     }
     
@@ -322,6 +326,7 @@ struct ProcessingView: View {
     @Binding var isSheetShown: Bool
     @Binding var background: DispatchQueue
     @Binding var chosenScaleLevel: Int
+    @Binding var isCreatingPDF: Bool
     
     @State var processedItems: [FinderItem] = []
     @State var currentTimeTaken: Double = 0 // up to 1s
@@ -505,13 +510,18 @@ struct ProcessingView: View {
                         isPaused.toggle()
                     }
                 } else {
+                    Button("Create PDF") {
+                        isProcessing = false
+                        isCreatingPDF = true
+                    }
+                    .padding(.trailing)
+                    
                     Button("Show in Finder") {
                         _ = shell(["open /Users/vaida/Downloads/Waifu\\ Output"])
                     }
                     .padding(.trailing)
                     
                     Button("Done") {
-                        isPaused = true
                         finderItems = []
                         isProcessing = false
                     }
@@ -558,9 +568,112 @@ struct ProcessingView: View {
     }
 }
 
+
+struct ProcessingPDFView: View {
+    
+    @Binding var isCreatingPDF: Bool
+    @Binding var background: DispatchQueue
+    
+    @State var finderItems: [FinderItem] = {()->[FinderItem] in
+        return FinderItem(at: "/Users/vaida/Downloads/Waifu Output").children!.filter({ $0.image != nil })
+    }()
+    @State var processedItems: [FinderItem] = []
+    @State var currentProcessingItem: FinderItem? = nil
+    @State var isFinished: Bool = false
+    
+    var body: some View {
+        VStack {
+            Spacer()
+            
+            HStack {
+                VStack(spacing: 10) {
+                    HStack {
+                        Spacer()
+                        Text("Processing:")
+                    }
+                    
+                    Spacer()
+                    
+                    HStack {
+                        Spacer()
+                        Text("Processed:")
+                    }
+                    
+                    HStack {
+                        Spacer()
+                        Text("To be processed:")
+                    }
+                    
+                    Spacer()
+                }
+                
+                VStack(spacing: 10) {
+                    HStack {
+                        if let currentProcessingItem = currentProcessingItem {
+                            Text(currentProcessingItem.relativePath ?? currentProcessingItem.fileName ?? "error")
+                        } else {
+                            Text("Error: \(currentProcessingItem.debugDescription)")
+                        }
+                        
+                        Spacer()
+                    }
+                    
+                    Spacer()
+                    
+                    HStack {
+                        Text("\(processedItems.count) items")
+                        
+                        Spacer()
+                    }
+                    
+                    HStack {
+                        Text("\(finderItems.count - processedItems.count - 1) items")
+                        
+                        Spacer()
+                    }
+                    
+                    Spacer()
+                }
+            }
+            
+            Spacer()
+            
+            ProgressView(value: {()->Double in
+                guard !finderItems.isEmpty else { return 1 }
+                return Double(processedItems.count - 1) / Double(finderItems.count)
+            }())
+                .padding([.bottom])
+            
+            Spacer()
+            
+            HStack {
+                Spacer()
+                
+                Button("Done") {
+                    isCreatingPDF = false
+                }
+                .disabled(!isFinished)
+            }
+        }
+        .frame(width: 600, height: 300)
+        .onAppear {
+            background = DispatchQueue(label: "Background")
+            
+            background.async {
+                FinderItem.createPDF(fromFolder: FinderItem(at: "/Users/vaida/Downloads/Waifu Output")) { item in
+                    currentProcessingItem = item
+                    processedItems.append(item)
+                }
+            }
+            
+        }
+        
+    }
+}
+
+
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
-        
     }
 }
