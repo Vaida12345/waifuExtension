@@ -280,10 +280,26 @@ struct ConfigurationView: View {
                 .padding(.trailing)
                 
                 Button {
+                    
+                    let background = DispatchQueue(label: "background")
+                    
                     for i in finderItems {
-                        let image = Waifu2x.run(i.image!, model: .anime_noise3_scale2x)
-                        image?.write(to: "/Users/vaida/Downloads/\(i.fileName!).png")
+                        
+                        self.isShown = false
+                        
+                        background.async {
+                            let image = Waifu2x.run(i.image!, model: .anime_noise3_scale2x)
+                            image?.write(to: "/Users/vaida/Downloads/\(i.fileName!).png")
+                            print("first finished")
+                            
+                            // when finished
+                            DispatchQueue.main.async {
+                                
+                            }
+                        }
                     }
+                    
+                    
                     
                 } label: {
                     Text("OK")
