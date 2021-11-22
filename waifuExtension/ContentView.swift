@@ -11,6 +11,7 @@ struct ContentView: View {
     @State var finderItems: [FinderItem] = []
     @State var isSheetShown: Bool = false
     @State var isProcessing: Bool = false
+    @State var currentProcessingItem: FinderItem? = nil
     
     var body: some View {
         VStack {
@@ -95,7 +96,10 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $isSheetShown, onDismiss: nil) {
-            ConfigurationView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing)
+            ConfigurationView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, currentProcessingItem: $currentProcessingItem)
+        }
+        .sheet(isPresented: $isProcessing, onDismiss: nil) {
+            ProcessingView(processing: $isProcessing, currentItem: $currentProcessingItem, finderItems: $finderItems)
         }
     }
     
@@ -216,7 +220,7 @@ struct ConfigurationView: View {
     
     @Binding var isProcessing: Bool
     @State var processProgress = 0.0
-    @State var processItem: FinderItem? = nil
+    @Binding var currentProcessingItem: FinderItem?
     
     var body: some View {
         VStack {
@@ -301,7 +305,7 @@ struct ConfigurationView: View {
                     for i in finderItems {
                         
                         background.async {
-                            processItem = i
+                            currentProcessingItem = i
                             let image = Waifu2x.run(i.image!, model: .init(rawValue: modelName)!)
                             image?.write(to: "/Users/vaida/Downloads/\(i.fileName!).png")
                             
@@ -325,6 +329,22 @@ struct ConfigurationView: View {
     
 }
 
+
+struct ProcessingView: View {
+    
+    @Binding var processing: Bool
+    @Binding var currentItem: FinderItem?
+    @Binding var finderItems: [FinderItem]
+    
+    var body: some View {
+        HStack {
+            Text("123")
+        }
+            .padding(.all)
+            .frame(width: 600, height: 300)
+    }
+    
+}
 
 
 struct ContentView_Previews: PreviewProvider {
