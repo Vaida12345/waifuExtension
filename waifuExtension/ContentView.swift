@@ -46,7 +46,7 @@ struct ContentView: View {
                                 item.iteratedOver { child in
                                     guard !finderItems.contains(child) else { return }
                                     guard child.image != nil else { return }
-                                    child.relativePath = item.fileName! + "/" + child.relativePath(to: item)
+                                    child.relativePath = item.fileName! + "/" + child.relativePath(to: item)!
                                     finderItems.append(child)
                                 }
                             }
@@ -95,7 +95,7 @@ struct ContentView: View {
                                     item.iteratedOver { child in
                                         guard !finderItems.contains(child) else { return }
                                         guard child.image != nil else { return }
-                                        child.relativePath = item.fileName! + "/" + child.relativePath(to: item)
+                                        child.relativePath = item.fileName! + "/" + child.relativePath(to: item)!
                                         finderItems.append(child)
                                     }
                                 }
@@ -151,7 +151,7 @@ struct welcomeView: View {
                     } else {
                         item.iteratedOver { child in
                             guard child.image != nil else { return }
-                            child.relativePath = item.fileName! + "/" + child.relativePath(to: item)
+                            child.relativePath = item.fileName! + "/" + child.relativePath(to: item)!
                             finderItems.append(child)
                         }
                     }
@@ -175,7 +175,7 @@ struct welcomeView: View {
                     } else {
                         item.iteratedOver { child in
                             guard child.image != nil else { return }
-                            child.relativePath = item.fileName! + "/" + child.relativePath(to: item)
+                            child.relativePath = item.fileName! + "/" + child.relativePath(to: item)!
                             finderItems.append(child)
                         }
                     }
