@@ -8,10 +8,11 @@
 import SwiftUI
 
 struct ContentView: View {
+    //TODO: also add relative path
     @State var finderItems: [FinderItem] = []
     @State var isSheetShown: Bool = false
     @State var isProcessing: Bool = false
-    @State var currentProcessingItem: FinderItem? = nil
+    @State var modelUsed: Model? = nil
     
     var body: some View {
         VStack {
@@ -96,10 +97,10 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $isSheetShown, onDismiss: nil) {
-            ConfigurationView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, currentProcessingItem: $currentProcessingItem)
+            ConfigurationView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed)
         }
         .sheet(isPresented: $isProcessing, onDismiss: nil) {
-            ProcessingView(processing: $isProcessing, currentItem: $currentProcessingItem, finderItems: $finderItems)
+            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed)
         }
     }
     
@@ -205,7 +206,10 @@ struct ConfigurationView: View {
     var finderItems: [FinderItem]
     
     @Binding var isShown: Bool
+    @Binding var isProcessing: Bool
+    @Binding var modelUsed: Model?
     
+    //TODO: edit models
     let modelNames: [String] = ["srcnn_mps", "srcnn_coreml", "cunet"]
     @State var chosenModel = "srcnn_mps"
     
@@ -217,10 +221,6 @@ struct ConfigurationView: View {
     
     let scaleLevels: [Int] = [2, 4]
     @State var chosenScaleLevel = 2
-    
-    @Binding var isProcessing: Bool
-    @State var processProgress = 0.0
-    @Binding var currentProcessingItem: FinderItem?
     
     var body: some View {
         VStack {
@@ -289,7 +289,6 @@ struct ConfigurationView: View {
                 .padding(.trailing)
                 
                 Button {
-                    let background = DispatchQueue(label: "background")
                     isProcessing = true
                     isShown = false
                     
@@ -302,19 +301,7 @@ struct ConfigurationView: View {
                     }
                     modelName += "_model"
                     
-                    for i in finderItems {
-                        
-                        background.async {
-                            currentProcessingItem = i
-                            let image = Waifu2x.run(i.image!, model: .init(rawValue: modelName)!)
-                            image?.write(to: "/Users/vaida/Downloads/\(i.fileName!).png")
-                            
-                            // when finished
-                            DispatchQueue.main.async {
-                                
-                            }
-                        }
-                    }
+                    self.modelUsed = Model(rawValue: modelName)!
                     
                 } label: {
                     Text("OK")
@@ -332,16 +319,151 @@ struct ConfigurationView: View {
 
 struct ProcessingView: View {
     
-    @Binding var processing: Bool
-    @Binding var currentItem: FinderItem?
+    @Binding var isProcessing: Bool
     @Binding var finderItems: [FinderItem]
+    @Binding var modelUsed: Model?
+    
+    @State var processedItems: [FinderItem] = []
+    @State var currentTimeTaken: Double = 0.0 // up to 0.1s
+    @State var pastTimeTaken: Double = 0.0 // up to 0.1s
+    @State var isPaused: Bool = false
+    @State var background = DispatchQueue(label: "Background")
+    @State var currentProcessingItem: FinderItem? = nil
     
     var body: some View {
-        HStack {
-            Text("123")
+        VStack {
+            HStack {
+                VStack(spacing: 10) {
+                    HStack {
+                        Spacer()
+                        Text("Processing:")
+                    }
+                    
+                    HStack {
+                        Spacer()
+                        Text("Time Spent:")
+                    }
+                    
+                    Spacer()
+                    
+                    HStack {
+                        Spacer()
+                        Text("Processed:")
+                    }
+                    
+                    HStack {
+                        Spacer()
+                        Text("To be processed:")
+                    }
+                    
+                    HStack {
+                        Spacer()
+                        Text("Time Spent:")
+                    }
+                    
+                    HStack {
+                        Spacer()
+                        Text("Time Remainning:")
+                    }
+                    
+                    HStack {
+                        Spacer()
+                        Text("ETA:")
+                    }
+                    
+                    Spacer()
+                }
+                
+                VStack(spacing: 10) {
+                    HStack {
+                        if let currentProcessingItem = currentProcessingItem {
+                            Text(currentProcessingItem.fileName!)
+                        } else {
+                            Text("Error")
+                        }
+                        
+                        Spacer()
+                    }
+                    
+                    HStack {
+                        Text(currentTimeTaken.expressedAsTime())
+                        
+                        Spacer()
+                    }
+                    
+                    Spacer()
+                    
+                    HStack {
+                        Text("\(processedItems.count) items")
+                        
+                        Spacer()
+                    }
+                    
+                    HStack {
+                        Text("\(finderItems.count - processedItems.count - 1) items")
+                        
+                        Spacer()
+                    }
+                    
+                    HStack {
+                        Text((pastTimeTaken + currentTimeTaken).expressedAsTime())
+                        
+                        Spacer()
+                    }
+                    
+                    HStack {
+                        Text("TBD")
+                        
+                        Spacer()
+                    }
+                    
+                    HStack {
+                        Text("TBD")
+                        
+                        Spacer()
+                    }
+                    
+                    Spacer()
+                }
+            }
+            
+            Spacer()
+            
+            ProgressView(value: Double(processedItems.count) / Double(finderItems.count))
+                .padding([.bottom])
+            
+            Spacer()
+            
+            HStack {
+                Spacer()
+                
+                Button("Cancel") {
+                    
+                }
+                    .padding(.trailing)
+                
+                Button("Pause") {
+                    isPaused.toggle()
+                }
+            }
         }
             .padding(.all)
             .frame(width: 600, height: 300)
+//            .onAppear {
+//                for i in finderItems {
+//
+//                    background.async {
+//                        currentProcessingItem = i
+//                        let image = Waifu2x.run(i.image!, model: modelUsed!)
+//                        image?.write(to: "/Users/vaida/Downloads/\(i.fileName!).png")
+//
+//                        // when finished
+//                        DispatchQueue.main.async {
+//
+//                        }
+//                    }
+//                }
+//            }
     }
     
 }
@@ -349,7 +471,7 @@ struct ProcessingView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        ProcessingView(isProcessing: .constant(false), finderItems: .constant([]), modelUsed: .constant(nil))
         
     }
 }

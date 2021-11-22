@@ -569,7 +569,7 @@ extension BinaryFloatingPoint where Self: LosslessStringConvertible {
         if self < Self(pow(60.0, 3))*24 { return String(format: "%.3gdays", Double(self) / pow(60.0, 3)) }
         if self < Self(pow(60.0, 3))*24*365 { return String(format: "%.3gyrs", Double(self) / pow(60.0, 3)*24) }
         if self < Self(pow(60.0, 3))*24*365*100 { return String(format: "%.3gcentries", Double(self) / pow(60.0, 3)*24*365) }
-        return String(format: "%gs", Double(self).rounded())
+        return String(format: "%.1fs", Double(self))
     }
     
     /// Returns the rounded value.
