@@ -482,6 +482,10 @@ struct ProcessingView: View {
                             processedItems.append(i)
                             pastTimeTaken += currentTimeTaken
                             currentTimeTaken = 0
+                            
+                            if processedItems.count == finderItems.count {
+                                
+                            }
                         }
                     }
                 }
