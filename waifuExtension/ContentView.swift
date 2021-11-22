@@ -281,17 +281,8 @@ struct ConfigurationView: View {
                 
                 Button {
                     for i in finderItems {
-                        let outputPath = "/Users/vaida/Downloads/waifu2x output/" + i.fileName! + ".png" // store relative path !!!!
-                        FinderItem(at: outputPath).generateDirectory()
-                        
-                        let command = "/Applications/waifu2x.app/Contents/MacOS/waifu2x --model \(chosenModel) --style \(chosenStyle) -s \(chosenScaleLevel) -n \(chosenNoiceLevel) -i \(i.path.replacingOccurrences(of: " ", with: "\\ ")) -o \(outputPath.replacingOccurrences(of: " ", with: "\\ "))"
-                        
-                        let cmd = shell([command])
-                        print(command)
-                        print(cmd)
-                        
-                        break
-                        
+                        let image = Waifu2x.run(i.image!, model: .anime_noise3_scale2x)
+                        image?.write(to: "/Users/vaida/Downloads/\(i.fileName!).png")
                     }
                     
                 } label: {
