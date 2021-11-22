@@ -434,14 +434,16 @@ struct ProcessingView: View {
                         Spacer()
                     }
                     
-                    HStack {
+                    HStack { // time remaining
                         Text({ ()-> String in
                             guard !isFinished else { return "finished" }
                             guard !isPaused else { return "paused" }
                             guard !processedItems.isEmpty else { return "calculating..." }
                             
-                            var value = Double(finderItems.count) * pastTimeTaken / Double(processedItems.count)
+                            var value = Double(finderItems.count) * (pastTimeTaken / Double(processedItems.count))
                             value -= pastTimeTaken + currentTimeTaken
+                            
+                            guard value >= 0 else { return "calculating..." }
                             
                             return value.expressedAsTime()
                         }())
@@ -455,8 +457,10 @@ struct ProcessingView: View {
                             guard !isPaused else { return "paused" }
                             guard !processedItems.isEmpty else { return "calculating..." }
                             
-                            var value = Double(finderItems.count) * pastTimeTaken / Double(processedItems.count)
+                            var value = Double(finderItems.count) * (pastTimeTaken / Double(processedItems.count))
                             value -= pastTimeTaken + currentTimeTaken
+                            
+                            guard value >= 0 else { return "calculating..." }
                             
                             let date = Date().addingTimeInterval(value)
                             
