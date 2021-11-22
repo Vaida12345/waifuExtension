@@ -328,10 +328,23 @@ struct ProcessingView: View {
     @State var processedItems: [FinderItem] = []
     @State var currentTimeTaken: Double = 1 // up to 1s
     @State var pastTimeTaken: Double = 1 // up to 1s
-    @State var isPaused: Bool = false
+    @State var isPaused: Bool = false {
+        didSet {
+            if isPaused {
+                timer.upstream.connect().cancel()
+                
+                background.suspend()
+            } else {
+                timer = Timer.publish(every: 1, on: .current, in: .common).autoconnect()
+                
+                background.resume()
+            }
+        }
+    }
     @State var background = DispatchQueue(label: "Background")
     @State var currentProcessingItem: FinderItem? = nil
     @State var timer = Timer.publish(every: 1, on: .current, in: .common).autoconnect()
+    @State var isFinished: Bool = false
     
     var body: some View {
         VStack {
@@ -464,7 +477,10 @@ struct ProcessingView: View {
             
             Spacer()
             
-            ProgressView(value: Double(processedItems.count) / Double(finderItems.count))
+            ProgressView(value: {()->Double in
+                guard !finderItems.isEmpty else { return 1 }
+                return Double(processedItems.count) / Double(finderItems.count)
+            }())
                 .padding([.bottom])
             
             Spacer()
@@ -472,23 +488,21 @@ struct ProcessingView: View {
             HStack {
                 Spacer()
                 
-                Button("Cancel") {
-                    isPaused = true
-                    isProcessing = false
-                    isSheetShown = true
-                }
+                if !isFinished {
+                    Button("Cancel") {
+                        isPaused = true
+                        isProcessing = false
+                        isSheetShown = true
+                    }
                     .padding(.trailing)
-                
-                Button(isPaused ? "Resume" : "Pause") {
-                    isPaused.toggle()
-                    if isPaused {
-                        timer.upstream.connect().cancel()
-                        
-                        background.suspend()
-                    } else {
-                        timer = Timer.publish(every: 1, on: .current, in: .common).autoconnect()
-                        
-                        background.resume()
+                    
+                    Button(isPaused ? "Resume" : "Pause") {
+                        isPaused.toggle()
+                    }
+                } else {
+                    Button("Done") {
+                        isProcessing = false
+                        finderItems = []
                     }
                 }
             }
@@ -510,6 +524,7 @@ struct ProcessingView: View {
                             
                             if processedItems.count == finderItems.count {
                                 isPaused = true
+                                isFinished = true
                             }
                         }
                     }
@@ -519,9 +534,7 @@ struct ProcessingView: View {
                 currentTimeTaken += 1
             }
     }
-    
 }
-
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
