@@ -189,7 +189,7 @@ struct GridItemView: View {
                 .aspectRatio(contentMode: .fit)
                 .padding([.top, .leading, .trailing])
             
-            
+            //TODO: add dimension, relative path
             Text(item.fileName ?? item.path)
                 .padding([.leading, .bottom, .trailing])
         }
@@ -326,8 +326,8 @@ struct ProcessingView: View {
     @Binding var isSheetShown: Bool
     
     @State var processedItems: [FinderItem] = []
-    @State var currentTimeTaken: Double = 1 // up to 1s
-    @State var pastTimeTaken: Double = 1 // up to 1s
+    @State var currentTimeTaken: Double = 0 // up to 1s
+    @State var pastTimeTaken: Double = 0 // up to 1s
     @State var isPaused: Bool = false {
         didSet {
             if isPaused {
@@ -439,6 +439,7 @@ struct ProcessingView: View {
                     
                     HStack {
                         Text({ ()-> String in
+                            guard !isFinished else { return "finished" }
                             guard !isPaused else { return "paused" }
                             guard !processedItems.isEmpty else { return "calculating..." }
                             
@@ -453,6 +454,7 @@ struct ProcessingView: View {
                     
                     HStack {
                         Text({ ()-> String in
+                            guard !isFinished else { return "finished" }
                             guard !isPaused else { return "paused" }
                             guard !processedItems.isEmpty else { return "calculating..." }
                             
@@ -501,8 +503,8 @@ struct ProcessingView: View {
                     }
                 } else {
                     Button("Done") {
-                        isProcessing = false
                         finderItems = []
+                        isProcessing = false
                     }
                 }
             }
@@ -538,7 +540,7 @@ struct ProcessingView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        ProcessingView(isProcessing: .constant(false), finderItems: .constant([]), modelUsed: .constant(Model.anime_noise3_scale2x), isSheetShown: .constant(false))
         
     }
 }
