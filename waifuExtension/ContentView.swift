@@ -230,7 +230,7 @@ struct ConfigurationView: View {
     let noiceLevels: [String] = ["none", "0", "1", "2", "3"]
     @State var chosenNoiceLevel = "3"
     
-    let scaleLevels: [Int] = [2, 4]
+    let scaleLevels: [Int] = [2]
     @State var chosenScaleLevel = 2
     
     var body: some View {
