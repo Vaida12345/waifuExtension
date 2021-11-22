@@ -505,6 +505,11 @@ struct ProcessingView: View {
                         isPaused.toggle()
                     }
                 } else {
+                    Button("Show in Finder") {
+                        _ = shell(["open /Users/vaida/Downloads/Waifu\\ Output"])
+                    }
+                    .padding(.trailing)
+                    
                     Button("Done") {
                         isPaused = true
                         finderItems = []
