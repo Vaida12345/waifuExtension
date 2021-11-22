@@ -207,11 +207,14 @@ struct ConfigurationView: View {
     let styleNames: [String] = ["anime", "photo"]
     @State var chosenStyle = "anime"
     
-    let noiceLevels: [Int] = [Int](0...3)
-    @State var chosenNoiceLevel = 3
+    let noiceLevels: [String] = ["none", "0", "1", "2", "3"]
+    @State var chosenNoiceLevel = "3"
     
     let scaleLevels: [Int] = [2, 4]
     @State var chosenScaleLevel = 2
+    
+    @State var isProcessing = true
+    @State var processProgress = 0.0
     
     var body: some View {
         VStack {
@@ -280,17 +283,23 @@ struct ConfigurationView: View {
                 .padding(.trailing)
                 
                 Button {
-                    
                     let background = DispatchQueue(label: "background")
+                    isProcessing = true
+                    
+                    var modelName = chosenStyle
+                    if chosenNoiceLevel != "none" {
+                        modelName += "_noise" + chosenNoiceLevel
+                    }
+                    if chosenModel != "none" {
+                        modelName = "up_" + modelName + "x" + "_scale2x"
+                    }
+                    modelName += "_model"
                     
                     for i in finderItems {
                         
-                        self.isShown = false
-                        
                         background.async {
-                            let image = Waifu2x.run(i.image!, model: .anime_noise3_scale2x)
+                            let image = Waifu2x.run(i.image!, model: .init(rawValue: modelName)!)
                             image?.write(to: "/Users/vaida/Downloads/\(i.fileName!).png")
-                            print("first finished")
                             
                             // when finished
                             DispatchQueue.main.async {
@@ -318,7 +327,7 @@ struct ConfigurationView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        ConfigurationView(finderItems: [FinderItem(at: "/Users/vaida/Downloads/Miyano 2.png")], isShown: .constant(true))
         
     }
 }
