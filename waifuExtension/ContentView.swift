@@ -412,13 +412,33 @@ struct ProcessingView: View {
                     }
                     
                     HStack {
-                        Text("TBD")
+                        Text({ ()-> String in
+                            guard !processedItems.isEmpty else { return "calculating..." }
+                            
+                            var value = Double(finderItems.count) * pastTimeTaken / Double(finderItems.count - processedItems.count - 1)
+                            value -= pastTimeTaken + currentTimeTaken
+                            
+                            return value.expressedAsTime()
+                        }())
                         
                         Spacer()
                     }
                     
                     HStack {
-                        Text("TBD")
+                        Text({ ()-> String in
+                            guard !processedItems.isEmpty else { return "calculating..." }
+                            
+                            var value = Double(finderItems.count) * pastTimeTaken / Double(finderItems.count - processedItems.count - 1)
+                            value -= pastTimeTaken + currentTimeTaken
+                            
+                            let date = Date().addingTimeInterval(value)
+                            
+                            let formatter = DateFormatter()
+                            formatter.dateStyle = .none
+                            formatter.timeStyle = .medium
+                            
+                            return formatter.string(from: date)
+                        }())
                         
                         Spacer()
                     }
