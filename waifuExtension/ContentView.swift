@@ -14,6 +14,7 @@ struct ContentView: View {
     @State var isSheetShown: Bool = false
     @State var isProcessing: Bool = false
     @State var modelUsed: Model? = nil
+    @State var background = DispatchQueue(label: "Background")
     
     var body: some View {
         VStack {
@@ -101,7 +102,7 @@ struct ContentView: View {
             ConfigurationView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed)
         }
         .sheet(isPresented: $isProcessing, onDismiss: nil) {
-            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown)
+            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, background: $background)
         }
     }
     
@@ -324,6 +325,7 @@ struct ProcessingView: View {
     @Binding var finderItems: [FinderItem]
     @Binding var modelUsed: Model?
     @Binding var isSheetShown: Bool
+    @Binding var background: DispatchQueue
     
     @State var processedItems: [FinderItem] = []
     @State var currentTimeTaken: Double = 0 // up to 1s
@@ -341,7 +343,6 @@ struct ProcessingView: View {
             }
         }
     }
-    @State var background = DispatchQueue(label: "Background")
     @State var currentProcessingItem: FinderItem? = nil
     @State var timer = Timer.publish(every: 1, on: .current, in: .common).autoconnect()
     @State var isFinished: Bool = false
@@ -400,7 +401,7 @@ struct ProcessingView: View {
                         if let name = currentProcessingItem?.fileName {
                             Text(name)
                         } else {
-                            Text("Error")
+                            Text("Error: \(currentProcessingItem.debugDescription)")
                         }
                         
                         Spacer()
@@ -513,6 +514,9 @@ struct ProcessingView: View {
             .padding(.all)
             .frame(width: 600, height: 350)
             .onAppear {
+                background = DispatchQueue(label: "Background")
+                
+                
                 for i in finderItems {
                     background.async {
                         currentProcessingItem = i
@@ -527,6 +531,7 @@ struct ProcessingView: View {
                             currentTimeTaken = 0
                             
                             if processedItems.count == finderItems.count {
+                                background.suspend()
                                 isPaused = true
                                 isFinished = true
                             }
@@ -542,7 +547,7 @@ struct ProcessingView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ProcessingView(isProcessing: .constant(false), finderItems: .constant([FinderItem(at: "123")]), modelUsed: .constant(Model.anime_noise3_scale2x), isSheetShown: .constant(false), isFinished: true)
+        ContentView()
         
     }
 }
