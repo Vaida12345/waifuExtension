@@ -459,7 +459,7 @@ struct ProcessingView: View {
                             guard !processedItems.isEmpty else { return "calculating..." }
                             
                             var value = Double(finderItems.count) * (pastTimeTaken / Double(processedItems.count))
-                            value -= pastTimeTaken
+                            value -= pastTimeTaken + currentTimeTaken
                             
                             guard value >= 0 else { return "calculating..." }
                             
@@ -476,7 +476,7 @@ struct ProcessingView: View {
                             guard !processedItems.isEmpty else { return "calculating..." }
                             
                             var value = Double(finderItems.count) * (pastTimeTaken / Double(processedItems.count))
-                            value -= pastTimeTaken
+                            value -= pastTimeTaken + currentTimeTaken
                             
                             guard value >= 0 else { return "calculating..." }
                             
@@ -549,7 +549,7 @@ struct ProcessingView: View {
                     DispatchQueue.concurrentPerform(iterations: finderItems.count) { i in
                         let i = finderItems[i]
                         
-                        DispatchQueue.main.async {
+                        background.async {
                             currentProcessingItemsCount += 1
                         }
                         
@@ -570,7 +570,7 @@ struct ProcessingView: View {
                         processedItems.append(i)
                         currentTimeTaken = 0
                         
-                        DispatchQueue.main.async {
+                        background.async {
                             currentProcessingItemsCount -= 1
                         }
                         
