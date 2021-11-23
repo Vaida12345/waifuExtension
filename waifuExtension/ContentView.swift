@@ -703,7 +703,14 @@ struct ProcessingView: View {
                                     
                                     FinderItem.mergeVideoWithAudio(videoUrl: URL(fileURLWithPath: videoPath), audioUrl: URL(fileURLWithPath: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/audio.m4a")) { _ in
                                         
-                                        try! FinderItem(at: videoPath).copy(to: "\(NSHomeDirectory())/Downloads/Waifu Output/\(filePath).mov")
+                                        let outputPath: String
+                                        if filePath.contains(".") {
+                                            outputPath = String(filePath[..<filePath.lastIndex(of: ".")!])
+                                        } else {
+                                            outputPath = filePath
+                                        }
+                                        
+                                        try! FinderItem(at: videoPath).copy(to: "\(NSHomeDirectory())/Downloads/Waifu Output/\(outputPath).mov")
                                         
                                         videos.remove(at: videos.firstIndex(of: item)!)
                                         
