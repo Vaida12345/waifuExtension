@@ -14,8 +14,8 @@ struct ContentView: View {
     @State var isProcessing: Bool = false
     @State var isCreatingPDF: Bool = false
     @State var modelUsed: Model? = nil
-    @State var background = DispatchQueue(label: "Background")
-    @State var pdfbackground = DispatchQueue(label: "PDF Background")
+    var background = DispatchQueue(label: "Background")
+    var pdfbackground = DispatchQueue(label: "PDF Background")
     @State var chosenScaleLevel: Int = 2
     @State var allowParallelExecution: Bool = true
     
@@ -115,10 +115,10 @@ struct ContentView: View {
             ConfigurationView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel, allowParallelExecution: $allowParallelExecution)
         }
         .sheet(isPresented: $isProcessing, onDismiss: nil) {
-            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, background: $background, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF, allowParallelExecution: $allowParallelExecution)
+            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, background: background, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF, allowParallelExecution: $allowParallelExecution)
         }
         .sheet(isPresented: $isCreatingPDF, onDismiss: nil) {
-            ProcessingPDFView(isCreatingPDF: $isCreatingPDF, background: $pdfbackground)
+            ProcessingPDFView(isCreatingPDF: $isCreatingPDF, background: pdfbackground)
         }
     }
     
@@ -394,7 +394,7 @@ struct ProcessingView: View {
     @Binding var finderItems: [FinderItem]
     @Binding var modelUsed: Model?
     @Binding var isSheetShown: Bool
-    @Binding var background: DispatchQueue
+    var background: DispatchQueue
     @Binding var chosenScaleLevel: Int
     @Binding var isCreatingPDF: Bool
     @Binding var allowParallelExecution: Bool
@@ -612,8 +612,6 @@ struct ProcessingView: View {
             .padding(.all)
             .frame(width: 600, height: 350)
             .onAppear {
-                background = DispatchQueue(label: "Background")
-                
                 func execute(_ i: FinderItem) {
                     DispatchQueue.main.async {
                         currentProcessingItemsCount += 1
@@ -671,7 +669,7 @@ struct ProcessingView: View {
 struct ProcessingPDFView: View {
     
     @Binding var isCreatingPDF: Bool
-    @Binding var background: DispatchQueue
+    var background: DispatchQueue
     
     @State var finderItemsCount: Int = 0
     @State var processedItemsCount: Int = 0
