@@ -663,6 +663,7 @@ struct ProcessingView: View {
                     
                     if processedItems.count == finderItems.count {
                         isFinished = true
+                        timer.upstream.connect().cancel()
                     }
                 }
                 
