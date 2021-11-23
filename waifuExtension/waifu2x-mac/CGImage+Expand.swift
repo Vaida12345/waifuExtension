@@ -166,7 +166,8 @@ extension CGImage {
         }
         
         // Top & bottom bar
-        for x in 0..<width {
+        var x = 0
+        while x < width {
             pixel = x * 4
             r = data[pixel]
             g = data[pixel + 1]
@@ -175,10 +176,13 @@ extension CGImage {
             fg = Float(g) / 255
             fb = Float(b) / 255
             xx = x + Waifu2x.shrink_size
-            for y in 0..<Waifu2x.shrink_size {
-                arr[y * exwidth + xx] = fr
-                arr[y * exwidth + xx + exwidth * exheight] = fg
-                arr[y * exwidth + xx + exwidth * exheight * 2] = fb
+            var y6 = 0
+            while y6 < Waifu2x.shrink_size {
+                arr[y6 * exwidth + xx] = fr
+                arr[y6 * exwidth + xx + exwidth * exheight] = fg
+                arr[y6 * exwidth + xx + exwidth * exheight * 2] = fb
+                
+                y6 += 1
             }
             pixel = (width * (height - 1) + x) * 4
             r = data[pixel]
@@ -188,40 +192,59 @@ extension CGImage {
             fg = Float(g) / 255
             fb = Float(b) / 255
             xx = x + Waifu2x.shrink_size
-            for y in height+Waifu2x.shrink_size..<height+2*Waifu2x.shrink_size {
-                arr[y * exwidth + xx] = fr
-                arr[y * exwidth + xx + exwidth * exheight] = fg
-                arr[y * exwidth + xx + exwidth * exheight * 2] = fb
+            
+            var y7 = height+Waifu2x.shrink_size
+            while y7 < height+2*Waifu2x.shrink_size {
+                arr[y7 * exwidth + xx] = fr
+                arr[y7 * exwidth + xx + exwidth * exheight] = fg
+                arr[y7 * exwidth + xx + exwidth * exheight * 2] = fb
+                
+                y7 += 1
             }
+            
+            x += 1
         }
         // Left & right bar
-        for y in 0..<height {
-            pixel = (width * y) * 4
+        
+        var y8 = 0
+        while y8 < height {
+            pixel = (width * y8) * 4
             r = data[pixel]
             g = data[pixel + 1]
             b = data[pixel + 2]
             fr = Float(r) / 255
             fg = Float(g) / 255
             fb = Float(b) / 255
-            yy = y + Waifu2x.shrink_size
-            for x in 0..<Waifu2x.shrink_size {
-                arr[yy * exwidth + x] = fr
-                arr[yy * exwidth + x + exwidth * exheight] = fg
-                arr[yy * exwidth + x + exwidth * exheight * 2] = fb
+            yy = y8 + Waifu2x.shrink_size
+            
+            var x1 = 0
+            while x1 < Waifu2x.shrink_size {
+                arr[yy * exwidth + x1] = fr
+                arr[yy * exwidth + x1 + exwidth * exheight] = fg
+                arr[yy * exwidth + x1 + exwidth * exheight * 2] = fb
+                
+                x1 += 1
             }
-            pixel = (width * y + (width - 1)) * 4
+            
+            pixel = (width * y8 + (width - 1)) * 4
             r = data[pixel]
             g = data[pixel + 1]
             b = data[pixel + 2]
             fr = Float(r) / 255
             fg = Float(g) / 255
             fb = Float(b) / 255
-            yy = y + Waifu2x.shrink_size
-            for x in width+Waifu2x.shrink_size..<width+2*Waifu2x.shrink_size {
+            yy = y8 + Waifu2x.shrink_size
+            
+            var x = width+Waifu2x.shrink_size
+            while x < width+2*Waifu2x.shrink_size {
                 arr[yy * exwidth + x] = fr
                 arr[yy * exwidth + x + exwidth * exheight] = fg
                 arr[yy * exwidth + x + exwidth * exheight * 2] = fb
+                
+                x += 1
             }
+            
+            y8 += 1
         }
         return arr
     }
