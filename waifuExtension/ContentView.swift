@@ -693,15 +693,18 @@ struct ProcessingView: View {
                                 let videoPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(item.fileName!)/processed/video.mov"
                                 FinderItem.convertImageSequenceToVideo(images, videoPath: videoPath, videoSize: CGSize(width: cgImage.width, height: cgImage.height), videoFPS: Int32(item.avAsset!.tracks(withMediaType: .video).first!.nominalFrameRate)) {
                                     
-                                    try! FinderItem.mergeVideoWithAudio(video: FinderItem(at: videoPath), audio: FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(item.fileName!)/audio.m4a"))
-                                    try! FinderItem(at: videoPath).copy(to: "\(NSHomeDirectory())/Downloads/Waifu Output/\(item.fileName!).mov")
-                                    
-                                    videos.remove(at: videos.firstIndex(of: item)!)
-                                    
-                                    if videos.isEmpty {
-                                        try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp").removeFile()
-                                        isMergingVideo = false
-                                        isFinished = true
+                                    FinderItem.mergeVideoAndAudio(videoUrl: URL(fileURLWithPath: videoPath), audioUrl: URL(fileURLWithPath: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(item.fileName!)/audio.m4a")) { _, _ in
+                                        
+                                        try! FinderItem(at: videoPath).copy(to: "\(NSHomeDirectory())/Downloads/Waifu Output/\(item.fileName!).mov")
+                                        
+                                        videos.remove(at: videos.firstIndex(of: item)!)
+                                        
+                                        if videos.isEmpty {
+                                            try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp").removeFile()
+                                            isMergingVideo = false
+                                            isFinished = true
+                                        }
+                                        
                                     }
                                 }
                             }
