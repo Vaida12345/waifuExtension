@@ -37,22 +37,22 @@ class BackgroundPipeline <T> {
     ///   - obj: The object
     init(_ name: String, count: Int, task: @escaping (_ index: Int, _ obj: T) -> Void) {
         self.count = count
-        background = DispatchQueue(label: name)
+        background = DispatchQueue(label: name, attributes: .concurrent)
         background.async {
             
-            var index = 0
-            while index < self.count {
+            DispatchQueue.concurrentPerform(iterations: self.count) { index in
                 if Waifu2x.interrupt {
-                    break
+                    return
                 }
                 autoreleasepool {
                     self.work_sem.wait()
                     task(index, self.queue.dequeue()!)
-                    index += 1
                 }
+                
             }
             
             self.wait_sem.signal()
+            
         }
         wait_sem.wait()
     }

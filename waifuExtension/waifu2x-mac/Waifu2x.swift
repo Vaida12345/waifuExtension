@@ -265,8 +265,10 @@ public struct Waifu2x {
             counter += 1
         }
         
+        let date = Date()
         // this would take most of time
         Waifu2x.in_pipeline.wait()
+        print(date.distance(to: Date()))
         
         Waifu2x.model_pipeline.wait()
         callback("wait_alpha")

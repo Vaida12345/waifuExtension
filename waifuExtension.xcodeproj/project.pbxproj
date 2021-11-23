@@ -30,7 +30,6 @@
 		B41C4773274AAF6A0024ECB7 /* Matrix.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C475F274AAF6A0024ECB7 /* Matrix.swift */; };
 		B41C4774274AAF6A0024ECB7 /* Plane.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C4760274AAF6A0024ECB7 /* Plane.swift */; };
 		B41C4775274AAF6A0024ECB7 /* Algebra.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C4761274AAF6A0024ECB7 /* Algebra.swift */; };
-		B46092D4274C923400C2C79B /* File.metal in Sources */ = {isa = PBXBuildFile; fileRef = B46092D3274C923400C2C79B /* File.metal */; };
 		B49BFD94274B4BC50046FDDF /* BackgroundPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD70274B4BC50046FDDF /* BackgroundPipeline.swift */; };
 		B49BFD95274B4BC50046FDDF /* ModelFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD71274B4BC50046FDDF /* ModelFactory.swift */; };
 		B49BFD96274B4BC50046FDDF /* MLModel+Prediction.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD72274B4BC50046FDDF /* MLModel+Prediction.swift */; };
@@ -94,7 +93,6 @@
 		B41C475F274AAF6A0024ECB7 /* Matrix.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Matrix.swift; sourceTree = "<group>"; };
 		B41C4760274AAF6A0024ECB7 /* Plane.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Plane.swift; sourceTree = "<group>"; };
 		B41C4761274AAF6A0024ECB7 /* Algebra.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Algebra.swift; sourceTree = "<group>"; };
-		B46092D3274C923400C2C79B /* File.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = File.metal; sourceTree = "<group>"; };
 		B49BFD70274B4BC50046FDDF /* BackgroundPipeline.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BackgroundPipeline.swift; sourceTree = "<group>"; };
 		B49BFD71274B4BC50046FDDF /* ModelFactory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ModelFactory.swift; sourceTree = "<group>"; };
 		B49BFD72274B4BC50046FDDF /* MLModel+Prediction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "MLModel+Prediction.swift"; sourceTree = "<group>"; };
@@ -236,7 +234,6 @@
 			isa = PBXGroup;
 			children = (
 				B49BFD70274B4BC50046FDDF /* BackgroundPipeline.swift */,
-				B46092D3274C923400C2C79B /* File.metal */,
 				B49BFD71274B4BC50046FDDF /* ModelFactory.swift */,
 				B49BFD72274B4BC50046FDDF /* MLModel+Prediction.swift */,
 				B49BFD73274B4BC50046FDDF /* waifu2x_mac.h */,
@@ -366,7 +363,6 @@
 				B49BFD9E274B4BC50046FDDF /* up_photo_scale2x_model.mlmodel in Sources */,
 				B49BFD9C274B4BC50046FDDF /* up_photo_noise1_scale2x_model.mlmodel in Sources */,
 				B41C4767274AAF6A0024ECB7 /* PreciseInt.swift in Sources */,
-				B46092D4274C923400C2C79B /* File.metal in Sources */,
 				B41C4762274AAF6A0024ECB7 /* Fraction.swift in Sources */,
 				B49BFD97274B4BC50046FDDF /* NSImage+PNG.swift in Sources */,
 				B49BFDA7274B4BC50046FDDF /* photo_noise1_model.mlmodel in Sources */,
