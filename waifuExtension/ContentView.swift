@@ -72,7 +72,6 @@ struct ContentView: View {
                     ScrollView {
                         LazyVGrid(columns: Array(repeating: .init(.flexible()), count: 5)) {
                             ForEach(finderItems) { item in
-                                
                                 GridItemView(item: item, geometry: geometry, finderItems: $finderItems)
                                 
                             }
@@ -661,8 +660,8 @@ struct ProcessingView: View {
                     }
                     
                     let finderItem: FinderItem
-                    if i.fileName!.contains("[sequence]") {
-                        let name = i.fileName![i.fileName!.index(after: i.fileName!.startIndex)..<i.fileName!.firstIndex(of: "]")!]
+                    if i.fileName!.contains("{sequence}") {
+                        let name = i.fileName![i.fileName!.index(after: i.fileName!.startIndex)..<i.fileName!.firstIndex(of: "}")!]
                         let item = videos.filter({ $0.fileName! == name }).first!
                         
                         let filePath = item.relativePath ?? item.fileName!
@@ -754,7 +753,7 @@ struct ProcessingView: View {
                                 var sequence = String(counter)
                                 while sequence.count <= 5 { sequence.insert("0", at: sequence.startIndex) }
                                 
-                                let path = tmpPath + "/" + "[\(i.fileName!)][sequence] \(sequence).png"
+                                let path = tmpPath + "/" + "{\(i.fileName!)}{sequence} \(sequence).png"
                                 ii.write(to: path)
                                 finderItems.append(FinderItem(at: path))
                                 

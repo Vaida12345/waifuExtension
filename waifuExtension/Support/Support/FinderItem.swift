@@ -585,6 +585,11 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     /// from https://stackoverflow.com/questions/31984474/swift-merge-audio-and-video-files-into-one-video
     static func mergeVideoWithAudio(videoUrl: URL, audioUrl: URL, success: @escaping ((URL) -> Void), failure: @escaping ((Error?) -> Void)) {
         
+        guard FileManager.default.fileExists(atPath: audioUrl.path) else {
+            print("no audio file found")
+            success(videoUrl)
+            return
+        }
         
         let mixComposition: AVMutableComposition = AVMutableComposition()
         var mutableCompositionVideoTrack: [AVMutableCompositionTrack] = []
