@@ -691,17 +691,23 @@ struct ProcessingView: View {
                                 
                                 let cgImage = images.first!.cgImage(forProposedRect: nil, context: nil, hints: nil)!
                                 let videoPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(item.fileName!)/processed/video.mov"
-                                FinderItem.convertImageSequenceToVideo(images, videoPath: videoPath, videoSize: CGSize(width: cgImage.width, height: cgImage.height), videoFPS: Int32(item.avAsset!.tracks(withMediaType: .video).first!.nominalFrameRate))
-                                
-                                try! FinderItem.mergeVideoWithAudio(video: FinderItem(at: videoPath), audio: FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(item.fileName!)/audio.m4a"))
-                                try! FinderItem(at: videoPath).copy(to: "\(NSHomeDirectory())/Downloads/Waifu Output/\(item.fileName!).mov")
+                                FinderItem.convertImageSequenceToVideo(images, videoPath: videoPath, videoSize: CGSize(width: cgImage.width, height: cgImage.height), videoFPS: Int32(item.avAsset!.tracks(withMediaType: .video).first!.nominalFrameRate)) {
+                                    
+                                    try! FinderItem.mergeVideoWithAudio(video: FinderItem(at: videoPath), audio: FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(item.fileName!)/audio.m4a"))
+                                    try! FinderItem(at: videoPath).copy(to: "\(NSHomeDirectory())/Downloads/Waifu Output/\(item.fileName!).mov")
+                                    
+                                    videos.remove(at: videos.firstIndex(of: item)!)
+                                    
+                                    if videos.isEmpty {
+                                        try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp").removeFile()
+                                        isMergingVideo = false
+                                        isFinished = true
+                                    }
+                                }
                             }
-                            try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp").removeFile()
-                            
-                            isMergingVideo = false
+                        } else {
+                            isFinished = true
                         }
-                        
-                        isFinished = true
                     }
                 }
                 
