@@ -93,12 +93,18 @@ public struct Waifu2x {
             alpha = image.alpha()
             var ralpha = false
             // Check if it really has alpha
-            for a in alpha {
+            var aIndex = 0
+            
+            while aIndex < alpha.count {
+                let a = alpha[aIndex]
                 if a < 255 {
                     ralpha = true
                     break
                 }
+                
+                aIndex += 1
             }
+            
             if ralpha {
                 channels = 4
             } else {
@@ -156,11 +162,22 @@ public struct Waifu2x {
                         alpha = bicubic.resize(scale: Float(out_scale))
                     }
                 }
-                for y in 0 ..< out_height {
-                    for x in 0 ..< out_width {
+                
+                var y = 0
+                
+                while y < out_height {
+                    var x = 0
+                    
+                    while x < out_width {
                         imgData[(y * out_width + x) * channels + 3] = alpha[y * out_width + x]
+                        
+                        x += 1
                     }
+                    
+                    y += 1
                 }
+                
+                
             }
         }
         // Output
@@ -174,9 +191,13 @@ public struct Waifu2x {
             var dest_y: Int
             var src_index: Int
             var dest_index: Int
-            for channel in 0..<3 {
-                for src_y in 0..<out_block_size {
-                    for src_x in 0..<out_block_size {
+            
+            var channel = 0
+            while channel < 3 {
+                var src_y = 0
+                while src_y < out_block_size {
+                    var src_x = 0
+                    while src_x < out_block_size {
                         dest_x = origin_x + src_x
                         dest_y = origin_y + src_y
                         if dest_x >= out_fullWidth || dest_y >= out_fullHeight {
@@ -185,8 +206,14 @@ public struct Waifu2x {
                         src_index = src_y * out_block_size + src_x + out_block_size * out_block_size * channel
                         dest_index = (dest_y * out_width + dest_x) * channels + channel
                         imgData[dest_index] = UInt8(normalize(dataPointer[src_index]))
+                        
+                        src_x += 1
                     }
+                    
+                    src_y += 1
                 }
+                
+                channel += 1
             }
         }
         
@@ -208,19 +235,31 @@ public struct Waifu2x {
             let multi = try! MLMultiArray(shape: [3, NSNumber(value: Waifu2x.block_size + 2 * Waifu2x.shrink_size), NSNumber(value: Waifu2x.block_size + 2 * Waifu2x.shrink_size)], dataType: .float32)
             var x_new: Int
             var y_new: Int
-            for y_exp in y..<(y + Waifu2x.block_size + 2 * Waifu2x.shrink_size) {
-                for x_exp in x..<(x + Waifu2x.block_size + 2 * Waifu2x.shrink_size) {
+            
+            var y_exp = y
+            
+            while y_exp < (y + Waifu2x.block_size + 2 * Waifu2x.shrink_size) {
+                
+                var x_exp = x
+                while x_exp < (x + Waifu2x.block_size + 2 * Waifu2x.shrink_size) {
                     x_new = x_exp - x
                     y_new = y_exp - y
                     multi[y_new * (Waifu2x.block_size + 2 * Waifu2x.shrink_size) + x_new] = NSNumber(value: expanded[y_exp * expwidth + x_exp])
                     multi[y_new * (Waifu2x.block_size + 2 * Waifu2x.shrink_size) + x_new + (block_size + 2 * Waifu2x.shrink_size) * (block_size + 2 * Waifu2x.shrink_size)] = NSNumber(value: expanded[y_exp * expwidth + x_exp + expwidth * expheight])
                     multi[y_new * (Waifu2x.block_size + 2 * Waifu2x.shrink_size) + x_new + (block_size + 2 * Waifu2x.shrink_size) * (block_size + 2 * Waifu2x.shrink_size) * 2] = NSNumber(value: expanded[y_exp * expwidth + x_exp + expwidth * expheight * 2])
+                    
+                    x_exp += 1
                 }
+                
+                y_exp += 1
             }
             model_pipeline.appendObject(multi)
         })
-        for i in 0..<rects.count {
-            Waifu2x.in_pipeline.appendObject(rects[i])
+        
+        var counter = 0
+        while counter < rects.count {
+            Waifu2x.in_pipeline.appendObject(rects[counter])
+            counter += 1
         }
         Waifu2x.in_pipeline.wait()
         Waifu2x.model_pipeline.wait()
