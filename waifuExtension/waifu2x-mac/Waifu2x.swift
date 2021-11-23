@@ -180,7 +180,7 @@ public struct Waifu2x {
                 
             }
         }
-        // Output
+        // Output, will not take much time
         Waifu2x.out_pipeline = BackgroundPipeline<MLMultiArray>("out_pipeline", count: rects.count) { (index, array) in
             let rect = rects[index]
             let origin_x = Int(rect.origin.x) * out_scale
@@ -229,6 +229,7 @@ public struct Waifu2x {
         let expheight = fullHeight + 2 * Waifu2x.shrink_size
         let expanded = fullCG.expand(withAlpha: hasalpha)
         callback("processing")
+        // this process will not take much time
         Waifu2x.in_pipeline = BackgroundPipeline<CGRect>("in_pipeline", count: rects.count, task: { (index, rect) in
             let x = Int(rect.origin.x)
             let y = Int(rect.origin.y)
