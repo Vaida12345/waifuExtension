@@ -8,7 +8,8 @@
 
 import Foundation
 import PDFKit
-import Cocoa
+import AppKit
+import AVFoundation
 
 class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     
@@ -24,6 +25,17 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     
     
     //MARK: - Instance Properties
+    
+    /// The audio / video asset at the path, if exists.
+    var avAsset: AVAsset? {
+        guard AVAsset(url: self.url).isReadable else { return nil }
+        return AVAsset(url: self.url)
+    }
+    
+    /// The audio track of the video file
+    var audioTrack: AVAssetTrack? {
+        return self.avAsset?.tracks(withMediaType: AVMediaType.audio).first
+    }
     
     /// The files that are **strictly** instead this folder.
     ///
@@ -64,6 +76,64 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         } else {
             return value
         }
+    }
+    
+    /// All the frames of the video.
+    var frames: [NSImage]? {
+        guard let asset = self.avAsset else { return nil }
+        let vidLength: CMTime = asset.duration
+        let seconds: Double = CMTimeGetSeconds(vidLength)
+        let frameRate = Double(asset.tracks(withMediaType: .video).first!.nominalFrameRate)
+        
+        let requiredFramesCount = Int(seconds * frameRate)
+        
+        let step = Int((vidLength.value / Int64(requiredFramesCount)))
+        var value: Int = 0
+        
+        var counter = 0
+        var images: [NSImage] = []
+        
+        print(requiredFramesCount)
+        
+        while counter < requiredFramesCount {
+            let imageGenerator = AVAssetImageGenerator(asset: asset)
+            imageGenerator.requestedTimeToleranceAfter = CMTime.zero
+            imageGenerator.requestedTimeToleranceBefore = CMTime.zero
+            let time: CMTime = CMTimeMake(value: Int64(value), timescale: vidLength.timescale)
+            var imageRef: CGImage?
+            do {
+                imageRef = try imageGenerator.copyCGImage(at: time, actualTime: nil)
+            } catch {
+                print(error)
+            }
+            guard let ref = imageRef else { continue }
+            let thumbnail = NSImage(cgImage: ref, size: NSSize(width: ref.width, height: ref.height))
+            
+            images.append(thumbnail)
+            
+            value += Int(step)
+            counter += 1
+        }
+        
+        return images
+    }
+    
+    var firstFrame: NSImage? {
+        guard let asset = self.avAsset else { return nil }
+        let vidLength: CMTime = asset.duration
+        
+        let imageGenerator = AVAssetImageGenerator(asset: asset)
+        imageGenerator.requestedTimeToleranceAfter = CMTime.zero
+        imageGenerator.requestedTimeToleranceBefore = CMTime.zero
+        let time: CMTime = CMTimeMake(value: Int64(0), timescale: vidLength.timescale)
+        var imageRef: CGImage?
+        do {
+            imageRef = try imageGenerator.copyCGImage(at: time, actualTime: nil)
+        } catch {
+            print(error)
+        }
+        guard let ref = imageRef else { return nil }
+        return NSImage(cgImage: ref, size: NSSize(width: ref.width, height: ref.height))
     }
     
     /// Determines whether there are files in this folder.
@@ -284,6 +354,34 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         try imageData.write(to: self.url)
     }
     
+    func saveAudioTrack(to path: String) throws {
+        // Create a composition
+        let composition = AVMutableComposition()
+        guard let asset = avAsset else {
+            throw NSError(domain: "no avAsset found", code: 1, userInfo: nil)
+        }
+        guard let audioAssetTrack = asset.tracks(withMediaType: AVMediaType.audio).first else { print("eror: 1"); return }
+        guard let audioCompositionTrack = composition.addMutableTrack(withMediaType: AVMediaType.audio, preferredTrackID: kCMPersistentTrackID_Invalid) else { print("eror: 1"); return }
+        try! audioCompositionTrack.insertTimeRange(audioAssetTrack.timeRange, of: audioAssetTrack, at: CMTime.zero)
+        print(audioAssetTrack.trackID, audioAssetTrack.timeRange)
+        
+        // Get url for output
+        let outputUrl = URL(fileURLWithPath: path)
+        if FileManager.default.fileExists(atPath: outputUrl.path) {
+            try? FileManager.default.removeItem(atPath: outputUrl.path)
+        }
+        
+        // Create an export session
+        let exportSession = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetAppleM4A)!
+        exportSession.outputFileType = AVFileType.m4a
+        exportSession.outputURL = outputUrl
+        
+        // Export file
+        exportSession.exportAsynchronously {
+            guard case exportSession.status = AVAssetExportSession.Status.completed else { return }
+        }
+    }
+    
     
     //MARK: - Comparing two instances
     
@@ -469,6 +567,160 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
                 item.renamed(byReplacingOccurrenceOf: "  ", with: " ")
             }
         }
+    }
+    
+    /// Convert image sequence to video.
+    ///
+    /// from https://stackoverflow.com/questions/3741323/how-do-i-export-uiimage-array-as-a-movie/3742212#36297656
+    static func convertImageSequenceToVideo(_ allImages: [NSImage], videoPath: String, videoSize: CGSize, videoFPS: Int32) {
+        
+        func writeImagesAsMovie(_ allImages: [NSImage], videoPath: String, videoSize: CGSize, videoFPS: Int32) {
+            // Create AVAssetWriter to write video
+            guard let assetWriter = createAssetWriter(videoPath, size: videoSize) else {
+                print("Error converting images to video: AVAssetWriter not created")
+                return
+            }
+            
+            // If here, AVAssetWriter exists so create AVAssetWriterInputPixelBufferAdaptor
+            let writerInput = assetWriter.inputs.filter{ $0.mediaType == AVMediaType.video }.first!
+            let sourceBufferAttributes : [String : AnyObject] = [
+                kCVPixelBufferPixelFormatTypeKey as String : Int(kCVPixelFormatType_32ARGB) as AnyObject,
+                kCVPixelBufferWidthKey as String : videoSize.width as AnyObject,
+                kCVPixelBufferHeightKey as String : videoSize.height as AnyObject,
+            ]
+            let pixelBufferAdaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: writerInput, sourcePixelBufferAttributes: sourceBufferAttributes)
+            
+            // Start writing session
+            assetWriter.startWriting()
+            assetWriter.startSession(atSourceTime: CMTime.zero)
+            if (pixelBufferAdaptor.pixelBufferPool == nil) {
+                print("Error converting images to video: pixelBufferPool nil after starting session")
+                return
+            }
+            
+            // -- Create queue for <requestMediaDataWhenReadyOnQueue>
+            let mediaQueue = DispatchQueue(label: "mediaInputQueue", attributes: [])
+            
+            // -- Set video parameters
+            let frameDuration = CMTimeMake(value: 1, timescale: videoFPS)
+            var frameCount = 0
+            
+            // -- Add images to video
+            let numImages = allImages.count
+            writerInput.requestMediaDataWhenReady(on: mediaQueue, using: { () -> Void in
+                // Append unadded images to video but only while input ready
+                while (writerInput.isReadyForMoreMediaData && frameCount < numImages) {
+                    let lastFrameTime = CMTimeMake(value: Int64(frameCount), timescale: videoFPS)
+                    let presentationTime = frameCount == 0 ? lastFrameTime : CMTimeAdd(lastFrameTime, frameDuration)
+                    
+                    if !appendPixelBufferForImageAtURL(allImages[frameCount], pixelBufferAdaptor: pixelBufferAdaptor, presentationTime: presentationTime) {
+                        print("Error converting images to video: AVAssetWriterInputPixelBufferAdapter failed to append pixel buffer")
+                        return
+                    }
+                    
+                    frameCount += 1
+                }
+                
+                // No more images to add? End video.
+                if (frameCount >= numImages) {
+                    writerInput.markAsFinished()
+                    assetWriter.finishWriting {
+                        if (assetWriter.error != nil) {
+                            print("Error converting images to video: \(assetWriter.error.debugDescription)")
+                        } else {
+                            print("Converted images to movie @ \(videoPath)")
+                        }
+                    }
+                }
+            })
+        }
+        
+        
+        func createAssetWriter(_ path: String, size: CGSize) -> AVAssetWriter? {
+            // Convert <path> to NSURL object
+            let pathURL = URL(fileURLWithPath: path)
+            
+            // Return new asset writer or nil
+            do {
+                // Create asset writer
+                let newWriter = try AVAssetWriter(outputURL: pathURL, fileType: AVFileType.m4v)
+                
+                // Define settings for video input
+                let videoSettings: [String : AnyObject] = [
+                    AVVideoCodecKey  : AVVideoCodecType.hevc as AnyObject,
+                    AVVideoWidthKey  : size.width as AnyObject,
+                    AVVideoHeightKey : size.height as AnyObject,
+                ]
+                
+                // Add video input to writer
+                let assetWriterVideoInput = AVAssetWriterInput(mediaType: AVMediaType.video, outputSettings: videoSettings)
+                newWriter.add(assetWriterVideoInput)
+                
+                // Return writer
+                print("Created asset writer for \(size.width)x\(size.height) video")
+                return newWriter
+            } catch {
+                print("Error creating asset writer: \(error)")
+                return nil
+            }
+        }
+        
+        
+        func appendPixelBufferForImageAtURL(_ image: NSImage, pixelBufferAdaptor: AVAssetWriterInputPixelBufferAdaptor, presentationTime: CMTime) -> Bool {
+            var appendSucceeded = false
+            
+            autoreleasepool {
+                if  let pixelBufferPool = pixelBufferAdaptor.pixelBufferPool {
+                    let pixelBufferPointer = UnsafeMutablePointer<CVPixelBuffer?>.allocate(capacity:1)
+                    let status: CVReturn = CVPixelBufferPoolCreatePixelBuffer(
+                        kCFAllocatorDefault,
+                        pixelBufferPool,
+                        pixelBufferPointer
+                    )
+                    
+                    if let pixelBuffer = pixelBufferPointer.pointee , status == 0 {
+                        fillPixelBufferFromImage(image, pixelBuffer: pixelBuffer)
+                        appendSucceeded = pixelBufferAdaptor.append(pixelBuffer, withPresentationTime: presentationTime)
+                        pixelBufferPointer.deinitialize(count: 1)
+                    } else {
+                        NSLog("Error: Failed to allocate pixel buffer from pool")
+                    }
+                    
+                    pixelBufferPointer.deallocate()
+                }
+            }
+            
+            return appendSucceeded
+        }
+        
+        
+        func fillPixelBufferFromImage(_ image: NSImage, pixelBuffer: CVPixelBuffer) {
+            CVPixelBufferLockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: CVOptionFlags(0)))
+            
+            let pixelData = CVPixelBufferGetBaseAddress(pixelBuffer)
+            let rgbColorSpace = CGColorSpaceCreateDeviceRGB()
+            
+            // Create CGBitmapContext
+            let context = CGContext(
+                data: pixelData,
+                width: Int(image.size.width),
+                height: Int(image.size.height),
+                bitsPerComponent: 8,
+                bytesPerRow: CVPixelBufferGetBytesPerRow(pixelBuffer),
+                space: rgbColorSpace,
+                bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue
+            )!
+            
+            // Draw image into context
+            let drawCGRect = CGRect(x:0, y:0, width:image.size.width, height:image.size.height)
+            var drawRect = NSRectFromCGRect(drawCGRect);
+            let cgImage = image.cgImage(forProposedRect: &drawRect, context: nil, hints: nil)!
+            context.draw(cgImage, in: CGRect(x: 0.0,y: 0.0,width: image.size.width,height: image.size.height))
+            
+            CVPixelBufferUnlockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: CVOptionFlags(0)))
+        }
+        
+        writeImagesAsMovie(allImages, videoPath: videoPath, videoSize: videoSize, videoFPS: videoFPS)
     }
 }
 
