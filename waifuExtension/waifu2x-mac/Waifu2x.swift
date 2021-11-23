@@ -39,6 +39,9 @@ public struct Waifu2x {
             callback("finished")
             return image
         }
+        
+        let date = Date()
+        
         Waifu2x.interrupt = false
         var out_scale: Int
         switch model! {
@@ -265,10 +268,10 @@ public struct Waifu2x {
             counter += 1
         }
         
-        let date = Date()
+        
         // this would take most of time
         Waifu2x.in_pipeline.wait()
-        print(date.distance(to: Date()))
+        
         
         Waifu2x.model_pipeline.wait()
         callback("wait_alpha")
@@ -293,6 +296,9 @@ public struct Waifu2x {
         let cgImage = CGImage(width: out_width, height: out_height, bitsPerComponent: 8, bitsPerPixel: 8 * channels, bytesPerRow: out_width * channels, space: colorSpace, bitmapInfo: CGBitmapInfo.init(rawValue: bitmapInfo), provider: dataProvider, decode: nil, shouldInterpolate: true, intent: CGColorRenderingIntent.defaultIntent)
         let outImage = NSImage(cgImage: cgImage!, size: CGSize(width: out_width, height: out_height))
         callback("finished")
+        
+        print(date.distance(to: Date()))
+        
         return outImage
     }
     
