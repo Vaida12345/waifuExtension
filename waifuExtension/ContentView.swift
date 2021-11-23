@@ -634,17 +634,25 @@ struct ProcessingView: View {
                     waifu2x.didFinishedOneBlock = { finished, total in
                         progress += 1 / Double(total)
                     }
-                    if chosenScaleLevel > 2 {
-                        for _ in 1...(chosenScaleLevel / 2) {
+                    if chosenScaleLevel >= 2 {
+                        for _ in 1...chosenScaleLevel {
                             image = waifu2x.run(image, model: modelUsed!)!.reload()
                         }
                     } else {
                         image = waifu2x.run(image, model: modelUsed!)!
                     }
                     
-                    let finderItem = FinderItem(at: NSHomeDirectory() + "/Downloads/Waifu Output/\(i.relativePath ?? i.fileName! + ".png")")
+                    let path: String
+                    if let name = i.relativePath {
+                        path = name[..<name.lastIndex(of: ".")!] + ".png"
+                    } else {
+                        path = i.fileName! + ".png"
+                    }
+                    
+                    let finderItem = FinderItem(at: NSHomeDirectory() + "/Downloads/Waifu Output/\(path)")
+                    
                     finderItem.generateDirectory()
-                    image.write(to: NSHomeDirectory() + "/Downloads/Waifu Output/\(i.relativePath ?? i.fileName! + ".png")")
+                    image.write(to: NSHomeDirectory() + "/Downloads/Waifu Output/\(path)")
                     
                     processedItems.append(i)
                     currentTimeTaken = 0
