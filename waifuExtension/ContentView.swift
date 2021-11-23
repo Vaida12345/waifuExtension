@@ -301,7 +301,8 @@ struct ConfigurationView: View {
                     isProcessing = true
                     isShown = false
                     
-                    let modelName = (chosenScaleLevel == 1 ? "" : "up_") + "\(chosenStyle)_noise\(chosenNoiceLevel)_scale2x_model"
+                    //change here
+                    let modelName = (chosenScaleLevel == 1 ? "" : "up_") + "\(chosenStyle)_noise\(chosenNoiceLevel)\(chosenScaleLevel == 1 ? "" : "_scale2x")_model"
                     
                     self.modelUsed = Model(rawValue: modelName)!
                     
@@ -512,6 +513,7 @@ struct ProcessingView: View {
                     }
                 } else {
                     Button("Create PDF") {
+                        finderItems = []
                         isProcessing = false
                         isCreatingPDF = true
                     }
@@ -576,7 +578,7 @@ struct ProcessingPDFView: View {
     @Binding var background: DispatchQueue
     
     @State var finderItemsCount: Int = 0
-    @State var processedItemsCount: Int = -1
+    @State var processedItemsCount: Int = 0
     @State var currentProcessingItem: FinderItem? = nil
     @State var isFinished: Bool = false
     
@@ -642,12 +644,17 @@ struct ProcessingPDFView: View {
                 guard finderItemsCount != 0 else { return 1 }
                 return Double(processedItemsCount) / Double(finderItemsCount)
             }())
-                .padding([.bottom])
+                .padding(.all)
             
             Spacer()
             
             HStack {
                 Spacer()
+                
+                Button("Show in Finder") {
+                    _ = shell(["open /Users/vaida/Downloads/PDF\\ output"])
+                }
+                .padding(.trailing)
                 
                 Button("Done") {
                     isCreatingPDF = false
@@ -660,15 +667,26 @@ struct ProcessingPDFView: View {
         .frame(width: 600, height: 300)
         .onAppear {
             
-            finderItemsCount = {()->[FinderItem] in
-                return FinderItem(at: "/Users/vaida/Downloads/Waifu Output").children!.filter({ $0.image != nil })
-            }().count
+            var counter = 0
+            FinderItem(at: "/Users/vaida/Downloads/Waifu Output").iteratedOver { child in
+                guard child.image != nil else { return }
+                counter += 1
+            }
+            
+            finderItemsCount = counter
             
             background.async {
-                FinderItem.createPDF(fromFolder: FinderItem(at: "/Users/vaida/Downloads/Waifu Output")) { item in
-                    currentProcessingItem = item
-                    processedItemsCount += 1
+                FinderItem(at: "/Users/vaida/Downloads/Waifu Output").iteratedOver { child in
+                    guard child.isDirectory else { return }
+                    
+                    FinderItem.createPDF(fromFolder: child) { item in
+                        currentProcessingItem = item
+                        processedItemsCount += 1
+                    } onFinish: {
+                        isFinished = true
+                    }
                 }
+                
             }
             
         }
@@ -679,6 +697,6 @@ struct ProcessingPDFView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ProcessingPDFView(isCreatingPDF: .constant(true), background: .constant(DispatchQueue(label: "bg")))
+        ContentView()
     }
 }

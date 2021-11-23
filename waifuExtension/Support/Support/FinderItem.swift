@@ -337,7 +337,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     }
     
     /// Creates PDF from images in folders.
-    static func createPDF(fromFolder folder: FinderItem, outputPath: String = "/Users/vaida/Downloads/PDF output", onChangingItem: ((_ item: FinderItem)->())? = nil) {
+    static func createPDF(fromFolder folder: FinderItem, outputPath: String = "/Users/vaida/Downloads/PDF output", onChangingItem: ((_ item: FinderItem)->())? = nil, onFinish: (()->())? = nil) {
         
         precondition(folder.isExistence)
         precondition(folder.hasChildren)
@@ -379,6 +379,9 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         let pastePath = outputPath + "/" + folder.fileName! + ".pdf"
         document.write(toFile: FinderItem(at: pastePath).generateOutputPath())
         
+        if let onFinish = onFinish {
+            onFinish()
+        }
     }
     
     /// Decode a file from `path` to the expected `type`.
