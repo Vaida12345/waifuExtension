@@ -1,6 +1,6 @@
 //
 //  Waifu2x.swift
-//  waifu2x-mac
+//  Waifu2x-mac
 //
 //  Created by xieyi on 2018/1/24.
 //  Copyright © 2018年 xieyi. All rights reserved.
@@ -10,28 +10,28 @@ import Foundation
 import CoreML
 import Cocoa
 
-public struct Waifu2x {
+public class Waifu2x {
     
     /// The output block size.
     /// It is dependent on the model.
     /// Do not modify it until you are sure your model has a different number.
-    static var block_size = 128
+    var block_size = 128
     
     /// The difference between output and input block size
-    static let shrink_size = 7
+    let shrink_size = 7
     
     /// Do not exactly know its function
     /// However it can on average improve PSNR by 0.09
-    /// https://github.com/nagadomi/waifu2x/commit/797b45ae23665a1c5e3c481c018e48e6f0d0e383
-    static let clip_eta8 = Float(0.00196)
+    /// https://github.com/nagadomi/self/commit/797b45ae23665a1c5e3c481c018e48e6f0d0e383
+    let clip_eta8 = Float(0.00196)
     
-    public static var interrupt = false
+    var interrupt = false
     
-    static private var in_pipeline: BackgroundPipeline<CGRect>! = nil
-    static private var model_pipeline: BackgroundPipeline<MLMultiArray>! = nil
-    static private var out_pipeline: BackgroundPipeline<MLMultiArray>! = nil
+    private var in_pipeline: BackgroundPipeline<CGRect>! = nil
+    private var model_pipeline: BackgroundPipeline<MLMultiArray>! = nil
+    private var out_pipeline: BackgroundPipeline<MLMultiArray>! = nil
     
-    static public func run(_ image: NSImage!, model: Model!, _ callback: @escaping (String) -> Void = { _ in }) -> NSImage? {
+    public func run(_ image: NSImage!, model: Model!, _ callback: @escaping (String) -> Void = { _ in }) -> NSImage? {
         guard image != nil else {
             return nil
         }
@@ -42,14 +42,14 @@ public struct Waifu2x {
         
         let date = Date()
         
-        Waifu2x.interrupt = false
+        self.interrupt = false
         var out_scale: Int
         switch model! {
         case .anime_noise0, .anime_noise1, .anime_noise2, .anime_noise3, .photo_noise0, .photo_noise1, .photo_noise2, .photo_noise3:
-            Waifu2x.block_size = 128
+            self.block_size = 128
             out_scale = 1
         default:
-            Waifu2x.block_size = 142
+            self.block_size = 142
             out_scale = 2
         }
         let width = Int(image.representations[0].pixelsWide)
@@ -119,8 +119,8 @@ public struct Waifu2x {
         let out_height = height * out_scale
         let out_fullWidth = fullWidth * out_scale
         let out_fullHeight = fullHeight * out_scale
-        let out_block_size = Waifu2x.block_size * out_scale
-        let rects = fullCG.getCropRects()
+        let out_block_size = self.block_size * out_scale
+        let rects = fullCG.getCropRects(from: self)
         // Prepare for output pipeline
         // Merge arrays into one array
         let normalize = { (input: Double) -> Double in
@@ -185,7 +185,7 @@ public struct Waifu2x {
         }
         
         // Output, will not take much time
-        Waifu2x.out_pipeline = BackgroundPipeline<MLMultiArray>("out_pipeline", count: rects.count) { (index, array) in
+        self.out_pipeline = BackgroundPipeline<MLMultiArray>("out_pipeline", count: rects.count, waifu2x: self) { (index, array) in
             let rect = rects[index]
             let origin_x = Int(rect.origin.x) * out_scale
             let origin_y = Int(rect.origin.y) * out_scale
@@ -224,64 +224,64 @@ public struct Waifu2x {
         // Prepare for model pipeline
         // Run prediction on each block
         let mlmodel = model.getMLModel()
-        Waifu2x.model_pipeline = BackgroundPipeline<MLMultiArray>("model_pipeline", count: rects.count) { (index, array) in
-            out_pipeline.appendObject(try! mlmodel.prediction(input: array))
+        self.model_pipeline = BackgroundPipeline<MLMultiArray>("model_pipeline", count: rects.count, waifu2x: self) { (index, array) in
+            self.out_pipeline.appendObject(try! mlmodel.prediction(input: array))
             callback("\((index * 100) / rects.count)")
         }
         // Start running model
-        let expwidth = fullWidth + 2 * Waifu2x.shrink_size
-        let expheight = fullHeight + 2 * Waifu2x.shrink_size
-        let expanded = fullCG.expand(withAlpha: hasalpha)
+        let expwidth = fullWidth + 2 * self.shrink_size
+        let expheight = fullHeight + 2 * self.shrink_size
+        let expanded = fullCG.expand(withAlpha: hasalpha, in: self)
         callback("processing")
         
         // this process will not take much time, but executing would
-        Waifu2x.in_pipeline = BackgroundPipeline<CGRect>("in_pipeline", count: rects.count, task: { (index, rect) in
+        self.in_pipeline = BackgroundPipeline<CGRect>("in_pipeline", count: rects.count, waifu2x: self, task: { (index, rect) in
             let x = Int(rect.origin.x)
             let y = Int(rect.origin.y)
-            let multi = try! MLMultiArray(shape: [3, NSNumber(value: Waifu2x.block_size + 2 * Waifu2x.shrink_size), NSNumber(value: Waifu2x.block_size + 2 * Waifu2x.shrink_size)], dataType: .float32)
+            let multi = try! MLMultiArray(shape: [3, NSNumber(value: self.block_size + 2 * self.shrink_size), NSNumber(value: self.block_size + 2 * self.shrink_size)], dataType: .float32)
             var x_new: Int
             var y_new: Int
             
             var y_exp = y
             
-            while y_exp < (y + Waifu2x.block_size + 2 * Waifu2x.shrink_size) {
+            while y_exp < (y + self.block_size + 2 * self.shrink_size) {
                 
                 var x_exp = x
-                while x_exp < (x + Waifu2x.block_size + 2 * Waifu2x.shrink_size) {
+                while x_exp < (x + self.block_size + 2 * self.shrink_size) {
                     x_new = x_exp - x
                     y_new = y_exp - y
-                    multi[y_new * (Waifu2x.block_size + 2 * Waifu2x.shrink_size) + x_new] = NSNumber(value: expanded[y_exp * expwidth + x_exp])
-                    multi[y_new * (Waifu2x.block_size + 2 * Waifu2x.shrink_size) + x_new + (block_size + 2 * Waifu2x.shrink_size) * (block_size + 2 * Waifu2x.shrink_size)] = NSNumber(value: expanded[y_exp * expwidth + x_exp + expwidth * expheight])
-                    multi[y_new * (Waifu2x.block_size + 2 * Waifu2x.shrink_size) + x_new + (block_size + 2 * Waifu2x.shrink_size) * (block_size + 2 * Waifu2x.shrink_size) * 2] = NSNumber(value: expanded[y_exp * expwidth + x_exp + expwidth * expheight * 2])
+                    multi[y_new * (self.block_size + 2 * self.shrink_size) + x_new] = NSNumber(value: expanded[y_exp * expwidth + x_exp])
+                    multi[y_new * (self.block_size + 2 * self.shrink_size) + x_new + (self.block_size + 2 * self.shrink_size) * (self.self.block_size + 2 * self.shrink_size)] = NSNumber(value: expanded[y_exp * expwidth + x_exp + expwidth * expheight])
+                    multi[y_new * (self.block_size + 2 * self.shrink_size) + x_new + (self.block_size + 2 * self.shrink_size) * (self.block_size + 2 * self.shrink_size) * 2] = NSNumber(value: expanded[y_exp * expwidth + x_exp + expwidth * expheight * 2])
                     
                     x_exp += 1
                 }
                 
                 y_exp += 1
             }
-            model_pipeline.appendObject(multi)
+            self.model_pipeline.appendObject(multi)
         })
         
         var counter = 0
         while counter < rects.count {
-            Waifu2x.in_pipeline.appendObject(rects[counter])
+            self.in_pipeline.appendObject(rects[counter])
             counter += 1
         }
         
         
         // this would take most of time
-        Waifu2x.in_pipeline.wait()
+        self.in_pipeline.wait()
         
         
-        Waifu2x.model_pipeline.wait()
+        self.model_pipeline.wait()
         callback("wait_alpha")
         alpha_task?.wait()
-        Waifu2x.out_pipeline.wait()
+        self.out_pipeline.wait()
         
-        Waifu2x.in_pipeline = nil
-        Waifu2x.model_pipeline = nil
-        Waifu2x.out_pipeline = nil
-        if Waifu2x.interrupt {
+        self.in_pipeline = nil
+        self.model_pipeline = nil
+        self.out_pipeline = nil
+        if self.interrupt {
             return nil
         }
         

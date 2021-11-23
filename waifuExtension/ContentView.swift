@@ -346,7 +346,7 @@ struct ProcessingView: View {
             }
         }
     }
-    @State var currentProcessingItem: FinderItem? = nil
+    @State var currentProcessingItemsCount: Int = 0
     @State var timer = Timer.publish(every: 1, on: .current, in: .common).autoconnect()
     @State var isFinished: Bool = false
     
@@ -403,10 +403,10 @@ struct ProcessingView: View {
                 
                 VStack(spacing: 10) {
                     HStack {
-                        if let currentProcessingItem = currentProcessingItem {
-                            Text(currentProcessingItem.relativePath ?? currentProcessingItem.fileName ?? "error")
+                        if currentProcessingItemsCount >= 2 {
+                            Text("\(currentProcessingItemsCount) items in parallel")
                         } else {
-                            Text("Error: \(currentProcessingItem.debugDescription)")
+                            Text("\(currentProcessingItemsCount) item")
                         }
                         
                         Spacer()
@@ -426,19 +426,28 @@ struct ProcessingView: View {
                     Spacer()
                     
                     HStack {
-                        Text("\(processedItems.count) items")
+                        if processedItems.count >= 2 {
+                            Text("\(processedItems.count) items")
+                        } else {
+                            Text("\(processedItems.count) item")
+                        }
                         
                         Spacer()
                     }
                     
                     HStack {
-                        Text("\(finderItems.count - processedItems.count) items")
+                        if finderItems.count - processedItems.count >= 2 {
+                            Text("\(finderItems.count - processedItems.count) items")
+                        } else {
+                            Text("\(finderItems.count - processedItems.count) item")
+                        }
+                        
                         
                         Spacer()
                     }
                     
                     HStack {
-                        Text((pastTimeTaken + currentTimeTaken).expressedAsTime())
+                        Text((pastTimeTaken).expressedAsTime())
                         
                         Spacer()
                     }
@@ -450,7 +459,7 @@ struct ProcessingView: View {
                             guard !processedItems.isEmpty else { return "calculating..." }
                             
                             var value = Double(finderItems.count) * (pastTimeTaken / Double(processedItems.count))
-                            value -= pastTimeTaken + currentTimeTaken
+                            value -= pastTimeTaken
                             
                             guard value >= 0 else { return "calculating..." }
                             
@@ -467,7 +476,7 @@ struct ProcessingView: View {
                             guard !processedItems.isEmpty else { return "calculating..." }
                             
                             var value = Double(finderItems.count) * (pastTimeTaken / Double(processedItems.count))
-                            value -= pastTimeTaken + currentTimeTaken
+                            value -= pastTimeTaken
                             
                             guard value >= 0 else { return "calculating..." }
                             
@@ -536,42 +545,46 @@ struct ProcessingView: View {
             .onAppear {
                 background = DispatchQueue(label: "Background")
                 
-                
-                for i in finderItems {
-                    background.async {
-                        currentProcessingItem = i
+                background.async {
+                    DispatchQueue.concurrentPerform(iterations: finderItems.count) { i in
+                        let i = finderItems[i]
+                        
+                        currentProcessingItemsCount += 1
                         guard var image = i.image else { return }
                         
                         if chosenScaleLevel > 2 {
                             for _ in 1...(chosenScaleLevel / 2) {
-                                image = Waifu2x.run(image, model: modelUsed!)!.reload()
+                                image = Waifu2x().run(image, model: modelUsed!)!.reload()
                             }
                         } else {
-                            image = Waifu2x.run(image, model: modelUsed!)!
+                            image = Waifu2x().run(image, model: modelUsed!)!
                         }
                         
                         let finderItem = FinderItem(at: "/Users/vaida/Downloads/Waifu Output/\(i.relativePath ?? i.fileName! + ".png")")
                         finderItem.generateDirectory()
                         image.write(to: "/Users/vaida/Downloads/Waifu Output/\(i.relativePath ?? i.fileName! + ".png")")
-
-                        // when finished
-                        DispatchQueue.main.async {
-                            processedItems.append(i)
-                            pastTimeTaken += currentTimeTaken
-                            currentTimeTaken = 0
-                            
-                            if processedItems.count == finderItems.count {
-                                background.suspend()
-                                isPaused = true
-                                isFinished = true
-                            }
+                        
+                        currentProcessingItemsCount -= 1
+                        
+                        processedItems.append(i)
+                        currentTimeTaken = 0
+                        
+                        if processedItems.count == finderItems.count {
+                            background.suspend()
+                            isPaused = true
+                            isFinished = true
                         }
                         
+                        // when finished
+                        DispatchQueue.main.async {
+                            
+                        }
                     }
                 }
             }
             .onReceive(timer) { timer in
                 currentTimeTaken += 1
+                pastTimeTaken += 1
             }
     }
 }
