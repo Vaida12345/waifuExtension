@@ -17,6 +17,7 @@ struct ContentView: View {
     @State var background = DispatchQueue(label: "Background")
     @State var pdfbackground = DispatchQueue(label: "PDF Background")
     @State var chosenScaleLevel: Int = 2
+    @State var allowParallelExecution: Bool = true
     
     var body: some View {
         VStack {
@@ -111,10 +112,10 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $isSheetShown, onDismiss: nil) {
-            ConfigurationView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel)
+            ConfigurationView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel, allowParallelExecution: $allowParallelExecution)
         }
         .sheet(isPresented: $isProcessing, onDismiss: nil) {
-            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, background: $background, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF)
+            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, background: $background, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF, allowParallelExecution: $allowParallelExecution)
         }
         .sheet(isPresented: $isCreatingPDF, onDismiss: nil) {
             ProcessingPDFView(isCreatingPDF: $isCreatingPDF, background: $pdfbackground)
@@ -228,13 +229,12 @@ struct ConfigurationView: View {
     @Binding var isProcessing: Bool
     @Binding var modelUsed: Model?
     @Binding var chosenScaleLevel: Int
-    
-    //TODO: edit models
+    @Binding var allowParallelExecution: Bool
     
     let styleNames: [String] = ["anime", "photo"]
     @State var chosenStyle = "anime"
     
-    let noiceLevels: [String] = ["none", "0", "1", "2", "3"]
+    let noiceLevels: [String] = ["0", "1", "2", "3"]
     @State var chosenNoiceLevel = "3"
     
     let scaleLevels: [Int] = [Int](0...5).map({ pow(2, $0) })
@@ -246,10 +246,14 @@ struct ConfigurationView: View {
             
             HStack(spacing: 10) {
                 VStack(spacing: 19) {
-                    Text("         Style:")
-                        .padding(.bottom)
-                    Text("Noice Level:")
-                    Text("Scale Level:")
+                    HStack {
+                        Spacer()
+                        Text("Style:")
+                            .padding(.bottom)
+                    }
+                    HStack { Spacer(); Text("Noice Level:") }
+                    HStack { Spacer(); Text("Scale Level:") }
+                    HStack { Spacer(); Text("Allow Parallel Execution:") }
                 }
                 
                 VStack(spacing: 15) {
@@ -275,6 +279,14 @@ struct ConfigurationView: View {
                         ForEach(scaleLevels, id: \.self) { item in
                             Button(item.description) {
                                 chosenScaleLevel = item
+                            }
+                        }
+                    }
+                    
+                    Menu(allowParallelExecution.description) {
+                        ForEach([true, false], id: \.self) { item in
+                            Button(item.description) {
+                                allowParallelExecution = item
                             }
                         }
                     }
@@ -329,6 +341,7 @@ struct ProcessingView: View {
     @Binding var background: DispatchQueue
     @Binding var chosenScaleLevel: Int
     @Binding var isCreatingPDF: Bool
+    @Binding var allowParallelExecution: Bool
     
     @State var processedItems: [FinderItem] = []
     @State var currentTimeTaken: Double = 0 // up to 1s
@@ -545,42 +558,49 @@ struct ProcessingView: View {
             .onAppear {
                 background = DispatchQueue(label: "Background")
                 
+                func execute(_ i: FinderItem) {
+                    DispatchQueue.main.async {
+                        currentProcessingItemsCount += 1
+                    }
+                    
+                    guard var image = i.image else { return }
+                    
+                    if chosenScaleLevel > 2 {
+                        for _ in 1...(chosenScaleLevel / 2) {
+                            image = Waifu2x().run(image, model: modelUsed!)!.reload()
+                        }
+                    } else {
+                        image = Waifu2x().run(image, model: modelUsed!)!
+                    }
+                    
+                    let finderItem = FinderItem(at: NSHomeDirectory() + "/Downloads/Waifu Output/\(i.relativePath ?? i.fileName! + ".png")")
+                    finderItem.generateDirectory()
+                    image.write(to: NSHomeDirectory() + "/Downloads/Waifu Output/\(i.relativePath ?? i.fileName! + ".png")")
+                    
+                    processedItems.append(i)
+                    currentTimeTaken = 0
+                    
+                    DispatchQueue.main.async {
+                        currentProcessingItemsCount -= 1
+                    }
+                    
+                    if processedItems.count == finderItems.count {
+                        background.suspend()
+                        isPaused = true
+                        isFinished = true
+                        
+                    }
+                }
+                
                 background.async {
-                    DispatchQueue.concurrentPerform(iterations: finderItems.count) { i in
-                        let i = finderItems[i]
-                        
-                        DispatchQueue.main.async {
-                            currentProcessingItemsCount += 1
+                    if allowParallelExecution {
+                        DispatchQueue.concurrentPerform(iterations: finderItems.count) { i in
+                            execute(finderItems[i])
                         }
-                        
-                        guard var image = i.image else { return }
-                        
-                        if chosenScaleLevel > 2 {
-                            for _ in 1...(chosenScaleLevel / 2) {
-                                image = Waifu2x().run(image, model: modelUsed!)!.reload()
-                            }
-                        } else {
-                            image = Waifu2x().run(image, model: modelUsed!)!
+                    } else {
+                        for i in finderItems {
+                            execute(i)
                         }
-                        
-                        let finderItem = FinderItem(at: NSHomeDirectory() + "/Downloads/Waifu Output/\(i.relativePath ?? i.fileName! + ".png")")
-                        finderItem.generateDirectory()
-                        image.write(to: NSHomeDirectory() + "/Downloads/Waifu Output/\(i.relativePath ?? i.fileName! + ".png")")
-                        
-                        processedItems.append(i)
-                        currentTimeTaken = 0
-                        
-                        DispatchQueue.main.async {
-                            currentProcessingItemsCount -= 1
-                        }
-                        
-                        if processedItems.count == finderItems.count {
-                            background.suspend()
-                            isPaused = true
-                            isFinished = true
-                            
-                        }
-                        
                     }
                 }
             }
