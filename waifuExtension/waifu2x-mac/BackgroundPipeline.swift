@@ -39,6 +39,7 @@ class BackgroundPipeline <T> {
         self.count = count
         background = DispatchQueue(label: name)
         background.async {
+            
             var index = 0
             while index < self.count {
                 if Waifu2x.interrupt {
@@ -50,6 +51,7 @@ class BackgroundPipeline <T> {
                     index += 1
                 }
             }
+            
             self.wait_sem.signal()
         }
         wait_sem.wait()

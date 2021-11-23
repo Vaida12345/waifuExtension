@@ -542,8 +542,12 @@ struct ProcessingView: View {
                         currentProcessingItem = i
                         guard var image = i.image else { return }
                         
-                        for _ in 1...(chosenScaleLevel / 2) {
-                            image = Waifu2x.run(image, model: modelUsed!)!.reload()
+                        if chosenScaleLevel > 2 {
+                            for _ in 1...(chosenScaleLevel / 2) {
+                                image = Waifu2x.run(image, model: modelUsed!)!.reload()
+                            }
+                        } else {
+                            image = Waifu2x.run(image, model: modelUsed!)!
                         }
                         
                         let finderItem = FinderItem(at: "/Users/vaida/Downloads/Waifu Output/\(i.relativePath ?? i.fileName! + ".png")")

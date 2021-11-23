@@ -180,6 +180,7 @@ public struct Waifu2x {
                 
             }
         }
+        
         // Output, will not take much time
         Waifu2x.out_pipeline = BackgroundPipeline<MLMultiArray>("out_pipeline", count: rects.count) { (index, array) in
             let rect = rects[index]
@@ -229,7 +230,8 @@ public struct Waifu2x {
         let expheight = fullHeight + 2 * Waifu2x.shrink_size
         let expanded = fullCG.expand(withAlpha: hasalpha)
         callback("processing")
-        // this process will not take much time
+        
+        // this process will not take much time, but executing would
         Waifu2x.in_pipeline = BackgroundPipeline<CGRect>("in_pipeline", count: rects.count, task: { (index, rect) in
             let x = Int(rect.origin.x)
             let y = Int(rect.origin.y)
@@ -262,17 +264,22 @@ public struct Waifu2x {
             Waifu2x.in_pipeline.appendObject(rects[counter])
             counter += 1
         }
+        
+        // this would take most of time
         Waifu2x.in_pipeline.wait()
+        
         Waifu2x.model_pipeline.wait()
         callback("wait_alpha")
         alpha_task?.wait()
         Waifu2x.out_pipeline.wait()
+        
         Waifu2x.in_pipeline = nil
         Waifu2x.model_pipeline = nil
         Waifu2x.out_pipeline = nil
         if Waifu2x.interrupt {
             return nil
         }
+        
         callback("generate_output")
         let cfbuffer = CFDataCreate(nil, imgData, out_width * out_height * channels)!
         let dataProvider = CGDataProvider(data: cfbuffer)!
