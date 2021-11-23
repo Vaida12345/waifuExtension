@@ -14,8 +14,8 @@ struct ContentView: View {
     @State var isProcessing: Bool = false
     @State var isCreatingPDF: Bool = false
     @State var modelUsed: Model? = nil
-    var background = DispatchQueue(label: "Background")
-    var pdfbackground = DispatchQueue(label: "PDF Background")
+    @State var background = DispatchQueue(label: "Background")
+    @State var pdfbackground = DispatchQueue(label: "PDF Background")
     @State var chosenScaleLevel: Int = 1
     @State var allowParallelExecution: Bool = true
     
@@ -394,7 +394,7 @@ struct ProcessingView: View {
     @Binding var finderItems: [FinderItem]
     @Binding var modelUsed: Model?
     @Binding var isSheetShown: Bool
-    var background: DispatchQueue
+    @Binding var background: DispatchQueue
     @Binding var chosenScaleLevel: Int
     @Binding var isCreatingPDF: Bool
     @Binding var allowParallelExecution: Bool
