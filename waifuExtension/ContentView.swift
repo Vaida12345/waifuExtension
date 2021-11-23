@@ -651,8 +651,6 @@ struct ProcessingView: View {
                     }
                     
                     if processedItems.count == finderItems.count {
-                        background.suspend()
-                        isPaused = true
                         isFinished = true
                     }
                 }
