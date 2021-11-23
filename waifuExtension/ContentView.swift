@@ -115,10 +115,10 @@ struct ContentView: View {
             ConfigurationView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel, allowParallelExecution: $allowParallelExecution)
         }
         .sheet(isPresented: $isProcessing, onDismiss: nil) {
-            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, background: background, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF, allowParallelExecution: $allowParallelExecution)
+            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, background: $background, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF, allowParallelExecution: $allowParallelExecution)
         }
         .sheet(isPresented: $isCreatingPDF, onDismiss: nil) {
-            ProcessingPDFView(isCreatingPDF: $isCreatingPDF, background: pdfbackground)
+            ProcessingPDFView(isCreatingPDF: $isCreatingPDF, background: $pdfbackground)
         }
     }
     
@@ -680,7 +680,7 @@ struct ProcessingView: View {
 struct ProcessingPDFView: View {
     
     @Binding var isCreatingPDF: Bool
-    var background: DispatchQueue
+    @Binding var background: DispatchQueue
     
     @State var finderItemsCount: Int = 0
     @State var processedItemsCount: Int = 0
