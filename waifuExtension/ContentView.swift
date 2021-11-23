@@ -588,7 +588,7 @@ struct ProcessingView: View {
                 
                 if !isFinished {
                     Button("Cancel") {
-                        isPaused = true
+                        isFinished = true
                         isProcessing = false
                         isSheetShown = true
                     }
@@ -658,10 +658,12 @@ struct ProcessingView: View {
                 background.async {
                     if allowParallelExecution {
                         DispatchQueue.concurrentPerform(iterations: finderItems.count) { i in
+                            guard !isFinished else { return }
                             execute(finderItems[i])
                         }
                     } else {
                         for i in finderItems {
+                            guard !isFinished else { return }
                             execute(i)
                         }
                     }
