@@ -696,7 +696,7 @@ struct ProcessingView: View {
                                     
                                     let filePath = item.relativePath ?? item.fileName!
                                     
-                                    FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed").iteratedOver { child in
+                                    for child in FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed").rawChildren?.sorted(by: { $0.rawPath < $1.rawPath }) {
                                         images.append(child.image!)
                                     }
                                     

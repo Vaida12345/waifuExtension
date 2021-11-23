@@ -189,14 +189,14 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     /// The individual path.
     ///
     /// /Study/Calculus/Materials -> Materials
-    private var rawPath: String {
+    var rawPath: String {
         return self.pathArray.last!
     }
     
     /// The files that are **strictly** instead this file.
     ///
     /// This property does not sort the children, however, please use this to save time.
-    private var rawChildren: [FinderItem]? {
+    var rawChildren: [FinderItem]? {
         guard let paths = self.findFiles() else { return nil }
         return paths.map({
             let item = FinderItem(at: self.path + "/" + $0)
