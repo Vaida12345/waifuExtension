@@ -86,7 +86,11 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         let seconds: Double = CMTimeGetSeconds(vidLength)
         let frameRate = Double(asset.tracks(withMediaType: .video).first!.nominalFrameRate)
         
-        let requiredFramesCount = Int(seconds * frameRate)
+        var requiredFramesCount = Int(seconds * frameRate)
+        
+        if requiredFramesCount == 0 {
+            requiredFramesCount = 1
+        }
         
         let step = Int((vidLength.value / Int64(requiredFramesCount)))
         var value: Int = 0

@@ -199,24 +199,26 @@ struct GridItemView: View {
     @Binding var finderItems: [FinderItem]
     
     var body: some View {
-        let image = item.image ?? item.firstFrame!
-        
-        VStack(alignment: .center) {
-            Image(nsImage: image)
-                .resizable()
-                .cornerRadius(5)
-                .aspectRatio(contentMode: .fit)
-                .padding([.top, .leading, .trailing])
-            
-            Text(((item.relativePath ?? item.fileName) ?? item.path) + "\n" + "\(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.width) × \(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.height)")
-                .multilineTextAlignment(.center)
-                .padding([.leading, .bottom, .trailing])
-        }
-        .frame(width: geometry.size.width / 5, height: geometry.size.width / 5)
-        .contextMenu {
-            Button("Delete") {
-                finderItems.remove(at: finderItems.firstIndex(of: item)!)
+        if let image = item.image ?? item.firstFrame {
+            VStack(alignment: .center) {
+                Image(nsImage: image)
+                    .resizable()
+                    .cornerRadius(5)
+                    .aspectRatio(contentMode: .fit)
+                    .padding([.top, .leading, .trailing])
+                
+                Text(((item.relativePath ?? item.fileName) ?? item.path) + "\n" + "\(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.width) × \(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.height)")
+                    .multilineTextAlignment(.center)
+                    .padding([.leading, .bottom, .trailing])
             }
+            .frame(width: geometry.size.width / 5, height: geometry.size.width / 5)
+            .contextMenu {
+                Button("Delete") {
+                    finderItems.remove(at: finderItems.firstIndex(of: item)!)
+                }
+            }
+        } else {
+            Rectangle()
         }
     }
 }
@@ -682,52 +684,56 @@ struct ProcessingView: View {
                     }
                     
                     if processedItems.count == finderItems.count {
-                        timer.upstream.connect().cancel()
                         
-                        if !videos.isEmpty {
-                            isMergingVideo = true
+                        background.async {
+                            timer.upstream.connect().cancel()
                             
-                            for item in videos {
-                                var images: [NSImage] = []
+                            if !videos.isEmpty {
+                                isMergingVideo = true
                                 
-                                let filePath = item.relativePath ?? item.fileName!
-                                
-                                FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed").iteratedOver { child in
-                                    images.append(child.image!)
-                                }
-                                
-                                let cgImage = images.first!.cgImage(forProposedRect: nil, context: nil, hints: nil)!
-                                let videoPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/video.mov"
-                                FinderItem.convertImageSequenceToVideo(images, videoPath: videoPath, videoSize: CGSize(width: cgImage.width, height: cgImage.height), videoFPS: Int32(item.avAsset!.tracks(withMediaType: .video).first!.nominalFrameRate)) {
+                                for item in videos {
+                                    var images: [NSImage] = []
                                     
-                                    FinderItem.mergeVideoWithAudio(videoUrl: URL(fileURLWithPath: videoPath), audioUrl: URL(fileURLWithPath: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/audio.m4a")) { _ in
+                                    let filePath = item.relativePath ?? item.fileName!
+                                    
+                                    FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed").iteratedOver { child in
+                                        images.append(child.image!)
+                                    }
+                                    
+                                    let cgImage = images.first!.cgImage(forProposedRect: nil, context: nil, hints: nil)!
+                                    let videoPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/video.mov"
+                                    FinderItem.convertImageSequenceToVideo(images, videoPath: videoPath, videoSize: CGSize(width: cgImage.width, height: cgImage.height), videoFPS: Int32(item.avAsset!.tracks(withMediaType: .video).first!.nominalFrameRate)) {
                                         
-                                        let outputPath: String
-                                        if filePath.contains(".") {
-                                            outputPath = String(filePath[..<filePath.lastIndex(of: ".")!])
-                                        } else {
-                                            outputPath = filePath
+                                        FinderItem.mergeVideoWithAudio(videoUrl: URL(fileURLWithPath: videoPath), audioUrl: URL(fileURLWithPath: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/audio.m4a")) { _ in
+                                            
+                                            let outputPath: String
+                                            if filePath.contains(".") {
+                                                outputPath = String(filePath[..<filePath.lastIndex(of: ".")!])
+                                            } else {
+                                                outputPath = filePath
+                                            }
+                                            
+                                            try! FinderItem(at: videoPath).copy(to: "\(NSHomeDirectory())/Downloads/Waifu Output/\(outputPath).mov")
+                                            
+                                            videos.remove(at: videos.firstIndex(of: item)!)
+                                            
+                                            if videos.isEmpty {
+                                                finderItems = []
+                                                try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp").removeFile()
+                                                isMergingVideo = false
+                                                isFinished = true
+                                            }
+                                            
+                                        } failure: { _ in
+                                            
                                         }
-                                        
-                                        try! FinderItem(at: videoPath).copy(to: "\(NSHomeDirectory())/Downloads/Waifu Output/\(outputPath).mov")
-                                        
-                                        videos.remove(at: videos.firstIndex(of: item)!)
-                                        
-                                        if videos.isEmpty {
-                                            finderItems = []
-                                            try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp").removeFile()
-                                            isMergingVideo = false
-                                            isFinished = true
-                                        }
-                                        
-                                    } failure: { _ in
-                                        
                                     }
                                 }
+                            } else {
+                                isFinished = true
                             }
-                        } else {
-                            isFinished = true
                         }
+                        
                     }
                 }
                 
