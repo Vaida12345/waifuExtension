@@ -205,6 +205,11 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         return URL(fileURLWithPath: self.path)
     }
     
+    /// The audio track of the video file
+    var videoTrack: AVAssetTrack? {
+        return self.avAsset?.tracks(withMediaType: AVMediaType.video).first
+    }
+    
     
     //MARK: - Initializers
     
@@ -569,6 +574,32 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         }
     }
     
+    static func mergeVideoWithAudio(video: FinderItem, audio: FinderItem) throws {
+        // Create a composition
+        let composition = AVMutableComposition()
+        guard let audioCompositionTrack = composition.addMutableTrack(withMediaType: AVMediaType.audio, preferredTrackID: kCMPersistentTrackID_Invalid) else { return }
+        try audioCompositionTrack.insertTimeRange(audio.audioTrack!.timeRange, of: audio.audioTrack!, at: CMTime.zero)
+        
+        guard let videoCompositionTrack = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid) else { return }
+        try videoCompositionTrack.insertTimeRange(video.videoTrack!.timeRange, of: video.videoTrack!, at: CMTime.zero)
+        
+        // Get url for output
+        let outputUrl = video.url
+        if FileManager.default.fileExists(atPath: outputUrl.path) {
+            try? FileManager.default.removeItem(atPath: outputUrl.path)
+        }
+        
+        // Create an export session
+        let exportSession = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetHEVCHighestQuality)!
+        exportSession.outputFileType = AVFileType.mov
+        exportSession.outputURL = outputUrl
+        
+        // Export file
+        exportSession.exportAsynchronously {
+            guard case exportSession.status = AVAssetExportSession.Status.completed else { return }
+        }
+    }
+    
     /// Convert image sequence to video.
     ///
     /// from https://stackoverflow.com/questions/3741323/how-do-i-export-uiimage-array-as-a-movie/3742212#36297656
@@ -643,7 +674,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
             // Return new asset writer or nil
             do {
                 // Create asset writer
-                let newWriter = try AVAssetWriter(outputURL: pathURL, fileType: AVFileType.m4v)
+                let newWriter = try AVAssetWriter(outputURL: pathURL, fileType: AVFileType.mov)
                 
                 // Define settings for video input
                 let videoSettings: [String : AnyObject] = [

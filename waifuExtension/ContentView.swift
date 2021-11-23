@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-import CoreML
+import AVFoundation
 
 struct ContentView: View {
     @State var finderItems: [FinderItem] = []
@@ -660,7 +660,7 @@ struct ProcessingView: View {
                     
                     let finderItem: FinderItem
                     if i.fileName!.contains("[sequence]") {
-                        let name = i.fileName![..<i.fileName!.firstIndex(of: "]")!]
+                        let name = i.fileName![i.fileName!.index(after: i.fileName!.startIndex)..<i.fileName!.firstIndex(of: "]")!]
                         finderItem = FinderItem(at: NSHomeDirectory() + "/Downloads/Waifu Output/tmp/\(name)/processed/\(path)")
                     } else {
                         finderItem = FinderItem(at: NSHomeDirectory() + "/Downloads/Waifu Output/\(path)")
@@ -677,6 +677,8 @@ struct ProcessingView: View {
                     }
                     
                     if processedItems.count == finderItems.count {
+                        timer.upstream.connect().cancel()
+                        
                         if !videos.isEmpty {
                             isMergingVideo = true
                             
@@ -687,12 +689,19 @@ struct ProcessingView: View {
                                     images.append(child.image!)
                                 }
                                 
-                                FinderItem.convertImageSequenceToVideo(images, videoPath: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(item.fileName!)/processed/video.mov", videoSize: <#T##CGSize#>, videoFPS: <#T##Int32#>)
+                                let cgImage = images.first!.cgImage(forProposedRect: nil, context: nil, hints: nil)!
+                                let videoPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(item.fileName!)/processed/video.mov"
+                                FinderItem.convertImageSequenceToVideo(images, videoPath: videoPath, videoSize: CGSize(width: cgImage.width, height: cgImage.height), videoFPS: Int32(item.avAsset!.tracks(withMediaType: .video).first!.nominalFrameRate))
+                                
+                                try! FinderItem.mergeVideoWithAudio(video: FinderItem(at: videoPath), audio: FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(item.fileName!)/audio.m4a"))
+                                try! FinderItem(at: videoPath).copy(to: "\(NSHomeDirectory())/Downloads/Waifu Output/\(item.fileName!).mov")
                             }
+                            try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp").removeFile()
+                            
+                            isMergingVideo = false
                         }
                         
                         isFinished = true
-                        timer.upstream.connect().cancel()
                     }
                 }
                 
@@ -705,10 +714,10 @@ struct ProcessingView: View {
                             finderItems.remove(at: finderItems.firstIndex(of: i)!)
                             videos.append(i)
                             
-                            let tmpPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/raw/\(i.fileName!)"
+                            let tmpPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(i.fileName!)/raw"
                             FinderItem(at: tmpPath).generateDirectory()
                             
-                            try! i.saveAudioTrack(to: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/raw/audio.m4a")
+                            try! i.saveAudioTrack(to: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(i.fileName!)/audio.m4a")
                             
                             var counter = 1
                             
