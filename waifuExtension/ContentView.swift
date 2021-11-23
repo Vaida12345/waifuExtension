@@ -539,7 +539,7 @@ struct ProcessingView: View {
                         Text({ ()-> String in
                             guard !isFinished else { return "finished" }
                             guard !isPaused else { return "paused" }
-                            guard !processedItems.isEmpty else { return "calculating..." }
+                            guard !processedItems.isEmpty && !isMergingVideo else { return "calculating..." }
                             
                             var value = Double(finderItems.count) * (pastTimeTaken / Double(processedItems.count))
                             value -= pastTimeTaken + currentTimeTaken
@@ -556,7 +556,7 @@ struct ProcessingView: View {
                         Text({ ()-> String in
                             guard !isFinished else { return "finished" }
                             guard !isPaused else { return "paused" }
-                            guard !processedItems.isEmpty else { return "calculating..." }
+                            guard !processedItems.isEmpty && !isMergingVideo else { return "calculating..." }
                             
                             var value = Double(finderItems.count) * (pastTimeTaken / Double(processedItems.count))
                             value -= pastTimeTaken + currentTimeTaken
@@ -663,7 +663,11 @@ struct ProcessingView: View {
                     let finderItem: FinderItem
                     if i.fileName!.contains("[sequence]") {
                         let name = i.fileName![i.fileName!.index(after: i.fileName!.startIndex)..<i.fileName!.firstIndex(of: "]")!]
-                        finderItem = FinderItem(at: NSHomeDirectory() + "/Downloads/Waifu Output/tmp/\(name)/processed/\(path)")
+                        let item = videos.filter({ $0.fileName! == name }).first!
+                        
+                        let filePath = item.relativePath ?? item.fileName!
+                        
+                        finderItem = FinderItem(at: NSHomeDirectory() + "/Downloads/Waifu Output/tmp/\(filePath)/processed/\(path)")
                     } else {
                         finderItem = FinderItem(at: NSHomeDirectory() + "/Downloads/Waifu Output/\(path)")
                     }
@@ -687,17 +691,19 @@ struct ProcessingView: View {
                             for item in videos {
                                 var images: [NSImage] = []
                                 
-                                FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(item.fileName!)/processed").iteratedOver { child in
+                                let filePath = item.relativePath ?? item.fileName!
+                                
+                                FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed").iteratedOver { child in
                                     images.append(child.image!)
                                 }
                                 
                                 let cgImage = images.first!.cgImage(forProposedRect: nil, context: nil, hints: nil)!
-                                let videoPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(item.fileName!)/processed/video.mov"
+                                let videoPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/video.mov"
                                 FinderItem.convertImageSequenceToVideo(images, videoPath: videoPath, videoSize: CGSize(width: cgImage.width, height: cgImage.height), videoFPS: Int32(item.avAsset!.tracks(withMediaType: .video).first!.nominalFrameRate)) {
                                     
-                                    FinderItem.mergeVideoWithAudio(videoUrl: URL(fileURLWithPath: videoPath), audioUrl: URL(fileURLWithPath: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(item.fileName!)/audio.m4a")) { _ in
+                                    FinderItem.mergeVideoWithAudio(videoUrl: URL(fileURLWithPath: videoPath), audioUrl: URL(fileURLWithPath: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/audio.m4a")) { _ in
                                         
-                                        try! FinderItem(at: videoPath).copy(to: "\(NSHomeDirectory())/Downloads/Waifu Output/\(item.fileName!).mov")
+                                        try! FinderItem(at: videoPath).copy(to: "\(NSHomeDirectory())/Downloads/Waifu Output/\(filePath).mov")
                                         
                                         videos.remove(at: videos.firstIndex(of: item)!)
                                         
@@ -728,10 +734,12 @@ struct ProcessingView: View {
                             finderItems.remove(at: finderItems.firstIndex(of: i)!)
                             videos.append(i)
                             
-                            let tmpPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(i.fileName!)/raw"
+                            let filePath = i.relativePath ?? i.fileName!
+                            
+                            let tmpPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw"
                             FinderItem(at: tmpPath).generateDirectory()
                             
-                            try! i.saveAudioTrack(to: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(i.fileName!)/audio.m4a")
+                            try! i.saveAudioTrack(to: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/audio.m4a")
                             
                             var counter = 1
                             
