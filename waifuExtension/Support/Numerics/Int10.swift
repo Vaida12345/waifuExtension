@@ -405,7 +405,6 @@ struct UInt10: Arithmetical {
             
             index -= 1
         }
-        assert(false)
     }
     
     /// Determines whether the `lhs` is equal to the `rhs`.
