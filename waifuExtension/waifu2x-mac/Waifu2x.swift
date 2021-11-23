@@ -31,6 +31,9 @@ public class Waifu2x {
     private var model_pipeline: BackgroundPipeline<MLMultiArray>! = nil
     private var out_pipeline: BackgroundPipeline<MLMultiArray>! = nil
     
+    var didFinishedOneBlock: ((_ finished: Int, _ total: Int)->Void)? = nil
+    var finishedCounter = 0
+    
     public func run(_ image: NSImage!, model: Model!, _ callback: @escaping (String) -> Void = { _ in }) -> NSImage? {
         guard image != nil else {
             return nil
@@ -260,6 +263,11 @@ public class Waifu2x {
                 y_exp += 1
             }
             self.model_pipeline.appendObject(multi)
+            
+            self.finishedCounter += 1
+            if let didFinishedOneBlock = self.didFinishedOneBlock {
+                didFinishedOneBlock(self.finishedCounter, rects.count)
+            }
         })
         
         var counter = 0

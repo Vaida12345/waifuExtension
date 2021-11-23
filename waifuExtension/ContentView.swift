@@ -16,7 +16,7 @@ struct ContentView: View {
     @State var modelUsed: Model? = nil
     var background = DispatchQueue(label: "Background")
     var pdfbackground = DispatchQueue(label: "PDF Background")
-    @State var chosenScaleLevel: Int = 2
+    @State var chosenScaleLevel: Int = 1
     @State var allowParallelExecution: Bool = true
     
     var body: some View {
@@ -243,7 +243,7 @@ struct ConfigurationView: View {
     let noiceLevels: [String] = ["0", "1", "2", "3"]
     @State var chosenNoiceLevel = "3"
     
-    let scaleLevels: [Int] = [Int](0...5).map({ pow(2, $0) })
+    let scaleLevels: [Int] = [Int](0...5)
     
     @State var isShowingStyleHint: Bool = false
     @State var isShowingNoiceHint: Bool = false
@@ -321,9 +321,9 @@ struct ConfigurationView: View {
                         
                     }
                     
-                    Menu(chosenScaleLevel.description) {
+                    Menu(pow(2, chosenScaleLevel).description) {
                         ForEach(scaleLevels, id: \.self) { item in
-                            Button(item.description) {
+                            Button(pow(2, item).description) {
                                 chosenScaleLevel = item
                             }
                         }
@@ -418,6 +418,7 @@ struct ProcessingView: View {
     @State var currentProcessingItemsCount: Int = 0
     @State var timer = Timer.publish(every: 1, on: .current, in: .common).autoconnect()
     @State var isFinished: Bool = false
+    @State var progress: Double = 0.0
     
     var body: some View {
         VStack {
@@ -569,7 +570,14 @@ struct ProcessingView: View {
             
             ProgressView(value: {()->Double in
                 guard !finderItems.isEmpty else { return 1 }
-                return Double(processedItems.count) / Double(finderItems.count)
+                let factor: Int
+                if chosenScaleLevel > 1 {
+                    factor = chosenScaleLevel
+                } else {
+                    factor = 1
+                }
+                
+                return progress / Double(finderItems.count * factor)
             }())
                 .padding([.bottom])
             
@@ -619,12 +627,16 @@ struct ProcessingView: View {
                     
                     guard var image = i.image else { return }
                     
+                    let waifu2x = Waifu2x()
+                    waifu2x.didFinishedOneBlock = { finished, total in
+                        progress += 1 / Double(total)
+                    }
                     if chosenScaleLevel > 2 {
                         for _ in 1...(chosenScaleLevel / 2) {
-                            image = Waifu2x().run(image, model: modelUsed!)!.reload()
+                            image = waifu2x.run(image, model: modelUsed!)!.reload()
                         }
                     } else {
-                        image = Waifu2x().run(image, model: modelUsed!)!
+                        image = waifu2x.run(image, model: modelUsed!)!
                     }
                     
                     let finderItem = FinderItem(at: NSHomeDirectory() + "/Downloads/Waifu Output/\(i.relativePath ?? i.fileName! + ".png")")
@@ -642,7 +654,6 @@ struct ProcessingView: View {
                         background.suspend()
                         isPaused = true
                         isFinished = true
-                        
                     }
                 }
                 
