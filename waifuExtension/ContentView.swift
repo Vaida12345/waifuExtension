@@ -370,7 +370,7 @@ struct ConfigurationView: View {
                     isShown = false
                     
                     //change here
-                    let modelName = (chosenScaleLevel == 1 ? "" : "up_") + "\(chosenStyle)_noise\(chosenNoiceLevel)\(chosenScaleLevel == 1 ? "" : "_scale2x")_model"
+                    let modelName = (chosenScaleLevel == 0 ? "" : "up_") + "\(chosenStyle)_noise\(chosenNoiceLevel)\(chosenScaleLevel == 0 ? "" : "_scale2x")_model"
                     
                     self.modelUsed = Model(rawValue: modelName)!
                     
