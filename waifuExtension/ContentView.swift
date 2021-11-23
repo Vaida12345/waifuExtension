@@ -529,7 +529,7 @@ struct ProcessingView: View {
                     .padding(.trailing)
                     
                     Button("Show in Finder") {
-                        _ = shell(["open /Users/vaida/Downloads/Waifu\\ Output"])
+                        _ = shell(["open \(NSHomeDirectory())/Downloads/Waifu\\ Output"])
                     }
                     .padding(.trailing)
                     
@@ -549,7 +549,7 @@ struct ProcessingView: View {
                     DispatchQueue.concurrentPerform(iterations: finderItems.count) { i in
                         let i = finderItems[i]
                         
-                        background.async {
+                        DispatchQueue.main.async {
                             currentProcessingItemsCount += 1
                         }
                         
@@ -563,14 +563,14 @@ struct ProcessingView: View {
                             image = Waifu2x().run(image, model: modelUsed!)!
                         }
                         
-                        let finderItem = FinderItem(at: "/Users/vaida/Downloads/Waifu Output/\(i.relativePath ?? i.fileName! + ".png")")
+                        let finderItem = FinderItem(at: NSHomeDirectory() + "/Downloads/Waifu Output/\(i.relativePath ?? i.fileName! + ".png")")
                         finderItem.generateDirectory()
-                        image.write(to: "/Users/vaida/Downloads/Waifu Output/\(i.relativePath ?? i.fileName! + ".png")")
+                        image.write(to: NSHomeDirectory() + "/Downloads/Waifu Output/\(i.relativePath ?? i.fileName! + ".png")")
                         
                         processedItems.append(i)
                         currentTimeTaken = 0
                         
-                        background.async {
+                        DispatchQueue.main.async {
                             currentProcessingItemsCount -= 1
                         }
                         
@@ -578,6 +578,7 @@ struct ProcessingView: View {
                             background.suspend()
                             isPaused = true
                             isFinished = true
+                            
                         }
                         
                     }
@@ -671,7 +672,7 @@ struct ProcessingPDFView: View {
                 Spacer()
                 
                 Button("Show in Finder") {
-                    _ = shell(["open /Users/vaida/Downloads/PDF\\ output"])
+                    _ = shell(["open \(NSHomeDirectory())/Downloads/PDF\\ output"])
                 }
                 .padding(.trailing)
                 
@@ -687,7 +688,7 @@ struct ProcessingPDFView: View {
         .onAppear {
             
             var counter = 0
-            FinderItem(at: "/Users/vaida/Downloads/Waifu Output").iteratedOver { child in
+            FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output").iteratedOver { child in
                 guard child.image != nil else { return }
                 counter += 1
             }
@@ -695,7 +696,7 @@ struct ProcessingPDFView: View {
             finderItemsCount = counter
             
             background.async {
-                FinderItem(at: "/Users/vaida/Downloads/Waifu Output").iteratedOver { child in
+                FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output").iteratedOver { child in
                     guard child.isDirectory else { return }
                     
                     FinderItem.createPDF(fromFolder: child) { item in

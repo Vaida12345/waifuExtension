@@ -172,11 +172,8 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     
     /// Generates the desired folders at the path.
     ///
-    /// - Precondition: The `path` needs to be begin with `/Users/vaida/`.
-    ///
     /// - Note: This function also generates all the folders containing the final folder.
     func generateDirectory() {
-        precondition(self.path.contains("/Users/vaida/"))
         var folders = self.pathArray
         if folders.last!.contains(".") { folders.removeLast() }
         
