@@ -431,11 +431,12 @@ struct ProcessingView: View {
                         Text("Processing:")
                     }
                     
-                    HStack {
-                        Spacer()
-                        Text("Time Spent:")
+                    if !allowParallelExecution {
+                        HStack {
+                            Spacer()
+                            Text("Time Spent:")
+                        }
                     }
-                    
                     HStack {
                         Spacer()
                         Text("ML Model:")
@@ -482,10 +483,12 @@ struct ProcessingView: View {
                         Spacer()
                     }
                     
-                    HStack {
-                        Text(currentTimeTaken.expressedAsTime())
-                        
-                        Spacer()
+                    if !allowParallelExecution {
+                        HStack {
+                            Text(currentTimeTaken.expressedAsTime())
+                            
+                            Spacer()
+                        }
                     }
                     
                     HStack {
