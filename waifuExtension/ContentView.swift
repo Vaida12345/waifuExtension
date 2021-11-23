@@ -549,7 +549,10 @@ struct ProcessingView: View {
                     DispatchQueue.concurrentPerform(iterations: finderItems.count) { i in
                         let i = finderItems[i]
                         
-                        currentProcessingItemsCount += 1
+                        DispatchQueue.main.async {
+                            currentProcessingItemsCount += 1
+                        }
+                        
                         guard var image = i.image else { return }
                         
                         if chosenScaleLevel > 2 {
@@ -564,10 +567,12 @@ struct ProcessingView: View {
                         finderItem.generateDirectory()
                         image.write(to: "/Users/vaida/Downloads/Waifu Output/\(i.relativePath ?? i.fileName! + ".png")")
                         
-                        currentProcessingItemsCount -= 1
-                        
                         processedItems.append(i)
                         currentTimeTaken = 0
+                        
+                        DispatchQueue.main.async {
+                            currentProcessingItemsCount -= 1
+                        }
                         
                         if processedItems.count == finderItems.count {
                             background.suspend()
@@ -575,10 +580,6 @@ struct ProcessingView: View {
                             isFinished = true
                         }
                         
-                        // when finished
-                        DispatchQueue.main.async {
-                            
-                        }
                     }
                 }
             }
