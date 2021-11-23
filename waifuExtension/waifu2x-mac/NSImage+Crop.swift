@@ -13,8 +13,11 @@ extension NSImage {
     
     public func crop(rects: [CGRect]) -> [NSImage] {
         var result: [NSImage] = []
-        for rect in rects {
+        var rectIndex = 0
+        while rectIndex < rects.count {
+        let rect = rects[rectIndex]
             result.append(crop(rect: rect))
+            rectIndex += 1
         }
         return result
     }

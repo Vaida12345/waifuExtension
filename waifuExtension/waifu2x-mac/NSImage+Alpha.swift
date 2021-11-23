@@ -43,14 +43,20 @@ extension NSImage {
             alphaNonTyped(&data)
         } else if bits == 16 {
             let typed: UnsafeMutablePointer<UInt16> = alphaTyped(bits: 16, zero: 0)
-            for i in 0 ..< data.count {
+            var i = 0
+            while i < data.count {
                 data[i] = UInt8(typed[i * 4 + 3] >> 8)
+                
+                i += 1
             }
             typed.deallocate()
         } else if bits == 32 {
             let typed: UnsafeMutablePointer<UInt32> = alphaTyped(bits: 32, zero: 0)
-            for i in 0 ..< data.count {
+            var i = 0
+            while i < data.count {
                 data[i] = UInt8(typed[i * 4 + 3] >> 24)
+                
+                i += 1
             }
             typed.deallocate()
         }

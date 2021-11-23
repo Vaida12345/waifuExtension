@@ -131,15 +131,27 @@ class Bicubic {
         let outh = Int(Float(height) * scale)
         let outp = outw * channels
         var out = [UInt8](repeating: 0, count: outw * outh * channels)
-        for y in 0 ..< outh {
+        
+        var y = 0
+        while y < outh {
             let v = Float(y) / Float(outh - 1)
-            for x in 0 ..< outw {
-                for c in 0 ..< channels {
+            
+            var x = 0
+            while x < outw {
+                
+                var c = 0
+                while c < channels {
                     let u = Float(x) / Float(outw - 1)
                     let sample = sampleBicubic(u: u, v: v, c: c)
                     out[y * outp + x + c] = sample
+                    
+                    c += 1
                 }
+                
+                x += 1
             }
+            
+            y += 1
         }
         return out
     }
