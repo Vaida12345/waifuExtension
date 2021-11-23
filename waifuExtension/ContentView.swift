@@ -228,7 +228,13 @@ struct ConfigurationView: View {
     @Binding var isShown: Bool
     @Binding var isProcessing: Bool
     @Binding var modelUsed: Model?
-    @Binding var chosenScaleLevel: Int
+    @Binding var chosenScaleLevel: Int {
+        didSet {
+            if chosenScaleLevel >= 3 {
+                allowParallelExecution = false
+            }
+        }
+    }
     @Binding var allowParallelExecution: Bool
     
     let styleNames: [String] = ["anime", "photo"]
@@ -238,6 +244,11 @@ struct ConfigurationView: View {
     @State var chosenNoiceLevel = "3"
     
     let scaleLevels: [Int] = [Int](0...5).map({ pow(2, $0) })
+    
+    @State var isShowingStyleHint: Bool = false
+    @State var isShowingNoiceHint: Bool = false
+    @State var isShowingScaleHint: Bool = false
+    @State var isShowingParallelHint: Bool = false
     
     var body: some View {
         VStack {
@@ -250,10 +261,31 @@ struct ConfigurationView: View {
                         Spacer()
                         Text("Style:")
                             .padding(.bottom)
+                            .onHover { bool in
+                                isShowingStyleHint = bool
+                            }
                     }
-                    HStack { Spacer(); Text("Noice Level:") }
-                    HStack { Spacer(); Text("Scale Level:") }
-                    HStack { Spacer(); Text("Allow Parallel Execution:") }
+                    HStack {
+                        Spacer()
+                        Text("Denoise Level:")
+                            .onHover { bool in
+                                isShowingNoiceHint = bool
+                            }
+                    }
+                    HStack {
+                        Spacer()
+                        Text("Scale Level:")
+                            .onHover { bool in
+                                isShowingScaleHint = bool
+                            }
+                    }
+                    HStack {
+                        Spacer()
+                        Text("Allow Parallel Execution:")
+                            .onHover { bool in
+                                isShowingParallelHint = bool
+                            }
+                    }
                 }
                 
                 VStack(spacing: 15) {
@@ -266,6 +298,15 @@ struct ConfigurationView: View {
                         }
                     }
                     .padding(.bottom)
+                    .popover(isPresented: $isShowingStyleHint) {
+                        Text("anime: for illustrations or 2D images or CG")
+                            .padding([.top, .leading, .trailing])
+                            .padding(.bottom, 3)
+                            
+                        Text("photo: for photos of real world or 3D images")
+                            .padding([.leading, .bottom, .trailing])
+                        
+                    }
                     
                     Menu(chosenNoiceLevel.description) {
                         ForEach(noiceLevels, id: \.self) { item in
@@ -273,6 +314,11 @@ struct ConfigurationView: View {
                                 chosenNoiceLevel = item
                             }
                         }
+                    }
+                    .popover(isPresented: $isShowingNoiceHint) {
+                        Text("Denoise could counter the effect due to compressions of JPGs. \nThis is not recommended for PNGs.")
+                            .padding(.all)
+                        
                     }
                     
                     Menu(chosenScaleLevel.description) {
@@ -282,6 +328,11 @@ struct ConfigurationView: View {
                             }
                         }
                     }
+                    .popover(isPresented: $isShowingScaleHint) {
+                        Text("Choose how much you want to scale.")
+                            .padding(.all)
+                        
+                    }
                     
                     Menu(allowParallelExecution.description) {
                         ForEach([true, false], id: \.self) { item in
@@ -289,6 +340,11 @@ struct ConfigurationView: View {
                                 allowParallelExecution = item
                             }
                         }
+                    }
+                    .popover(isPresented: $isShowingParallelHint) {
+                        Text("Parallel execution is recommended to enhance efficiency. \nHowever, the consumption of RAM would increase.")
+                            .padding(.all)
+                        
                     }
                 }
                 
