@@ -875,6 +875,10 @@ extension String {
         return dictionary.keys.contains(self)
     }
     
+    func localized() -> String {
+        return NSLocalizedString(self, comment: "nil")
+    }
+    
     
     /// Extracts digits from a `String`.
     ///
