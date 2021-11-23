@@ -135,7 +135,7 @@ struct welcomeView: View {
                 .scaledToFit()
                 .padding(.all)
                 .frame(width: 100, height: 100, alignment: .center)
-            Text("Drag files or folder \n or \n click to add files.")
+            Text("Drag files or folder \n or \n Click to add files.")
                 .font(.title)
                 .multilineTextAlignment(.center)
                 .padding(.all)
