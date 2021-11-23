@@ -566,6 +566,7 @@ struct ProcessingView: View {
                                 isFinished = true
                             }
                         }
+                        
                     }
                 }
             }
