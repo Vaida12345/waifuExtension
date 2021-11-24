@@ -123,6 +123,11 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         return images
     }
     
+    var frameRate: Float? {
+        guard let value = self.avAsset?.tracks(withMediaType: .video).first else { return nil }
+        return value.nominalFrameRate
+    }
+    
     var firstFrame: NSImage? {
         guard let asset = self.avAsset else { return nil }
         let vidLength: CMTime = asset.duration
@@ -820,6 +825,100 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         }
         
         writeImagesAsMovie(allImages, videoPath: videoPath, videoSize: videoSize, videoFPS: videoFPS)
+    }
+    
+    static func trimVideo(sourceURL: URL, outputURL: URL, statTime:Float, endTime:Float, completion: @escaping (()->()))
+    {
+        let asset = AVAsset(url: sourceURL as URL)
+        let length = Float(asset.duration.value) / Float(asset.duration.timescale)
+        print("video length: \(length) seconds")
+        
+        let start = statTime
+        let end = endTime
+        
+        guard let exportSession = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHighestQuality) else { return }
+        exportSession.outputURL = outputURL
+        exportSession.outputFileType = .mov
+        
+        let startTime = CMTime(seconds: Double(start), preferredTimescale: 1000)
+        let endTime = CMTime(seconds: Double(end), preferredTimescale: 1000)
+        let timeRange = CMTimeRange(start: startTime, end: endTime)
+        
+        if FinderItem(at: outputURL).isExistence {
+            try! FinderItem(at: outputURL).removeFile()
+        }
+        
+        exportSession.timeRange = timeRange
+        exportSession.exportAsynchronously {
+            switch exportSession.status {
+            case .completed:
+                print("exported at \(outputURL)")
+                completion()
+            case .failed:
+                print("failed \(exportSession.error.debugDescription)")
+                
+            case .cancelled:
+                print("cancelled \(exportSession.error.debugDescription)")
+                
+            default: break
+            }
+        }
+    }
+    
+    static func mergeVideos(from arrayVideos: [AVAsset], toPath: String, completion: @escaping (_ urlGet:URL?,_ errorGet:Error?) -> Void) {
+        
+        var atTimeM: CMTime = CMTimeMake(value: 0, timescale: 0)
+        var lastAsset: AVAsset!
+        var completeTrackDuration: CMTime = CMTimeMake(value: 0, timescale: 1)
+        var videoSize: CGSize = CGSize(width: 0.0, height: 0.0)
+        var totalTime : CMTime = CMTimeMake(value: 0, timescale: 0)
+        
+        let mixComposition = AVMutableComposition.init()
+        for videoAsset in arrayVideos {
+            
+            let videoTrack = mixComposition.addMutableTrack(withMediaType: AVMediaType.video, preferredTrackID: Int32(kCMPersistentTrackID_Invalid))
+            do {
+                if videoAsset == arrayVideos.first {
+                    atTimeM = CMTime.zero
+                } else {
+                    atTimeM = totalTime // <-- Use the total time for all the videos seen so far.
+                }
+                try videoTrack?.insertTimeRange(CMTimeRangeMake(start: CMTime.zero, duration: videoAsset.duration),
+                                                of: videoAsset.tracks(withMediaType: AVMediaType.video)[0],
+                                                at: completeTrackDuration)
+                videoSize = (videoTrack?.naturalSize)!
+                
+                
+                
+            } catch let error as NSError {
+                print("error: \(error)")
+            }
+            
+            totalTime = CMTimeAdd(totalTime, videoAsset.duration)
+            
+            
+            
+            completeTrackDuration = CMTimeAdd(completeTrackDuration, videoAsset.duration)
+            lastAsset = videoAsset
+        }
+        
+        let arbitraryVideo = arrayVideos.first!.tracks(withMediaType: .video).first!
+        
+        let mainComposition = AVMutableVideoComposition()
+        mainComposition.frameDuration = CMTimeMake(value: 1, timescale: Int32(arbitraryVideo.nominalFrameRate))
+        mainComposition.renderSize = arbitraryVideo.naturalSize
+        
+        let url = NSURL(fileURLWithPath: toPath)
+        
+        let exporter = AVAssetExportSession(asset: mixComposition, presetName: AVAssetExportPresetHighestQuality)
+        exporter!.outputURL = url as URL
+        exporter!.outputFileType = AVFileType.mov
+        exporter!.shouldOptimizeForNetworkUse = true
+        exporter!.videoComposition = mainComposition
+        exporter!.exportAsynchronously {
+            completion(exporter?.outputURL, exporter?.error)
+        }
+        
     }
 }
 

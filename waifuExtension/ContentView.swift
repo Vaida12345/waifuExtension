@@ -8,8 +8,211 @@
 import SwiftUI
 import AVFoundation
 
+func addItemIfPossible(of item: FinderItem, to finderItems: inout [WorkItem]) {
+    guard !finderItems.contains(item) else { return }
+    
+    if item.isFile {
+        guard item.image != nil || item.avAsset != nil else { return }
+        finderItems.append(WorkItem(at: item, type: item.image != nil ? .image : .video))
+    } else {
+        item.iteratedOver { child in
+            guard !finderItems.contains(child) else { return }
+            guard child.image != nil || child.avAsset != nil else { return }
+            child.relativePath = item.fileName! + "/" + child.relativePath(to: item)!
+            finderItems.append(WorkItem(at: child, type: child.image != nil ? .image : .video))
+        }
+    }
+}
+
+extension Array where Element == WorkItem {
+    
+    func contains(_ finderItem: FinderItem) -> Bool {
+        return self.contains(WorkItem(at: finderItem, type: .image))
+    }
+    
+}
+
+class WorkItem: Equatable, Identifiable {
+    var finderItem: FinderItem
+    var progress: Double
+    var type: ItemType
+    
+    enum ItemType: String {
+        case video, image
+    }
+    
+    enum Status: String {
+        case splittingVideo, generatingImages, savingVideos, mergingVideos, mergingAudio
+    }
+    
+    init(at finderItem: FinderItem, type: ItemType) {
+        self.finderItem = finderItem
+        self.progress = 0
+        self.type = type
+    }
+    
+    static func == (lhs: WorkItem, rhs: WorkItem) -> Bool {
+        lhs.finderItem == rhs.finderItem
+    }
+    
+    func work(chosenScaleLevel: Int, modelUsed: Model, onStatusChanged: @escaping ((_ staus: Status)->()), onChangingProgress: @escaping ((_ progress: Double, _ total: Double) -> ()), completion: @escaping (() -> ())) {
+        print("work submitted with a \(type.rawValue)")
+        
+        if type == .image {
+            guard var image = self.finderItem.image else { return }
+            
+            let waifu2x = Waifu2x()
+            waifu2x.didFinishedOneBlock = { finished, total in
+                self.progress += 1 / Double(total)
+                onChangingProgress(self.progress, Double(total))
+            }
+            
+            if chosenScaleLevel >= 2 {
+                for _ in 1...chosenScaleLevel {
+                    image = waifu2x.run(image, model: modelUsed)!.reload()
+                }
+            } else {
+                image = waifu2x.run(image, model: modelUsed)!
+            }
+            
+            let path: String
+            if let name = self.finderItem.relativePath {
+                path = name[..<name.lastIndex(of: ".")!] + ".png"
+            } else {
+                path = self.finderItem.fileName! + ".png"
+            }
+            
+            let finderItem = FinderItem(at: path)
+            
+            finderItem.generateDirectory()
+            image.write(to: finderItem.path)
+            
+            completion()
+            
+        } else {
+            print("processing video")
+            onStatusChanged(.splittingVideo)
+            
+            guard self.finderItem.avAsset != nil else { return }
+            
+            let filePath = self.finderItem.relativePath ?? self.finderItem.fileName!
+            
+            let tmpPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw"
+            FinderItem(at: tmpPath).generateDirectory()
+            
+            try! self.finderItem.saveAudioTrack(to: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/audio.m4a")
+            let duration = self.finderItem.avAsset!.duration.seconds
+            
+            // split videos
+            var splitVideos: [WorkItem] = []
+            var counter: Double = 0
+            while counter < duration {
+                var sequence = String(Int(counter))
+                while sequence.count <= 5 { sequence.insert("0", at: sequence.startIndex) }
+                let path = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/splitVideo/video \(sequence).mov"
+                FinderItem(at: path).generateDirectory()
+                FinderItem.trimVideo(sourceURL: self.finderItem.url, outputURL: URL(fileURLWithPath: path), statTime: Float(counter), endTime: {()->Float in
+                    if counter + 1 < duration {
+                        return Float(counter + 1)
+                    } else {
+                        return Float(duration)
+                    }
+                }()) {
+                    // generate frames and enlarge
+                    onStatusChanged(.generatingImages)
+                    let item = WorkItem(at: FinderItem(at: path), type: .video)
+                    splitVideos.append(item)
+                    
+                    let rawFramePath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/frames/video \(sequence).mov"
+                    FinderItem(at: rawFramePath + "/frame 1.png").generateDirectory()
+                    
+                    let rawFrames = item.finderItem.frames!
+                    
+                    print("frames: \(rawFrames.count)")
+                    var rawFrameIndex = 1
+                    for i in rawFrames {
+                        print("writting \(rawFramePath)/frame \(rawFrameIndex).png")
+                        var frameSequence = String(rawFrameIndex)
+                        while frameSequence.count <= 5 { frameSequence.insert("0", at: frameSequence.startIndex) }
+                        i.write(to: "\(rawFramePath)/frame \(frameSequence).png")
+                        print("written \(rawFramePath)/frame \(frameSequence).png")
+                        
+                        rawFrameIndex += 1
+                    }
+                    
+                    let frames: [FinderItem] = FinderItem(at: rawFramePath).rawChildren!.sorted(by: { $0.rawPath < $1.rawPath })
+                    
+                    let waifu2x = Waifu2x()
+                    waifu2x.didFinishedOneBlock = { finished, total in
+                        self.progress += 1 / Double(total) / (duration + 1).rounded(.up) / Double(frames.count)
+                        onChangingProgress(self.progress, Double(total) * (duration + 1).rounded(.up) * Double(frames.count))
+                    }
+                    
+                    var frameCounter = 1
+                    
+                    DispatchQueue.concurrentPerform(iterations: frames.count) { index in
+                        var image = frames[index].image!
+                        print(frames[index].path)
+                        
+                        if chosenScaleLevel >= 2 {
+                            for _ in 1...chosenScaleLevel {
+                                image = waifu2x.run(image, model: modelUsed)!.reload()
+                            }
+                        } else {
+                            image = waifu2x.run(image, model: modelUsed)!
+                        }
+                        
+                        var frameSequence = String(frameCounter)
+                        while frameSequence.count <= 5 { frameSequence.insert("0", at: frameSequence.startIndex) }
+                        
+                        let path = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/video \(sequence).mov/frame \(frameCounter).png"
+                        FinderItem(at: path).generateDirectory()
+                        image.write(to: path)
+                        
+                        frameCounter += 1
+                    }
+                    
+                    // enlarged, now save as video
+                    onStatusChanged(.savingVideos)
+                    let path = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo/video \(sequence).mov"
+                    var enlargedFrames: [NSImage] = []
+                    for i in FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/video \(sequence).mov").rawChildren!.sorted(by: { $0.rawPath < $1.rawPath }) {
+                        enlargedFrames.append(i.image!)
+                    }
+                    
+                    try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/video \(sequence).mov").removeFile()
+                    
+                    FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: path, videoSize: enlargedFrames.first!.size, videoFPS: Int32(item.finderItem.frameRate!)) {
+                        
+                        // if all videos are ready, merge video and save
+                        guard splitVideos.count == Int(duration.rounded(.up)) else { return }
+                        onStatusChanged(.mergingVideos)
+                        
+                        let path = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/\(item.finderItem.fileName!).mov"
+                        FinderItem.mergeVideos(from: FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo").rawChildren!.map({ $0.avAsset! }), toPath: path) { urlGet, errorGet in
+                            
+                            // video merged, now merge with audio file
+                            onStatusChanged(.mergingAudio)
+                            FinderItem.mergeVideoWithAudio(videoUrl: URL(fileURLWithPath: path), audioUrl: URL(fileURLWithPath: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/audio.m4a")) { _ in
+                                // audio merged. Finished.
+                                
+                                completion()
+                            } failure: { error in
+                                print(error.debugDescription)
+                            }
+
+                        }
+                    }
+                }
+                
+                counter += 1
+            }
+        }
+    }
+}
+
 struct ContentView: View {
-    @State var finderItems: [FinderItem] = []
+    @State var finderItems: [WorkItem] = []
     @State var isSheetShown: Bool = false
     @State var isProcessing: Bool = false
     @State var isCreatingPDF: Bool = false
@@ -39,19 +242,7 @@ struct ContentView: View {
                         for i in panel.urls {
                             let item = FinderItem(at: i)
                             
-                            guard !finderItems.contains(item) else { return }
-                            
-                            if item.isFile {
-                                guard item.image != nil || item.avAsset != nil else { return }
-                                finderItems.append(item)
-                            } else {
-                                item.iteratedOver { child in
-                                    guard !finderItems.contains(child) else { return }
-                                    guard child.image != nil || child.avAsset != nil else { return }
-                                    child.relativePath = item.fileName! + "/" + child.relativePath(to: item)!
-                                    finderItems.append(child)
-                                }
-                            }
+                            addItemIfPossible(of: item, to: &finderItems)
                         }
                     }
                 }
@@ -89,20 +280,8 @@ struct ContentView: View {
                                 guard let url = URL(dataRepresentation: urlData, relativeTo: nil) else { return }
                                 
                                 let item = FinderItem(at: url)
-                                guard !finderItems.contains(item) else { return }
                                 
-                                if item.isFile {
-                                    guard item.image != nil || item.avAsset != nil else { return }
-                                    finderItems.append(item)
-                                } else {
-                                    item.iteratedOver { child in
-                                        guard !finderItems.contains(child) else { return }
-                                        guard child.image != nil || child.avAsset != nil else { return }
-                                        child.relativePath = item.fileName! + "/" + child.relativePath(to: item)!
-                                        finderItems.append(child)
-                                    }
-                                }
-                                
+                                addItemIfPossible(of: item, to: &finderItems)
                             }
                         }
                         
@@ -121,12 +300,11 @@ struct ContentView: View {
             ProcessingPDFView(isCreatingPDF: $isCreatingPDF, background: $pdfbackground)
         }
     }
-    
 }
 
 struct welcomeView: View {
     
-    @Binding var finderItems: [FinderItem]
+    @Binding var finderItems: [WorkItem]
     
     var body: some View {
         VStack {
@@ -151,17 +329,7 @@ struct welcomeView: View {
                     
                     let item = FinderItem(at: url)
                     
-                    if item.isFile {
-                        guard item.image != nil || item.avAsset != nil else { return }
-                        finderItems.append(item)
-                    } else {
-                        item.iteratedOver { child in
-                            guard child.image != nil || child.avAsset != nil else { return }
-                            child.relativePath = item.fileName! + "/" + child.relativePath(to: item)!
-                            finderItems.append(child)
-                        }
-                    }
-                    
+                    addItemIfPossible(of: item, to: &finderItems)
                 }
             }
             
@@ -174,17 +342,7 @@ struct welcomeView: View {
             if panel.runModal() == .OK {
                 for i in panel.urls {
                     let item = FinderItem(at: i)
-                    
-                    if item.isFile {
-                        guard item.image != nil || item.avAsset != nil else { return }
-                        finderItems.append(item)
-                    } else {
-                        item.iteratedOver { child in
-                            guard child.image != nil || child.avAsset != nil else { return }
-                            child.relativePath = item.fileName! + "/" + child.relativePath(to: item)!
-                            finderItems.append(child)
-                        }
-                    }
+                    addItemIfPossible(of: item, to: &finderItems)
                 }
             }
         }
@@ -194,12 +352,12 @@ struct welcomeView: View {
 
 struct GridItemView: View {
     
-    let item: FinderItem
+    let item: WorkItem
     let geometry: GeometryProxy
-    @Binding var finderItems: [FinderItem]
+    @Binding var finderItems: [WorkItem]
     
     var body: some View {
-        if let image = item.image ?? item.firstFrame {
+        if let image = item.finderItem.image ?? item.finderItem.firstFrame {
             VStack(alignment: .center) {
                 Image(nsImage: image)
                     .resizable()
@@ -207,7 +365,7 @@ struct GridItemView: View {
                     .aspectRatio(contentMode: .fit)
                     .padding([.top, .leading, .trailing])
                 
-                Text(((item.relativePath ?? item.fileName) ?? item.path) + "\n" + "\(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.width) × \(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.height)")
+                Text(((item.finderItem.relativePath ?? item.finderItem.fileName) ?? item.finderItem.path) + "\n" + "\(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.width) × \(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.height)")
                     .multilineTextAlignment(.center)
                     .padding([.leading, .bottom, .trailing])
             }
@@ -225,7 +383,7 @@ struct GridItemView: View {
 
 struct ConfigurationView: View {
     
-    var finderItems: [FinderItem]
+    var finderItems: [WorkItem]
     
     @Binding var isShown: Bool
     @Binding var isProcessing: Bool
@@ -393,7 +551,7 @@ struct ConfigurationView: View {
 struct ProcessingView: View {
     
     @Binding var isProcessing: Bool
-    @Binding var finderItems: [FinderItem]
+    @Binding var finderItems: [WorkItem]
     @Binding var modelUsed: Model?
     @Binding var isSheetShown: Bool
     @Binding var background: DispatchQueue
@@ -401,7 +559,7 @@ struct ProcessingView: View {
     @Binding var isCreatingPDF: Bool
     @Binding var allowParallelExecution: Bool
     
-    @State var processedItems: [FinderItem] = []
+    @State var processedItems: [WorkItem] = []
     @State var currentTimeTaken: Double = 0 // up to 1s
     @State var pastTimeTaken: Double = 0 // up to 1s
     @State var isPaused: Bool = false {
@@ -635,142 +793,32 @@ struct ProcessingView: View {
             .padding(.all)
             .frame(width: 600, height: 350)
             .onAppear {
-                func execute(_ i: FinderItem) {
+                func execute(_ i: WorkItem) {
                     DispatchQueue.main.async {
                         currentProcessingItemsCount += 1
                     }
                     
-                    guard var image = i.image else { return }
-                    
-                    let waifu2x = Waifu2x()
-                    waifu2x.didFinishedOneBlock = { finished, total in
-                        progress += 1 / Double(total)
-                    }
-                    if chosenScaleLevel >= 2 {
-                        for _ in 1...chosenScaleLevel {
-                            image = waifu2x.run(image, model: modelUsed!)!.reload()
-                        }
-                    } else {
-                        image = waifu2x.run(image, model: modelUsed!)!
-                    }
-                    
-                    let path: String
-                    if let name = i.relativePath {
-                        path = name[..<name.lastIndex(of: ".")!] + ".png"
-                    } else {
-                        path = i.fileName! + ".png"
-                    }
-                    
-                    let finderItem: FinderItem
-                    if i.fileName!.contains("{sequence}") {
-                        let name = i.fileName![i.fileName!.index(after: i.fileName!.startIndex)..<i.fileName!.firstIndex(of: "}")!]
-                        let item = videos.filter({ $0.fileName! == name }).first!
+                    i.work(chosenScaleLevel: chosenScaleLevel, modelUsed: modelUsed!) { status in
+                        //TODO: change status here, also check why not processed.
+                        print(status.rawValue)
+                    } onChangingProgress: { progress, total in
+                        self.progress += 1 / total
+                    } completion: {
+                        processedItems.append(i)
+                        currentTimeTaken = 0
                         
-                        let filePath = item.relativePath ?? item.fileName!
-                        
-                        finderItem = FinderItem(at: NSHomeDirectory() + "/Downloads/Waifu Output/tmp/\(filePath)/processed/\(path)")
-                    } else {
-                        finderItem = FinderItem(at: NSHomeDirectory() + "/Downloads/Waifu Output/\(path)")
-                    }
-                    
-                    finderItem.generateDirectory()
-                    image.write(to: finderItem.path)
-                    
-                    processedItems.append(i)
-                    currentTimeTaken = 0
-                    
-                    DispatchQueue.main.async {
-                        currentProcessingItemsCount -= 1
-                    }
-                    
-                    if processedItems.count == finderItems.count {
-                        
-                        background.async {
-                            timer.upstream.connect().cancel()
-                            
-                            if !videos.isEmpty {
-                                isMergingVideo = true
-                                
-                                for item in videos {
-                                    var images: [NSImage] = []
-                                    
-                                    let filePath = item.relativePath ?? item.fileName!
-                                    
-                                    for child in FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed").rawChildren?.sorted(by: { $0.rawPath < $1.rawPath }) {
-                                        images.append(child.image!)
-                                    }
-                                    
-                                    let cgImage = images.first!.cgImage(forProposedRect: nil, context: nil, hints: nil)!
-                                    let videoPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/video.mov"
-                                    FinderItem.convertImageSequenceToVideo(images, videoPath: videoPath, videoSize: CGSize(width: cgImage.width, height: cgImage.height), videoFPS: Int32(item.avAsset!.tracks(withMediaType: .video).first!.nominalFrameRate)) {
-                                        
-                                        FinderItem.mergeVideoWithAudio(videoUrl: URL(fileURLWithPath: videoPath), audioUrl: URL(fileURLWithPath: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/audio.m4a")) { _ in
-                                            
-                                            let outputPath: String
-                                            if filePath.contains(".") {
-                                                outputPath = String(filePath[..<filePath.lastIndex(of: ".")!])
-                                            } else {
-                                                outputPath = filePath
-                                            }
-                                            
-                                            try! FinderItem(at: videoPath).copy(to: "\(NSHomeDirectory())/Downloads/Waifu Output/\(outputPath).mov")
-                                            
-                                            videos.remove(at: videos.firstIndex(of: item)!)
-                                            
-                                            if videos.isEmpty {
-                                                finderItems = []
-                                                try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp").removeFile()
-                                                isMergingVideo = false
-                                                isFinished = true
-                                            }
-                                            
-                                        } failure: { _ in
-                                            
-                                        }
-                                    }
-                                }
-                            } else {
-                                isFinished = true
-                            }
+                        DispatchQueue.main.async {
+                            currentProcessingItemsCount -= 1
                         }
                         
+                        guard processedItems.count == finderItems.count else { return }
+                        
+                        isFinished = true
                     }
+                    
                 }
                 
                 background.async {
-                    if !finderItems.allSatisfy({ $0.image != nil }) {
-                        isCreatingImageSequence = true
-                        
-                        for i in finderItems {
-                            guard i.avAsset != nil else { continue }
-                            finderItems.remove(at: finderItems.firstIndex(of: i)!)
-                            videos.append(i)
-                            
-                            let filePath = i.relativePath ?? i.fileName!
-                            
-                            let tmpPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw"
-                            FinderItem(at: tmpPath).generateDirectory()
-                            
-                            try! i.saveAudioTrack(to: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/audio.m4a")
-                            
-                            var counter = 1
-                            
-                            for ii in i.frames! {
-                                var sequence = String(counter)
-                                while sequence.count <= 5 { sequence.insert("0", at: sequence.startIndex) }
-                                
-                                let path = tmpPath + "/" + "{\(i.fileName!)}{sequence} \(sequence).png"
-                                ii.write(to: path)
-                                finderItems.append(FinderItem(at: path))
-                                
-                                counter += 1
-                            }
-                        }
-                        
-                        currentTimeTaken = 0
-                        isCreatingImageSequence = false
-                    }
-                    
                     if allowParallelExecution {
                         DispatchQueue.concurrentPerform(iterations: finderItems.count) { i in
                             guard !isFinished else { return }
