@@ -757,8 +757,8 @@ struct ProcessingView: View {
             }())
             .popover(isPresented: $isShowProgressDetail) {
                 Text("\(String(format: "%.2f", progress * 100))%")
-                    .padding(.all, 2)
-                    .frame(width: 20)
+                    .padding(.all, 3)
+                    .frame(width: 100)
             }
             .onHover { bool in
                 isShowProgressDetail = bool
