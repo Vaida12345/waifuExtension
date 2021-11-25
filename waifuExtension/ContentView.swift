@@ -37,7 +37,7 @@ extension Array where Element == WorkItem {
     
     //TODO: remember to add isCancelled into onStatusChanged.
     
-    func work(_ chosenScaleLevel: Int, modelUsed: Model, videoSegmentLength: Int = 1, onStatusChanged status: @escaping ((_ status: String)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
+    func work(_ chosenScaleLevel: Int, modelUsed: Model, videoSegmentLength: Int = 10, onStatusChanged status: @escaping ((_ status: String)->()), onStatusProgressChanged: @escaping ((_ progress: Int?, _ total: Int?)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
         
         let images = self.filter({ $0.type == .image })
         let videos = self.filter({ $0.type == .video })
@@ -134,77 +134,88 @@ extension Array where Element == WorkItem {
                             return Float(duration)
                         }
                     }()) { _ in
+                        
+                        onStatusProgressChanged(segmentIndex, Int(duration) / videoSegmentLength)
+                        
                         splitVideo(withIndex: segmentIndex + 1, completion: completion)
                         guard segmentIndex == Int(duration) / videoSegmentLength else { return }
                         completion()
                     }
                 }
                 
+                func generateImagesAndMergeToVideo(segmentsFinderItems: [FinderItem], completion: @escaping (()->())) {
+                    guard !segmentsFinderItems.isEmpty else { return }
+                    
+                    let segmentsFinderItem = segmentsFinderItems.first!
+                    let asset = segmentsFinderItem.avAsset!
+                    let segmentSequence = segmentsFinderItem.fileName!
+                    
+                    let framesToBeProcessed = asset.frames!
+                    var outputFrames: [orderedImages] = []
+                    
+                    DispatchQueue.concurrentPerform(iterations: framesToBeProcessed.count) { frameIndex in
+                        
+                        var currentFrame = framesToBeProcessed[frameIndex]
+                        
+                        let waifu2x = Waifu2x()
+                        waifu2x.didFinishedOneBlock = { total in
+                            currentVideo.progress += 1 / Double(total) / Double(framesToBeProcessed.count) / Double(Int(duration) / videoSegmentLength + 1)
+                            onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / Double(totalItemCounter))
+                        }
+                        
+                        if chosenScaleLevel >= 2 {
+                            for _ in 1...chosenScaleLevel {
+                                currentFrame = waifu2x.run(currentFrame.reload(withIndex: "\(segmentSequence)\(frameIndex)"), model: modelUsed)!
+                            }
+                        } else {
+                            currentFrame = waifu2x.run(currentFrame.reload(withIndex: "\(segmentSequence)\(frameIndex)"), model: modelUsed)!
+                        }
+                        
+                        outputFrames.append(orderedImages(image: currentFrame, index: frameIndex))
+                    }
+                    
+                    let enlargedFrames = outputFrames.sorted(by: { $0.index < $1.index }).map({ $0.image })
+                    
+                    // status: merge videos
+                    
+                    let mergedVideoSegmentPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo/\(segmentSequence).mov"
+                    FinderItem(at: mergedVideoSegmentPath).generateDirectory()
+                    
+                    let videoSize = NSSize(width: enlargedFrames.first!.cgImage(forProposedRect: nil, context: nil, hints: nil)!.width, height: enlargedFrames.first!.cgImage(forProposedRect: nil, context: nil, hints: nil)!.height)
+                    
+                    FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: mergedVideoSegmentPath, videoSize: videoSize, videoFPS: Int32(currentVideo.finderItem.frameRate!)) {
+                        finishedSegmentsCounter += 1
+                        onStatusProgressChanged(finishedItemsCounter,  Int((duration / Double(videoSegmentLength)).rounded(.up)))
+                        guard Int(finishedSegmentsCounter) == Int((duration / Double(videoSegmentLength)).rounded(.up)) else { generateImagesAndMergeToVideo(segmentsFinderItems: Array<FinderItem>(segmentsFinderItems.dropFirst()), completion: completion); return }
+                        
+                        completion()
+                    }
+                }
+                
                 splitVideo(withIndex: 0) {
+                    
+                    onStatusProgressChanged(nil, nil)
                     
                     status("generating images segments for \(filePath)")
                     
                     //status: generating video segment frames
     
-                    for segmentsFinderItem in FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/splitVideo").children! {
+                    generateImagesAndMergeToVideo(segmentsFinderItems: FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/splitVideo").children!) {
+                        status("merging videos for \(filePath)")
                         
-                        let asset = segmentsFinderItem.avAsset!
-                        let segmentSequence = segmentsFinderItem.fileName!
+                        let outputPath = "\(NSHomeDirectory())/Downloads/Waifu Output/\(currentVideo.finderItem.fileName!).mov"
                         
-                        let framesToBeProcessed = asset.frames!
-                        var outputFrames: [orderedImages] = []
-                        
-                        DispatchQueue.concurrentPerform(iterations: framesToBeProcessed.count) { frameIndex in
+                        FinderItem.mergeVideos(from: FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo").children!.map({ $0.avAsset! }), toPath: outputPath) { urlGet, errorGet in
                             
-                            var currentFrame = framesToBeProcessed[frameIndex]
+                            status("merging video and audio for \(filePath)")
                             
-                            let waifu2x = Waifu2x()
-                            waifu2x.didFinishedOneBlock = { total in
-                                currentVideo.progress += 1 / Double(total) / Double(framesToBeProcessed.count) / Double(Int(duration) / videoSegmentLength + 1)
-                                onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / Double(totalItemCounter))
+                            FinderItem.mergeVideoWithAudio(videoUrl: URL(fileURLWithPath: outputPath), audioUrl: URL(fileURLWithPath: audioPath)) { _ in
+                                status("Completed")
+                                completion()
+                            } failure: { error in
+                                print(error.debugDescription)
                             }
                             
-                            if chosenScaleLevel >= 2 {
-                                for _ in 1...chosenScaleLevel {
-                                    currentFrame = waifu2x.run(currentFrame.reload(withIndex: "\(segmentSequence)\(frameIndex)"), model: modelUsed)!
-                                }
-                            } else {
-                                currentFrame = waifu2x.run(currentFrame.reload(withIndex: "\(segmentSequence)\(frameIndex)"), model: modelUsed)!
-                            }
-                            
-                            outputFrames.append(orderedImages(image: currentFrame, index: frameIndex))
-                        }
-                        
-                        let enlargedFrames = outputFrames.sorted(by: { $0.index < $1.index }).map({ $0.image })
-                        
-                        // status: merge videos
-                        
-                        let mergedVideoSegmentPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo/\(segmentSequence).mov"
-                        FinderItem(at: mergedVideoSegmentPath).generateDirectory()
-                        
-                        let videoSize = NSSize(width: enlargedFrames.first!.cgImage(forProposedRect: nil, context: nil, hints: nil)!.width, height: enlargedFrames.first!.cgImage(forProposedRect: nil, context: nil, hints: nil)!.height)
-                        
-                        FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: mergedVideoSegmentPath, videoSize: videoSize, videoFPS: Int32(currentVideo.finderItem.frameRate!)) {
-                            finishedSegmentsCounter += 1
-                            
-                            guard Int(finishedSegmentsCounter) == Int((duration / Double(videoSegmentLength)).rounded(.up)) else { return }
-                            
-                            status("merging videos for \(filePath)")
-                            
-                            let outputPath = "\(NSHomeDirectory())/Downloads/Waifu Output/\(currentVideo.finderItem.fileName!).mov"
-                            
-                            FinderItem.mergeVideos(from: FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo").children!.map({ $0.avAsset! }), toPath: outputPath) { urlGet, errorGet in
-                                
-                                status("merging video and audio for \(filePath)")
-                                
-                                FinderItem.mergeVideoWithAudio(videoUrl: URL(fileURLWithPath: outputPath), audioUrl: URL(fileURLWithPath: audioPath)) { _ in
-                                    status("Completed")
-                                    completion()
-                                } failure: { error in
-                                    print(error.debugDescription)
-                                }
-                                
-                            }
                         }
                     }
                 }
@@ -621,6 +632,8 @@ struct ProcessingView: View {
     @State var isMergingVideo: Bool = false
     @State var videos: [FinderItem] = []
     @State var status: String = "Loading..."
+    @State var statusProgress: (progress: Int, total: Int)? = nil
+    @State var isShowProgressDetail = false
     
     var body: some View {
         VStack {
@@ -628,20 +641,30 @@ struct ProcessingView: View {
             
             HStack {
                 VStack(spacing: 10) {
-                    HStack {
-                        Spacer()
-                        Text("Status:")
-                    }
-                    
-                    if !allowParallelExecution {
+                    VStack(spacing: 10) {
                         HStack {
                             Spacer()
-                            Text("Time Spent:")
+                            Text("Status:")
                         }
-                    }
-                    HStack {
-                        Spacer()
-                        Text("ML Model:")
+                        
+                        if statusProgress != nil {
+                            HStack {
+                                Spacer()
+                                Text("progress:")
+                            }
+                        }
+                        
+                        if !allowParallelExecution {
+                            HStack {
+                                Spacer()
+                                Text("Time Spent:")
+                            }
+                        }
+                        
+                        HStack {
+                            Spacer()
+                            Text("ML Model:")
+                        }
                     }
                     
                     Spacer()
@@ -675,23 +698,33 @@ struct ProcessingView: View {
                 }
                 
                 VStack(spacing: 10) {
-                    HStack {
-                        Text(status)
-                        
-                        Spacer()
-                    }
-                    
-                    if !allowParallelExecution {
+                    VStack(spacing: 10) {
                         HStack {
-                            Text(currentTimeTaken.expressedAsTime())
+                            Text(status)
                             
                             Spacer()
                         }
-                    }
-                    
-                    HStack {
-                        Text(modelUsed!.rawValue)
-                        Spacer()
+                        
+                        if let statusProgress = statusProgress {
+                            HStack {
+                                Text("\(statusProgress.progress) / \(statusProgress.total)")
+                                
+                                Spacer()
+                            }
+                        }
+                        
+                        if !allowParallelExecution {
+                            HStack {
+                                Text(currentTimeTaken.expressedAsTime())
+                                
+                                Spacer()
+                            }
+                        }
+                        
+                        HStack {
+                            Text(modelUsed!.rawValue)
+                            Spacer()
+                        }
                     }
                     
                     Spacer()
@@ -768,6 +801,7 @@ struct ProcessingView: View {
                     Spacer()
                 }
             }
+            .frame(width: 200)
             
             Spacer()
             
@@ -783,7 +817,13 @@ struct ProcessingView: View {
                 
                 return progress / Double(factor)
             }())
-                .padding([.bottom])
+            .popover(isPresented: $isShowProgressDetail) {
+                Text("\((progress * 100).rounded(toDigit: 2))%")
+            }
+            .onHover { bool in
+                isShowProgressDetail = bool
+            }
+            .padding([.bottom])
             
             Spacer()
             
@@ -828,6 +868,12 @@ struct ProcessingView: View {
                 background.async {
                     self.finderItems.work(self.chosenScaleLevel, modelUsed: self.modelUsed!) { status in
                         self.status = status
+                    } onStatusProgressChanged: { progress,total in
+                        if progress != nil {
+                            self.statusProgress = (progress!, total!)
+                        } else {
+                            self.statusProgress = nil
+                        }
                     } onProgressChanged: { progress in
                         self.progress = progress
                     } didFinishOneItem: { finished,total in
