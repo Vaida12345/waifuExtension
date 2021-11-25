@@ -869,6 +869,8 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     /// from https://stackoverflow.com/questions/38972829/swift-merge-avasset-videos-array
     static func mergeVideos(from arrayVideos: [AVAsset], toPath: String, completion: @escaping (_ urlGet:URL?,_ errorGet:Error?) -> Void) {
         
+        try! FinderItem(at: toPath).removeFile()
+        
         func videoCompositionInstruction(_ track: AVCompositionTrack, asset: AVAsset)
         -> AVMutableVideoCompositionLayerInstruction {
             let instruction = AVMutableVideoCompositionLayerInstruction(assetTrack: track)
@@ -878,12 +880,11 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         }
 
         
-        var atTimeM: CMTime = CMTimeMake(value: 0, timescale: 0)
-        var lastAsset: AVAsset!
+        var atTimeM: CMTime = CMTimeMake(value: 0, timescale: 600)
         var layerInstructionsArray = [AVVideoCompositionLayerInstruction]()
-        var completeTrackDuration: CMTime = CMTimeMake(value: 0, timescale: 1)
+        var completeTrackDuration: CMTime = CMTimeMake(value: 0, timescale: 600 )
         var videoSize: CGSize = CGSize(width: 0.0, height: 0.0)
-        var totalTime : CMTime = CMTimeMake(value: 0, timescale: 0)
+        var totalTime : CMTime = CMTimeMake(value: 0, timescale: 600)
         
         let mixComposition = AVMutableComposition.init()
         for videoAsset in arrayVideos {
@@ -897,7 +898,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
                     atTimeM = totalTime // <-- Use the total time for all the videos seen so far.
                 }
                 try videoTrack!.insertTimeRange(CMTimeRangeMake(start: CMTime.zero, duration: videoAsset.duration),
-                                                of: videoAsset.tracks(withMediaType: AVMediaType.video)[0],
+                                                of: videoAsset.tracks(withMediaType: AVMediaType.video).first!,
                                                 at: atTimeM)
                 videoSize = (videoTrack!.naturalSize)
 
@@ -909,11 +910,11 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
             completeTrackDuration = CMTimeAdd(completeTrackDuration, videoAsset.duration)
             
             let firstInstruction = videoCompositionInstruction(videoTrack!, asset: videoAsset)
-            firstInstruction.setOpacity(0.0, at: videoAsset.duration)
+            firstInstruction.setOpacity(0.0, at: totalTime) // hide the video after its duration.
             
             layerInstructionsArray.append(firstInstruction)
-            lastAsset = videoAsset
         }
+        
         let arbitraryVideo = arrayVideos.first!.tracks(withMediaType: .video).first!
         
         let mainInstruction = AVMutableVideoCompositionInstruction()
