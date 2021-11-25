@@ -8,6 +8,11 @@
 import SwiftUI
 import AVFoundation
 
+struct orderedImages {
+    var image: NSImage
+    var index: Int
+}
+
 func addItemIfPossible(of item: FinderItem, to finderItems: inout [WorkItem]) {
     guard !finderItems.contains(item) else { return }
     
@@ -135,6 +140,8 @@ class WorkItem: Equatable, Identifiable {
                     
                     var frameCounter = 1
                     
+                    var enlargedImages: [orderedImages] = []
+                    
                     DispatchQueue.concurrentPerform(iterations: frames.count) { index in
                         var image = frames[index]
                         
@@ -155,9 +162,7 @@ class WorkItem: Equatable, Identifiable {
                         var frameSequence = String(frameCounter)
                         while frameSequence.count <= 5 { frameSequence.insert("0", at: frameSequence.startIndex) }
                         
-                        let path = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/video \(sequence).mov/frame \(frameSequence).png"
-                        FinderItem(at: path).generateDirectory()
-                        image.write(to: path)
+                        enlargedImages.append(orderedImages(image: image, index: index))
                         
                         frameCounter += 1
                     }
@@ -165,12 +170,8 @@ class WorkItem: Equatable, Identifiable {
                     // enlarged, now save as video
                     onStatusChanged(.savingVideos)
                     let path = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo/video \(sequence).mov"
-                    var enlargedFrames: [NSImage] = []
-                    for i in FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/video \(sequence).mov").rawChildren!.sorted(by: { $0.rawPath < $1.rawPath }) {
-                        enlargedFrames.append(i.image!)
-                    }
+                    let enlargedFrames: [NSImage] = enlargedImages.sorted(by: { $0.index < $1.index }).map{ $0.image }
                     
-                    FinderItem(at: path).generateDirectory()
                     print("enlarged frames number: \(enlargedFrames.count)")
                     
 //                    try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/video \(sequence).mov").removeFile()
@@ -193,7 +194,8 @@ class WorkItem: Equatable, Identifiable {
                             FinderItem.mergeVideoWithAudio(videoUrl: URL(fileURLWithPath: path), audioUrl: URL(fileURLWithPath: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/audio.m4a")) { _ in
                                 // audio merged. Finished.
                                 
-                                try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/\(item.finderItem.fileName!).mov").copy(to: "\(NSHomeDirectory())/Downloads/Waifu Output/\(item.finderItem.fileName!).mov")
+                                try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/\(self.finderItem.fileName!).mov").copy(to: "\(NSHomeDirectory())/Downloads/Waifu Output/\(item.finderItem.fileName!).mov")
+                                try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp").removeFile()
                                 
                                 completion()
                             } failure: { error in

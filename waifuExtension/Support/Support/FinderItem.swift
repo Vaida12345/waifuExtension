@@ -674,6 +674,8 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     /// from https://stackoverflow.com/questions/3741323/how-do-i-export-uiimage-array-as-a-movie/3742212#36297656
     static func convertImageSequenceToVideo(_ allImages: [NSImage], videoPath: String, videoSize: CGSize, videoFPS: Int32, completion: (()->Void)? = nil) {
         
+        FinderItem(at: videoPath).generateDirectory()
+        
         func writeImagesAsMovie(_ allImages: [NSImage], videoPath: String, videoSize: CGSize, videoFPS: Int32) {
             // Create AVAssetWriter to write video
             guard let assetWriter = createAssetWriter(videoPath, size: videoSize) else {
