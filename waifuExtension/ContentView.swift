@@ -36,7 +36,7 @@ extension Array where Element == WorkItem {
     }
     
     /// note: remember to add isCancelled into onStatusChanged.
-    func work(_ chosenScaleLevel: Int, modelUsed: Model, onStatusChanged status: @escaping ((_ status: String)->()), onProgressChanged: @escaping ((_ delta: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
+    func work(_ chosenScaleLevel: Int, modelUsed: Model, onStatusChanged status: @escaping ((_ status: String)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
         
         let images = self.filter({ $0.type == .image })
         let videos = self.filter({ $0.type == .video })
@@ -60,8 +60,9 @@ extension Array where Element == WorkItem {
                 var image = currentImage.finderItem.image!
                 
                 let waifu2x = Waifu2x()
-                waifu2x.didFinishedOneBlock = { finished, total in
-                    onProgressChanged(1 / Double(total) / Double(totalItemCounter))
+                waifu2x.didFinishedOneBlock = { total in
+                    currentImage.progress += 1 / Double(total)
+                    onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / Double(totalItemCounter))
                 }
                 
                 if chosenScaleLevel >= 2 {
@@ -130,10 +131,10 @@ class WorkItem: Equatable, Identifiable {
             guard var image = self.finderItem.image else { return }
             
             let waifu2x = Waifu2x()
-            waifu2x.didFinishedOneBlock = { finished, total in
-                self.progress += 1 / Double(total)
-                onChangingProgress(self.progress, Double(total))
-            }
+//            waifu2x.didFinishedOneBlock = { finished, total in
+//                self.progress += 1 / Double(total)
+//                onChangingProgress(self.progress, Double(total))
+//            }
             
             if chosenScaleLevel >= 2 {
                 for _ in 1...chosenScaleLevel {
@@ -209,10 +210,10 @@ class WorkItem: Equatable, Identifiable {
                         var image = frames[index]
                         
                         let waifu2x = Waifu2x()
-                        waifu2x.didFinishedOneBlock = { finished, total in
-                            self.progress += 1 / Double(total) / (duration + 1).rounded(.up) / Double(frames.count)
-                            onChangingProgress(self.progress, Double(total) * (duration + 1).rounded(.up) * Double(frames.count))
-                        }
+//                        waifu2x.didFinishedOneBlock = { finished, total in
+//                            self.progress += 1 / Double(total) / (duration + 1).rounded(.up) / Double(frames.count)
+//                            onChangingProgress(self.progress, Double(total) * (duration + 1).rounded(.up) * Double(frames.count))
+//                        }
                         
                         if chosenScaleLevel >= 2 {
                             for _ in 1...chosenScaleLevel {
@@ -813,7 +814,7 @@ struct ProcessingView: View {
                     factor = 1
                 }
                 
-                return progress / Double(finderItems.count * factor)
+                return progress / Double(factor)
             }())
                 .padding([.bottom])
             
@@ -885,7 +886,7 @@ struct ProcessingView: View {
                     self.finderItems.work(self.chosenScaleLevel, modelUsed: self.modelUsed!) { status in
                         self.status = status
                     } onProgressChanged: { progress in
-                        self.progress += progress
+                        self.progress = progress
                     } didFinishOneItem: { finished,total in
                         self.processedItemsCounter = finished
                     } completion: {
