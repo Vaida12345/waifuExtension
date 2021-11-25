@@ -47,9 +47,16 @@ extension Array where Element == WorkItem {
             var concurrentProcessingImagesCount = 0
             
             DispatchQueue.concurrentPerform(iterations: images.count) { imageIndex in
+                backgroundQueue.async {
+                    concurrentProcessingImagesCount += 1
+                }
+                
                 let currentImage = images[imageIndex]
                 
                 
+                backgroundQueue.async {
+                    concurrentProcessingImagesCount -= 1
+                }
             }
             
         }
