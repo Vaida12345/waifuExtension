@@ -35,7 +35,8 @@ extension Array where Element == WorkItem {
         return self.contains(WorkItem(at: finderItem, type: .image))
     }
     
-    /// note: remember to add isCancelled into onStatusChanged.
+    //TODO: remember to add isCancelled into onStatusChanged.
+    
     func work(_ chosenScaleLevel: Int, modelUsed: Model, videoSegmentLength: Int = 1, onStatusChanged status: @escaping ((_ status: String)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
         
         let images = self.filter({ $0.type == .image })
@@ -112,24 +113,43 @@ extension Array where Element == WorkItem {
                 let audioPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/audio.m4a"
                 try! currentVideo.finderItem.saveAudioTrack(to: audioPath)
                 
-                status("generating video for \(filePath)")
+                status("generating video segments for \(filePath)")
                 
                 let duration = currentVideo.finderItem.avAsset!.duration.seconds
                 
-                DispatchQueue.concurrentPerform(iterations: Int(duration) / videoSegmentLength + 1) { segmentIndex in
+                func splitVideo(withIndex segmentIndex: Int, completion: @escaping (()->())) {
+                    
+                    guard segmentIndex <= Int(duration) / videoSegmentLength else { return }
+                    
                     var segmentSequence = String(segmentIndex)
                     while segmentSequence.count <= 5 { segmentSequence.insert("0", at: segmentSequence.startIndex) }
                     
                     let path = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/splitVideo/video \(segmentSequence).mov"
                     FinderItem(at: path).generateDirectory()
+                    
                     FinderItem.trimVideo(sourceURL: currentVideo.finderItem.url, outputURL: URL(fileURLWithPath: path), statTime: Float(segmentIndex * videoSegmentLength), endTime: {()->Float in
                         if Double(segmentIndex * videoSegmentLength + videoSegmentLength) < duration {
                             return Float(segmentIndex * videoSegmentLength + videoSegmentLength)
                         } else {
                             return Float(duration)
                         }
-                    }()) { asset in
-                        // status: generating video segment frames
+                    }()) { _ in
+                        splitVideo(withIndex: segmentIndex + 1, completion: completion)
+                        guard segmentIndex == Int(duration) / videoSegmentLength else { return }
+                        completion()
+                    }
+                }
+                
+                splitVideo(withIndex: 0) {
+                    
+                    status("generating images segments for \(filePath)")
+                    
+                    //status: generating video segment frames
+    
+                    for segmentsFinderItem in FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/splitVideo").children! {
+                        
+                        let asset = segmentsFinderItem.avAsset!
+                        let segmentSequence = segmentsFinderItem.fileName!
                         
                         let framesToBeProcessed = asset.frames!
                         var outputFrames: [orderedImages] = []
@@ -146,10 +166,10 @@ extension Array where Element == WorkItem {
                             
                             if chosenScaleLevel >= 2 {
                                 for _ in 1...chosenScaleLevel {
-                                    currentFrame = waifu2x.run(currentFrame.reload(withIndex: segmentIndex * 100000 + frameIndex), model: modelUsed)!
+                                    currentFrame = waifu2x.run(currentFrame.reload(withIndex: "\(segmentSequence)\(frameIndex)"), model: modelUsed)!
                                 }
                             } else {
-                                currentFrame = waifu2x.run(currentFrame.reload(withIndex: segmentIndex * 100000 + frameIndex), model: modelUsed)!
+                                currentFrame = waifu2x.run(currentFrame.reload(withIndex: "\(segmentSequence)\(frameIndex)"), model: modelUsed)!
                             }
                             
                             outputFrames.append(orderedImages(image: currentFrame, index: frameIndex))
@@ -159,7 +179,7 @@ extension Array where Element == WorkItem {
                         
                         // status: merge videos
                         
-                        let mergedVideoSegmentPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo/video \(segmentSequence).mov"
+                        let mergedVideoSegmentPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo/\(segmentSequence).mov"
                         FinderItem(at: mergedVideoSegmentPath).generateDirectory()
                         
                         let videoSize = NSSize(width: enlargedFrames.first!.cgImage(forProposedRect: nil, context: nil, hints: nil)!.width, height: enlargedFrames.first!.cgImage(forProposedRect: nil, context: nil, hints: nil)!.height)
@@ -183,11 +203,10 @@ extension Array where Element == WorkItem {
                                 } failure: { error in
                                     print(error.debugDescription)
                                 }
-
+                                
                             }
                         }
                     }
-                    
                 }
                 
             }
