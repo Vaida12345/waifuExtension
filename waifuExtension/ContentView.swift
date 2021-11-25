@@ -36,13 +36,14 @@ extension Array where Element == WorkItem {
     }
     
     /// note: remember to add isCancelled into onStatusChanged.
-    func work(_ chosenScaleLevel: Int, modelUsed: Model, onStatusChanged status: @escaping ((_ staus: String)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), completion: @escaping (() -> ())) {
+    func work(_ chosenScaleLevel: Int, modelUsed: Model, onStatusChanged status: @escaping ((_ status: String)->()), onProgressChanged: @escaping ((_ delta: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
         
         let images = self.filter({ $0.type == .image })
         let videos = self.filter({ $0.type == .video })
         let backgroundQueue = DispatchQueue(label: "[WorkItem] background dispatch queue")
-        var progress: Double = 0
+        
         let totalItemCounter = self.count
+        var finishedItemsCounter = 0
         
         if !images.isEmpty {
             status("processing images")
@@ -60,8 +61,7 @@ extension Array where Element == WorkItem {
                 
                 let waifu2x = Waifu2x()
                 waifu2x.didFinishedOneBlock = { finished, total in
-                    currentImage.progress += 1 / Double(total)
-                    onProgressChanged(currentImage.progress / Double(totalItemCounter))
+                    onProgressChanged(1 / Double(total) / Double(totalItemCounter))
                 }
                 
                 if chosenScaleLevel >= 2 {
@@ -72,25 +72,30 @@ extension Array where Element == WorkItem {
                     image = waifu2x.run(image, model: modelUsed)!
                 }
                 
-                let imageOutputPath: String
+                let outputFileName: String
                 if let name = currentImage.finderItem.relativePath {
-                    imageOutputPath = name[..<name.lastIndex(of: ".")!] + ".png"
+                    outputFileName = name[..<name.lastIndex(of: ".")!] + ".png"
                 } else {
-                    imageOutputPath = currentImage.finderItem.fileName! + ".png"
+                    outputFileName = currentImage.finderItem.fileName! + ".png"
                 }
                 
-                let finderItemAtImageOutputPath = FinderItem(at: imageOutputPath)
+                let finderItemAtImageOutputPath = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/\(outputFileName)")
                 
                 finderItemAtImageOutputPath.generateDirectory()
                 image.write(to: finderItemAtImageOutputPath.path)
                 
                 backgroundQueue.async {
                     concurrentProcessingImagesCount -= 1
+                    status("processing \(concurrentProcessingImagesCount) images in parallel")
+                    finishedItemsCounter += 1
+                    didFinishOneItem(finishedItemsCounter, totalItemCounter)
                 }
             }
             
         }
         
+        status("Completed")
+        completion()
     }
     
 }
@@ -618,7 +623,7 @@ struct ProcessingView: View {
     @Binding var isCreatingPDF: Bool
     @Binding var allowParallelExecution: Bool
     
-    @State var processedItems: [WorkItem] = []
+    @State var processedItemsCounter: Int = 0
     @State var currentTimeTaken: Double = 0 // up to 1s
     @State var pastTimeTaken: Double = 0 // up to 1s
     @State var isPaused: Bool = false {
@@ -636,11 +641,18 @@ struct ProcessingView: View {
     }
     @State var currentProcessingItemsCount: Int = 0
     @State var timer = Timer.publish(every: 1, on: .current, in: .common).autoconnect()
-    @State var isFinished: Bool = false
+    @State var isFinished: Bool = false {
+        didSet {
+            if isFinished {
+                timer.upstream.connect().cancel()
+            }
+        }
+    }
     @State var progress: Double = 0.0
     @State var isCreatingImageSequence: Bool = false
     @State var isMergingVideo: Bool = false
     @State var videos: [FinderItem] = []
+    @State var status: String = "Loading..."
     
     var body: some View {
         VStack {
@@ -650,7 +662,7 @@ struct ProcessingView: View {
                 VStack(spacing: 10) {
                     HStack {
                         Spacer()
-                        Text("Processing:")
+                        Text("Status:")
                     }
                     
                     if !allowParallelExecution {
@@ -696,15 +708,7 @@ struct ProcessingView: View {
                 
                 VStack(spacing: 10) {
                     HStack {
-                        if isMergingVideo {
-                            Text("Merging frames to video...")
-                        } else if isCreatingImageSequence {
-                            Text("Extracting frames from video...")
-                        } else if currentProcessingItemsCount >= 2 {
-                            Text("\(currentProcessingItemsCount) items in parallel")
-                        } else {
-                            Text("\(currentProcessingItemsCount) item")
-                        }
+                        Text(status)
                         
                         Spacer()
                     }
@@ -725,10 +729,10 @@ struct ProcessingView: View {
                     Spacer()
                     
                     HStack {
-                        if processedItems.count >= 2 {
-                            Text("\(processedItems.count) items")
+                        if processedItemsCounter >= 2 {
+                            Text("\(processedItemsCounter) items")
                         } else {
-                            Text("\(processedItems.count) item")
+                            Text("\(processedItemsCounter) item")
                         }
                         
                         Spacer()
@@ -737,10 +741,10 @@ struct ProcessingView: View {
                     HStack {
                         if isFinished {
                             Text("0 item")
-                        } else if finderItems.count - processedItems.count >= 2 {
-                            Text("\(finderItems.count - processedItems.count) items")
+                        } else if finderItems.count - processedItemsCounter >= 2 {
+                            Text("\(finderItems.count - processedItemsCounter) items")
                         } else {
-                            Text("\(finderItems.count - processedItems.count) item")
+                            Text("\(finderItems.count - processedItemsCounter) item")
                         }
                         
                         
@@ -757,9 +761,9 @@ struct ProcessingView: View {
                         Text({ ()-> String in
                             guard !isFinished else { return "finished" }
                             guard !isPaused else { return "paused" }
-                            guard !processedItems.isEmpty && !isMergingVideo else { return "calculating..." }
+                            guard processedItemsCounter != 0 && !isMergingVideo else { return "calculating..." }
                             
-                            var value = Double(finderItems.count) * (pastTimeTaken / Double(processedItems.count))
+                            var value = Double(finderItems.count) * (pastTimeTaken / Double(processedItemsCounter))
                             value -= pastTimeTaken + currentTimeTaken
                             
                             guard value >= 0 else { return "calculating..." }
@@ -774,9 +778,9 @@ struct ProcessingView: View {
                         Text({ ()-> String in
                             guard !isFinished else { return "finished" }
                             guard !isPaused else { return "paused" }
-                            guard !processedItems.isEmpty && !isMergingVideo else { return "calculating..." }
+                            guard processedItemsCounter != 0 && !isMergingVideo else { return "calculating..." }
                             
-                            var value = Double(finderItems.count) * (pastTimeTaken / Double(processedItems.count))
+                            var value = Double(finderItems.count) * (pastTimeTaken / Double(processedItemsCounter))
                             value -= pastTimeTaken + currentTimeTaken
                             
                             guard value >= 0 else { return "calculating..." }
@@ -863,14 +867,14 @@ struct ProcessingView: View {
                     } onChangingProgress: { progress, total in
                         self.progress += 1 / total
                     } completion: {
-                        processedItems.append(i)
+//                        processedItemsCounter.append(i)
                         currentTimeTaken = 0
                         
                         DispatchQueue.main.async {
                             currentProcessingItemsCount -= 1
                         }
                         
-                        guard processedItems.count == finderItems.count else { return }
+                        guard processedItemsCounter == finderItems.count else { return }
                         
                         isFinished = true
                     }
@@ -878,17 +882,17 @@ struct ProcessingView: View {
                 }
                 
                 background.async {
-                    if allowParallelExecution {
-                        DispatchQueue.concurrentPerform(iterations: finderItems.count) { i in
-                            guard !isFinished else { return }
-                            execute(finderItems[i])
-                        }
-                    } else {
-                        for i in finderItems {
-                            guard !isFinished else { return }
-                            execute(i)
-                        }
+                    self.finderItems.work(self.chosenScaleLevel, modelUsed: self.modelUsed!) { status in
+                        self.status = status
+                    } onProgressChanged: { progress in
+                        self.progress += progress
+                    } didFinishOneItem: { finished,total in
+                        self.processedItemsCounter = finished
+                    } completion: {
+                        print("yeah!")
+                        isFinished = true
                     }
+
                 }
             }
             .onReceive(timer) { timer in
