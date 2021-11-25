@@ -150,7 +150,7 @@ class WorkItem: Equatable, Identifiable {
                     
                     var frameCounter = 1
                     
-                    DispatchQueue.concurrentPerform(iterations: frames.count) { index in
+                    for index in 0..<frames.count {
                         guard var image = frames[index].image else { return }
                         print("waifu2x working with", frames[index].path)
                         
@@ -180,12 +180,15 @@ class WorkItem: Equatable, Identifiable {
                         enlargedFrames.append(i.image!)
                     }
                     
-                    try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/video \(sequence).mov").removeFile()
+                    FinderItem(at: path).generateDirectory()
+                    print("enlarged frames number: \(enlargedFrames.count)")
+                    
+//                    try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/video \(sequence).mov").removeFile()
                     
                     FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: path, videoSize: enlargedFrames.first!.size, videoFPS: Int32(item.finderItem.frameRate!)) {
                         
                         // if all videos are ready, merge video and save
-                        guard splitVideos.count == Int(duration.rounded(.up)) else { return }
+                        guard Int(counter) + 1 == Int(duration.rounded(.up)) else { return }
                         onStatusChanged(.mergingVideos)
                         
                         let path = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/\(item.finderItem.fileName!).mov"

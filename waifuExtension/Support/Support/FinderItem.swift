@@ -672,7 +672,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     /// Convert image sequence to video.
     ///
     /// from https://stackoverflow.com/questions/3741323/how-do-i-export-uiimage-array-as-a-movie/3742212#36297656
-    static func convertImageSequenceToVideo(_ allImages: [NSImage], videoPath: String, videoSize: CGSize, videoFPS: Int32, didFinish: (()->Void)? = nil) {
+    static func convertImageSequenceToVideo(_ allImages: [NSImage], videoPath: String, videoSize: CGSize, videoFPS: Int32, completion: (()->Void)? = nil) {
         
         func writeImagesAsMovie(_ allImages: [NSImage], videoPath: String, videoSize: CGSize, videoFPS: Int32) {
             // Create AVAssetWriter to write video
@@ -731,8 +731,8 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
                             print("Converted images to movie @ \(videoPath)")
                         }
                         
-                        if let didFinish = didFinish {
-                            didFinish()
+                        if let completion = completion {
+                            completion()
                         }
                     }
                 }
@@ -865,16 +865,28 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         }
     }
     
+    
+    /// from https://stackoverflow.com/questions/38972829/swift-merge-avasset-videos-array
     static func mergeVideos(from arrayVideos: [AVAsset], toPath: String, completion: @escaping (_ urlGet:URL?,_ errorGet:Error?) -> Void) {
+        
+        func videoCompositionInstruction(_ track: AVCompositionTrack, asset: AVAsset)
+        -> AVMutableVideoCompositionLayerInstruction {
+            let instruction = AVMutableVideoCompositionLayerInstruction(assetTrack: track)
+            let assetTrack = asset.tracks(withMediaType: .video)[0]
+            
+            return instruction
+        }
+
         
         var atTimeM: CMTime = CMTimeMake(value: 0, timescale: 0)
         var lastAsset: AVAsset!
+        var layerInstructionsArray = [AVVideoCompositionLayerInstruction]()
         var completeTrackDuration: CMTime = CMTimeMake(value: 0, timescale: 1)
         var videoSize: CGSize = CGSize(width: 0.0, height: 0.0)
         var totalTime : CMTime = CMTimeMake(value: 0, timescale: 0)
         
         let mixComposition = AVMutableComposition.init()
-        for videoAsset in arrayVideos {
+        for videoAsset in arrayVideos{
             
             let videoTrack = mixComposition.addMutableTrack(withMediaType: AVMediaType.video, preferredTrackID: Int32(kCMPersistentTrackID_Invalid))
             do {
@@ -899,24 +911,40 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
             
             
             completeTrackDuration = CMTimeAdd(completeTrackDuration, videoAsset.duration)
+            
+            let firstInstruction = videoCompositionInstruction(videoTrack!, asset: videoAsset)
+            firstInstruction.setOpacity(0.0, at: videoAsset.duration)
+            
+            layerInstructionsArray.append(firstInstruction)
             lastAsset = videoAsset
         }
-        
         let arbitraryVideo = arrayVideos.first!.tracks(withMediaType: .video).first!
         
+        let mainInstruction = AVMutableVideoCompositionInstruction()
+        mainInstruction.layerInstructions = layerInstructionsArray
+        mainInstruction.timeRange = CMTimeRangeMake(start: CMTime.zero, duration: completeTrackDuration)
+        
         let mainComposition = AVMutableVideoComposition()
-        mainComposition.frameDuration = CMTimeMake(value: 1, timescale: Int32(arbitraryVideo.nominalFrameRate))
+        mainComposition.instructions = [mainInstruction]
+        mainComposition.frameDuration = CMTimeMake(value: 1, timescale: 30)
         mainComposition.renderSize = arbitraryVideo.naturalSize
         
-        let url = NSURL(fileURLWithPath: toPath)
+        let documentDirectory = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateStyle = .long
+        dateFormatter.timeStyle = .short
+        let date = dateFormatter.string(from: NSDate() as Date)
+        let savePath = (documentDirectory as NSString).appendingPathComponent("mergeVideo-\(date).mov")
+        let url = NSURL(fileURLWithPath: savePath)
         
         let exporter = AVAssetExportSession(asset: mixComposition, presetName: AVAssetExportPresetHighestQuality)
         exporter!.outputURL = url as URL
-        exporter!.outputFileType = AVFileType.mov
+        exporter!.outputFileType = AVFileType.mp4
         exporter!.shouldOptimizeForNetworkUse = true
         exporter!.videoComposition = mainComposition
         exporter!.exportAsynchronously {
-            completion(exporter?.outputURL, exporter?.error)
+            completion(exporter?.outputURL, nil)
+            
         }
         
     }
