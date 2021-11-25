@@ -101,15 +101,18 @@ extension Array where Element == WorkItem {
             
             for currentVideo in videos {
                 
-                status("splitting audio")
+                var finishedSegmentsCounter = 0
                 
                 let filePath = currentVideo.finderItem.relativePath ?? currentVideo.finderItem.fileName!
                 let tmpPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw"
                 FinderItem(at: tmpPath).generateDirectory()
                 
-                try! currentVideo.finderItem.saveAudioTrack(to: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/audio.m4a")
+                status("splitting audio for \(filePath)")
                 
-                status("generating video")
+                let audioPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/audio.m4a"
+                try! currentVideo.finderItem.saveAudioTrack(to: audioPath)
+                
+                status("generating video for \(filePath)")
                 
                 let duration = currentVideo.finderItem.avAsset!.duration.seconds
                 
@@ -137,16 +140,16 @@ extension Array where Element == WorkItem {
                             
                             let waifu2x = Waifu2x()
                             waifu2x.didFinishedOneBlock = { total in
-                                currentVideo.progress += 1 / Double(total) / Double(framesToBeProcessed.count)
+                                currentVideo.progress += 1 / Double(total) / Double(framesToBeProcessed.count) / Double(Int(duration) / videoSegmentLength + 1)
                                 onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / Double(totalItemCounter))
                             }
                             
                             if chosenScaleLevel >= 2 {
                                 for _ in 1...chosenScaleLevel {
-                                    currentFrame = waifu2x.run(currentFrame, model: modelUsed)!.reload()
+                                    currentFrame = waifu2x.run(currentFrame.reload(withIndex: segmentIndex * 100000 + frameIndex), model: modelUsed)!
                                 }
                             } else {
-                                currentFrame = waifu2x.run(currentFrame, model: modelUsed)!
+                                currentFrame = waifu2x.run(currentFrame.reload(withIndex: segmentIndex * 100000 + frameIndex), model: modelUsed)!
                             }
                             
                             outputFrames.append(orderedImages(image: currentFrame, index: frameIndex))
@@ -159,22 +162,40 @@ extension Array where Element == WorkItem {
                         let mergedVideoSegmentPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo/video \(segmentSequence).mov"
                         FinderItem(at: mergedVideoSegmentPath).generateDirectory()
                         
-                        let videoSize = NSSize(width: enlargedFrames.first!.cgImage(forProposedRect: nil, context: nil, hints: nil)!.width, height: enlargedFrames.first!.cgImage(forProposedRect: nil, context: nil, hints: nil)!.width)
+                        let videoSize = NSSize(width: enlargedFrames.first!.cgImage(forProposedRect: nil, context: nil, hints: nil)!.width, height: enlargedFrames.first!.cgImage(forProposedRect: nil, context: nil, hints: nil)!.height)
                         
                         FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: mergedVideoSegmentPath, videoSize: videoSize, videoFPS: Int32(currentVideo.finderItem.frameRate!)) {
+                            finishedSegmentsCounter += 1
                             
+                            guard Int(finishedSegmentsCounter) == Int((duration / Double(videoSegmentLength)).rounded(.up)) else { return }
                             
+                            status("merging videos for \(filePath)")
                             
+                            let outputPath = "\(NSHomeDirectory())/Downloads/Waifu Output/\(currentVideo.finderItem.fileName!).mov"
+                            
+                            FinderItem.mergeVideos(from: FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo").children!.map({ $0.avAsset! }), toPath: outputPath) { urlGet, errorGet in
+                                
+                                status("merging video and audio for \(filePath)")
+                                
+                                FinderItem.mergeVideoWithAudio(videoUrl: URL(fileURLWithPath: outputPath), audioUrl: URL(fileURLWithPath: audioPath)) { _ in
+                                    status("Completed")
+                                    completion()
+                                } failure: { error in
+                                    print(error.debugDescription)
+                                }
+
+                            }
                         }
                     }
                     
                 }
                 
             }
+        } else {
+            status("Completed")
+            completion()
         }
         
-        status("Completed")
-        completion()
     }
     
 }
