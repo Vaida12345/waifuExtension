@@ -36,11 +36,13 @@ extension Array where Element == WorkItem {
     }
     
     /// note: remember to add isCancelled into onStatusChanged.
-    func work(_ chosenScaleLevel: Int, modelUsed: Model, onStatusChanged status: @escaping ((_ staus: String)->()), onProgressChanged progress: @escaping ((_ progress: Double, _ total: Double) -> ()), completion: @escaping (() -> ())) {
+    func work(_ chosenScaleLevel: Int, modelUsed: Model, onStatusChanged status: @escaping ((_ staus: String)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), completion: @escaping (() -> ())) {
         
         let images = self.filter({ $0.type == .image })
         let videos = self.filter({ $0.type == .video })
         let backgroundQueue = DispatchQueue(label: "[WorkItem] background dispatch queue")
+        var progress: Double = 0
+        let totalItemCounter = self.count
         
         if !images.isEmpty {
             status("processing images")
@@ -49,10 +51,38 @@ extension Array where Element == WorkItem {
             DispatchQueue.concurrentPerform(iterations: images.count) { imageIndex in
                 backgroundQueue.async {
                     concurrentProcessingImagesCount += 1
+                    
+                    status("processing \(concurrentProcessingImagesCount) images in parallel")
                 }
                 
                 let currentImage = images[imageIndex]
+                var image = currentImage.finderItem.image!
                 
+                let waifu2x = Waifu2x()
+                waifu2x.didFinishedOneBlock = { finished, total in
+                    currentImage.progress += 1 / Double(total)
+                    onProgressChanged(currentImage.progress / Double(totalItemCounter))
+                }
+                
+                if chosenScaleLevel >= 2 {
+                    for _ in 1...chosenScaleLevel {
+                        image = waifu2x.run(image, model: modelUsed)!.reload()
+                    }
+                } else {
+                    image = waifu2x.run(image, model: modelUsed)!
+                }
+                
+                let imageOutputPath: String
+                if let name = currentImage.finderItem.relativePath {
+                    imageOutputPath = name[..<name.lastIndex(of: ".")!] + ".png"
+                } else {
+                    imageOutputPath = currentImage.finderItem.fileName! + ".png"
+                }
+                
+                let finderItemAtImageOutputPath = FinderItem(at: imageOutputPath)
+                
+                finderItemAtImageOutputPath.generateDirectory()
+                image.write(to: finderItemAtImageOutputPath.path)
                 
                 backgroundQueue.async {
                     concurrentProcessingImagesCount -= 1
