@@ -194,7 +194,7 @@ class WorkItem: Equatable, Identifiable {
                             FinderItem.mergeVideoWithAudio(videoUrl: URL(fileURLWithPath: path), audioUrl: URL(fileURLWithPath: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/audio.m4a")) { _ in
                                 // audio merged. Finished.
                                 
-                                try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/\(self.finderItem.fileName!).mov").copy(to: "\(NSHomeDirectory())/Downloads/Waifu Output/\(item.finderItem.fileName!).mov")
+                                try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/\(self.finderItem.fileName!).mov").copy(to: "\(NSHomeDirectory())/Downloads/Waifu Output/\(self.finderItem.fileName!).mov")
                                 try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp").removeFile()
                                 
                                 completion()
