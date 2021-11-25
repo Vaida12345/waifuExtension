@@ -155,6 +155,8 @@ extension Array where Element == WorkItem {
                     
                     DispatchQueue.concurrentPerform(iterations: framesToBeProcessed.count) { frameIndex in
                         
+                        onStatusProgressChanged(0, Int((duration / Double(videoSegmentLength)).rounded(.up)))
+                        
                         var currentFrame = framesToBeProcessed[frameIndex]
                         
                         let waifu2x = Waifu2x()
@@ -196,7 +198,7 @@ extension Array where Element == WorkItem {
                     
                     onStatusProgressChanged(nil, nil)
                     
-                    status("generating images segments for \(filePath)")
+                    status("generating images for \(filePath)")
                     
                     //status: generating video segment frames
     
@@ -640,168 +642,101 @@ struct ProcessingView: View {
             Spacer()
             
             HStack {
-                VStack(spacing: 10) {
-                    VStack(spacing: 10) {
-                        HStack {
-                            Spacer()
-                            Text("Status:")
-                        }
+                VStack(alignment: .trailing, spacing: 10) {
+                    VStack(alignment: .trailing, spacing: 10) {
+                        Text("Status:")
                         
                         if statusProgress != nil {
-                            HStack {
-                                Spacer()
-                                Text("progress:")
-                            }
+                            Text("progress:")
                         }
                         
                         if !allowParallelExecution {
-                            HStack {
-                                Spacer()
-                                Text("Time Spent:")
-                            }
+                            Text("Time Spent:")
                         }
                         
-                        HStack {
-                            Spacer()
-                            Text("ML Model:")
-                        }
+                        Text("ML Model:")
                     }
                     
                     Spacer()
                     
-                    HStack {
-                        Spacer()
-                        Text("Processed:")
-                    }
-                    
-                    HStack {
-                        Spacer()
-                        Text("To be processed:")
-                    }
-                    
-                    HStack {
-                        Spacer()
-                        Text("Time Spent:")
-                    }
-                    
-                    HStack {
-                        Spacer()
-                        Text("Time Remainning:")
-                    }
-                    
-                    HStack {
-                        Spacer()
-                        Text("ETA:")
-                    }
+                    Text("Processed:")
+                    Text("To be processed:")
+                    Text("Time Spent:")
+                    Text("Time Remaining:")
+                    Text("ETA:")
                     
                     Spacer()
                 }
+                .padding(.leading)
                 
-                VStack(spacing: 10) {
-                    VStack(spacing: 10) {
-                        HStack {
-                            Text(status)
-                            
-                            Spacer()
-                        }
+                VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(status)
                         
                         if let statusProgress = statusProgress {
-                            HStack {
-                                Text("\(statusProgress.progress) / \(statusProgress.total)")
-                                
-                                Spacer()
-                            }
+                            Text("\(statusProgress.progress) / \(statusProgress.total)")
                         }
                         
                         if !allowParallelExecution {
-                            HStack {
-                                Text(currentTimeTaken.expressedAsTime())
-                                
-                                Spacer()
-                            }
+                            Text(currentTimeTaken.expressedAsTime())
                         }
                         
-                        HStack {
-                            Text(modelUsed!.rawValue)
-                            Spacer()
-                        }
+                        Text(modelUsed!.rawValue)
                     }
                     
                     Spacer()
                     
-                    HStack {
-                        if processedItemsCounter >= 2 {
-                            Text("\(processedItemsCounter) items")
-                        } else {
-                            Text("\(processedItemsCounter) item")
-                        }
-                        
-                        Spacer()
+                    if processedItemsCounter >= 2 {
+                        Text("\(processedItemsCounter) items")
+                    } else {
+                        Text("\(processedItemsCounter) item")
                     }
                     
-                    HStack {
-                        if isFinished {
-                            Text("0 item")
-                        } else if finderItems.count - processedItemsCounter >= 2 {
-                            Text("\(finderItems.count - processedItemsCounter) items")
-                        } else {
-                            Text("\(finderItems.count - processedItemsCounter) item")
-                        }
-                        
-                        
-                        Spacer()
+                    if isFinished {
+                        Text("0 item")
+                    } else if finderItems.count - processedItemsCounter >= 2 {
+                        Text("\(finderItems.count - processedItemsCounter) items")
+                    } else {
+                        Text("\(finderItems.count - processedItemsCounter) item")
                     }
                     
-                    HStack {
-                        Text((pastTimeTaken).expressedAsTime())
-                        
-                        Spacer()
-                    }
+                    Text((pastTimeTaken).expressedAsTime())
                     
-                    HStack { // time remaining
-                        Text({ ()-> String in
-                            guard !isFinished else { return "finished" }
-                            guard !isPaused else { return "paused" }
-                            guard processedItemsCounter != 0 && !isMergingVideo else { return "calculating..." }
-                            
-                            var value = Double(finderItems.count) * (pastTimeTaken / Double(processedItemsCounter))
-                            value -= pastTimeTaken + currentTimeTaken
-                            
-                            guard value >= 0 else { return "calculating..." }
-                            
-                            return value.expressedAsTime()
-                        }())
+                    Text({ ()-> String in
+                        guard !isFinished else { return "finished" }
+                        guard !isPaused else { return "paused" }
+                        guard processedItemsCounter != 0 && !isMergingVideo && progress != 0 else { return "calculating..." }
                         
-                        Spacer()
-                    }
+                        var value = (pastTimeTaken + currentTimeTaken) / progress
+                        value -= pastTimeTaken + currentTimeTaken
+                        
+                        guard value >= 0 else { return "calculating..." }
+                        
+                        return value.expressedAsTime()
+                    }())
                     
-                    HStack {
-                        Text({ ()-> String in
-                            guard !isFinished else { return "finished" }
-                            guard !isPaused else { return "paused" }
-                            guard processedItemsCounter != 0 && !isMergingVideo else { return "calculating..." }
-                            
-                            var value = Double(finderItems.count) * (pastTimeTaken / Double(processedItemsCounter))
-                            value -= pastTimeTaken + currentTimeTaken
-                            
-                            guard value >= 0 else { return "calculating..." }
-                            
-                            let date = Date().addingTimeInterval(value)
-                            
-                            let formatter = DateFormatter()
-                            formatter.dateStyle = .none
-                            formatter.timeStyle = .medium
-                            
-                            return formatter.string(from: date)
-                        }())
+                    Text({ ()-> String in
+                        guard !isFinished else { return "finished" }
+                        guard !isPaused else { return "paused" }
+                        guard progress != 0 else { return "calculating..." }
                         
-                        Spacer()
-                    }
+                        var value = (pastTimeTaken + currentTimeTaken) / progress
+                        value -= pastTimeTaken + currentTimeTaken
+                        
+                        guard value >= 0 else { return "calculating..." }
+                        
+                        let date = Date().addingTimeInterval(value)
+                        
+                        let formatter = DateFormatter()
+                        formatter.dateStyle = .none
+                        formatter.timeStyle = .medium
+                        
+                        return formatter.string(from: date)
+                    }())
                     
                     Spacer()
                 }
             }
-            .frame(width: 200)
             
             Spacer()
             
@@ -818,7 +753,8 @@ struct ProcessingView: View {
                 return progress / Double(factor)
             }())
             .popover(isPresented: $isShowProgressDetail) {
-                Text("\((progress * 100).rounded(toDigit: 2))%")
+                Text("\(String(format: "%.2f", progress * 100))%")
+                    .padding(.all, 3)
             }
             .onHover { bool in
                 isShowProgressDetail = bool
