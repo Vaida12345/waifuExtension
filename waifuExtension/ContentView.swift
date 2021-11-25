@@ -267,7 +267,6 @@ struct ContentView: View {
     @State var background = DispatchQueue(label: "Background")
     @State var pdfbackground = DispatchQueue(label: "PDF Background")
     @State var chosenScaleLevel: Int = 1
-    @State var allowParallelExecution: Bool = true
     
     var body: some View {
         VStack {
@@ -338,10 +337,10 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $isSheetShown, onDismiss: nil) {
-            ConfigurationView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel, allowParallelExecution: $allowParallelExecution)
+            ConfigurationView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel)
         }
         .sheet(isPresented: $isProcessing, onDismiss: nil) {
-            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, background: $background, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF, allowParallelExecution: $allowParallelExecution)
+            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, background: $background, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF)
         }
         .sheet(isPresented: $isCreatingPDF, onDismiss: nil) {
             ProcessingPDFView(isCreatingPDF: $isCreatingPDF, background: $pdfbackground)
@@ -435,14 +434,7 @@ struct ConfigurationView: View {
     @Binding var isShown: Bool
     @Binding var isProcessing: Bool
     @Binding var modelUsed: Model?
-    @Binding var chosenScaleLevel: Int {
-        didSet {
-            if chosenScaleLevel >= 3 {
-                allowParallelExecution = false
-            }
-        }
-    }
-    @Binding var allowParallelExecution: Bool
+    @Binding var chosenScaleLevel: Int
     
     let styleNames: [String] = ["anime", "photo"]
     @State var chosenStyle = "anime"
@@ -455,7 +447,6 @@ struct ConfigurationView: View {
     @State var isShowingStyleHint: Bool = false
     @State var isShowingNoiceHint: Bool = false
     @State var isShowingScaleHint: Bool = false
-    @State var isShowingParallelHint: Bool = false
     
     var body: some View {
         VStack {
@@ -484,13 +475,6 @@ struct ConfigurationView: View {
                         Text("Scale Level:")
                             .onHover { bool in
                                 isShowingScaleHint = bool
-                            }
-                    }
-                    HStack {
-                        Spacer()
-                        Text("Allow Parallel Execution:")
-                            .onHover { bool in
-                                isShowingParallelHint = bool
                             }
                     }
                 }
@@ -537,19 +521,6 @@ struct ConfigurationView: View {
                     }
                     .popover(isPresented: $isShowingScaleHint) {
                         Text("Choose how much you want to scale.")
-                            .padding(.all)
-                        
-                    }
-                    
-                    Menu(allowParallelExecution.description) {
-                        ForEach([true, false], id: \.self) { item in
-                            Button(item.description) {
-                                allowParallelExecution = item
-                            }
-                        }
-                    }
-                    .popover(isPresented: $isShowingParallelHint) {
-                        Text("Parallel execution is recommended to enhance efficiency. \nHowever, the consumption of RAM would increase.")
                             .padding(.all)
                         
                     }
@@ -604,7 +575,6 @@ struct ProcessingView: View {
     @Binding var background: DispatchQueue
     @Binding var chosenScaleLevel: Int
     @Binding var isCreatingPDF: Bool
-    @Binding var allowParallelExecution: Bool
     
     @State var processedItemsCounter: Int = 0
     @State var currentTimeTaken: Double = 0 // up to 1s
@@ -653,10 +623,6 @@ struct ProcessingView: View {
                             Text("progress:")
                         }
                         
-                        if !allowParallelExecution {
-                            Text("Time Spent:")
-                        }
-                        
                         Text("ML Model:")
                     }
                     
@@ -678,10 +644,6 @@ struct ProcessingView: View {
                         
                         if let statusProgress = statusProgress {
                             Text("\(statusProgress.progress) / \(statusProgress.total)")
-                        }
-                        
-                        if !allowParallelExecution {
-                            Text(currentTimeTaken.expressedAsTime())
                         }
                         
                         Text(modelUsed!.rawValue)
@@ -708,7 +670,7 @@ struct ProcessingView: View {
                     Text({ ()-> String in
                         guard !isFinished else { return "finished" }
                         guard !isPaused else { return "paused" }
-                        guard processedItemsCounter != 0 && !isMergingVideo && progress != 0 else { return "calculating..." }
+                        guard progress != 0 else { return "calculating..." }
                         
                         var value = (pastTimeTaken + currentTimeTaken) / progress
                         value -= pastTimeTaken + currentTimeTaken
@@ -731,7 +693,11 @@ struct ProcessingView: View {
                         let date = Date().addingTimeInterval(value)
                         
                         let formatter = DateFormatter()
-                        formatter.dateStyle = .none
+                        if value < 10 * 60 * 60 {
+                            formatter.dateStyle = .none
+                        } else {
+                            formatter.dateStyle = .medium
+                        }
                         formatter.timeStyle = .medium
                         
                         return formatter.string(from: date)
