@@ -710,7 +710,7 @@ struct ProcessingView: View {
                         var value = (pastTimeTaken + currentTimeTaken) / progress
                         value -= pastTimeTaken + currentTimeTaken
                         
-                        guard value >= 0 else { return "calculating..." }
+                        guard value > 0 else { return "calculating..." }
                         
                         return value.expressedAsTime()
                     }())
@@ -723,7 +723,7 @@ struct ProcessingView: View {
                         var value = (pastTimeTaken + currentTimeTaken) / progress
                         value -= pastTimeTaken + currentTimeTaken
                         
-                        guard value >= 0 else { return "calculating..." }
+                        guard value > 0 else { return "calculating..." }
                         
                         let date = Date().addingTimeInterval(value)
                         
