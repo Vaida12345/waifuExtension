@@ -106,6 +106,7 @@ class WorkItem: Equatable, Identifiable {
             // split videos
             var splitVideos: [WorkItem] = []
             var counter: Double = 0
+            var finalCounter = 0
             while counter < duration {
                 var sequence = String(Int(counter))
                 while sequence.count <= 5 { sequence.insert("0", at: sequence.startIndex) }
@@ -165,7 +166,7 @@ class WorkItem: Equatable, Identifiable {
                         var frameSequence = String(frameCounter)
                         while frameSequence.count <= 5 { frameSequence.insert("0", at: frameSequence.startIndex) }
                         
-                        let path = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/video \(sequence).mov/frame \(frameCounter).png"
+                        let path = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/video \(sequence).mov/frame \(frameSequence).png"
                         FinderItem(at: path).generateDirectory()
                         image.write(to: path)
                         
@@ -188,16 +189,22 @@ class WorkItem: Equatable, Identifiable {
                     FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: path, videoSize: enlargedFrames.first!.size, videoFPS: Int32(item.finderItem.frameRate!)) {
                         
                         // if all videos are ready, merge video and save
-                        guard Int(counter) + 1 == Int(duration.rounded(.up)) else { return }
+                        
+                        print(finalCounter)
+                        finalCounter += 1
+                        guard Int(finalCounter) == Int(duration.rounded(.up)) else { return }
                         onStatusChanged(.mergingVideos)
                         
                         let path = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/\(item.finderItem.fileName!).mov"
-                        FinderItem.mergeVideos(from: FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo").rawChildren!.map({ $0.avAsset! }), toPath: path) { urlGet, errorGet in
+                        FinderItem.mergeVideos(from: FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo").children!.map({ $0.avAsset! }), toPath: path) { urlGet, errorGet in
                             
+                            print("merge video completed.")
                             // video merged, now merge with audio file
                             onStatusChanged(.mergingAudio)
                             FinderItem.mergeVideoWithAudio(videoUrl: URL(fileURLWithPath: path), audioUrl: URL(fileURLWithPath: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/audio.m4a")) { _ in
                                 // audio merged. Finished.
+                                
+                                try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/\(item.finderItem.fileName!).mov").copy(to: "\(NSHomeDirectory())/Downloads/Waifu Output/\(item.finderItem.fileName!).mov")
                                 
                                 completion()
                             } failure: { error in
