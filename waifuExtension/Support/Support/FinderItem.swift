@@ -897,7 +897,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
                 }
                 try videoTrack!.insertTimeRange(CMTimeRangeMake(start: CMTime.zero, duration: videoAsset.duration),
                                                 of: videoAsset.tracks(withMediaType: AVMediaType.video)[0],
-                                                at: atTimeM)
+                                                at: completeTrackDuration)
                 videoSize = (videoTrack!.naturalSize)
 
             } catch let error as NSError {
