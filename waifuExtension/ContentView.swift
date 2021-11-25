@@ -116,8 +116,7 @@ extension Array where Element == WorkItem {
                 
                 let duration = currentVideo.finderItem.avAsset!.duration.seconds
                 
-                for segmentIndex in 0 ..< (Int(duration) / videoSegmentLength + 1) {
-                    
+                DispatchQueue.concurrentPerform(iterations: Int(duration) / videoSegmentLength + 1) { segmentIndex in
                     var segmentSequence = String(segmentIndex)
                     while segmentSequence.count <= 5 { segmentSequence.insert("0", at: segmentSequence.startIndex) }
                     
