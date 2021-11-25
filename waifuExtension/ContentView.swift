@@ -222,157 +222,6 @@ class WorkItem: Equatable, Identifiable {
     static func == (lhs: WorkItem, rhs: WorkItem) -> Bool {
         lhs.finderItem == rhs.finderItem
     }
-    
-    func work(chosenScaleLevel: Int, modelUsed: Model, onStatusChanged: @escaping ((_ staus: Status)->()), onChangingProgress: @escaping ((_ progress: Double, _ total: Double) -> ()), completion: @escaping (() -> ())) {
-        print("work submitted with a \(type.rawValue)")
-        
-        if type == .image {
-            guard var image = self.finderItem.image else { return }
-            
-            let waifu2x = Waifu2x()
-//            waifu2x.didFinishedOneBlock = { finished, total in
-//                self.progress += 1 / Double(total)
-//                onChangingProgress(self.progress, Double(total))
-//            }
-            
-            if chosenScaleLevel >= 2 {
-                for _ in 1...chosenScaleLevel {
-                    image = waifu2x.run(image, model: modelUsed)!.reload()
-                }
-            } else {
-                image = waifu2x.run(image, model: modelUsed)!
-            }
-            
-            let path: String
-            if let name = self.finderItem.relativePath {
-                path = name[..<name.lastIndex(of: ".")!] + ".png"
-            } else {
-                path = self.finderItem.fileName! + ".png"
-            }
-            
-            let finderItem = FinderItem(at: path)
-            
-            finderItem.generateDirectory()
-            image.write(to: finderItem.path)
-            
-            completion()
-            
-        } else {
-            print("processing video")
-            onStatusChanged(.splittingVideo)
-            
-            guard self.finderItem.avAsset != nil else { return }
-            
-            let filePath = self.finderItem.relativePath ?? self.finderItem.fileName!
-            
-            let tmpPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw"
-            FinderItem(at: tmpPath).generateDirectory()
-            
-            try! self.finderItem.saveAudioTrack(to: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/audio.m4a")
-            let duration = self.finderItem.avAsset!.duration.seconds
-            
-            // split videos
-            var splitVideos: [WorkItem] = []
-            var counter: Double = 0
-            var finalCounter = 0
-            while counter < duration {
-                var sequence = String(Int(counter))
-                while sequence.count <= 5 { sequence.insert("0", at: sequence.startIndex) }
-                let path = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/splitVideo/video \(sequence).mov"
-                FinderItem(at: path).generateDirectory()
-                FinderItem.trimVideo(sourceURL: self.finderItem.url, outputURL: URL(fileURLWithPath: path), statTime: Float(counter), endTime: {()->Float in
-                    if counter + 1 < duration {
-                        return Float(counter + 1)
-                    } else {
-                        return Float(duration)
-                    }
-                }()) { asset in
-                    // generate frames and enlarge
-                    onStatusChanged(.generatingImages)
-                    let item = WorkItem(at: FinderItem(at: path), type: .video)
-                    splitVideos.append(item)
-                    
-                    let rawFramePath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/frames/video \(sequence).mov"
-                    FinderItem(at: rawFramePath + "/frame 1.png").generateDirectory()
-                    
-                    let rawFrames = item.finderItem.frames!
-                    
-                    print("frames: \(rawFrames.count)")
-                    
-                    let frames: [NSImage] = rawFrames
-                    
-                    var frameCounter = 1
-                    
-                    var enlargedImages: [orderedImages] = []
-                    
-                    DispatchQueue.concurrentPerform(iterations: frames.count) { index in
-                        var image = frames[index]
-                        
-                        let waifu2x = Waifu2x()
-//                        waifu2x.didFinishedOneBlock = { finished, total in
-//                            self.progress += 1 / Double(total) / (duration + 1).rounded(.up) / Double(frames.count)
-//                            onChangingProgress(self.progress, Double(total) * (duration + 1).rounded(.up) * Double(frames.count))
-//                        }
-                        
-                        if chosenScaleLevel >= 2 {
-                            for _ in 1...chosenScaleLevel {
-                                image = waifu2x.run(image.reload(withIndex: index), model: modelUsed)!
-                            }
-                        } else {
-                            image = waifu2x.run(image.reload(withIndex: index), model: modelUsed)!
-                        }
-                        
-                        var frameSequence = String(frameCounter)
-                        while frameSequence.count <= 5 { frameSequence.insert("0", at: frameSequence.startIndex) }
-                        
-                        enlargedImages.append(orderedImages(image: image, index: index))
-                        
-                        frameCounter += 1
-                    }
-                    
-                    // enlarged, now save as video
-                    onStatusChanged(.savingVideos)
-                    let path = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo/video \(sequence).mov"
-                    let enlargedFrames: [NSImage] = enlargedImages.sorted(by: { $0.index < $1.index }).map{ $0.image }
-                    
-                    print("enlarged frames number: \(enlargedFrames.count)")
-                    
-//                    try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/video \(sequence).mov").removeFile()
-                    
-                    FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: path, videoSize: enlargedFrames.first!.size, videoFPS: Int32(item.finderItem.frameRate!)) {
-                        
-                        // if all videos are ready, merge video and save
-                        
-                        print(finalCounter)
-                        finalCounter += 1
-                        guard Int(finalCounter) == Int(duration.rounded(.up)) else { return }
-                        onStatusChanged(.mergingVideos)
-                        
-                        let path = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/\(self.finderItem.fileName!).mov"
-                        FinderItem.mergeVideos(from: FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo").children!.map({ $0.avAsset! }), toPath: path) { urlGet, errorGet in
-                            
-                            print("merge video completed.")
-                            // video merged, now merge with audio file
-                            onStatusChanged(.mergingAudio)
-                            FinderItem.mergeVideoWithAudio(videoUrl: URL(fileURLWithPath: path), audioUrl: URL(fileURLWithPath: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/audio.m4a")) { _ in
-                                // audio merged. Finished.
-                                
-                                try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/\(self.finderItem.fileName!).mov").copy(to: "\(NSHomeDirectory())/Downloads/Waifu Output/\(self.finderItem.fileName!).mov")
-                                try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp").removeFile()
-                                
-                                completion()
-                            } failure: { error in
-                                print(error.debugDescription)
-                            }
-
-                        }
-                    }
-                }
-                
-                counter += 1
-            }
-        }
-    }
 }
 
 struct ContentView: View {
@@ -956,30 +805,6 @@ struct ProcessingView: View {
             .padding(.all)
             .frame(width: 600, height: 350)
             .onAppear {
-                func execute(_ i: WorkItem) {
-                    DispatchQueue.main.async {
-                        currentProcessingItemsCount += 1
-                    }
-                    
-                    i.work(chosenScaleLevel: chosenScaleLevel, modelUsed: modelUsed!) { status in
-                        //TODO: change status here, also check why not processed.
-                        print(status.rawValue)
-                    } onChangingProgress: { progress, total in
-                        self.progress += 1 / total
-                    } completion: {
-//                        processedItemsCounter.append(i)
-                        currentTimeTaken = 0
-                        
-                        DispatchQueue.main.async {
-                            currentProcessingItemsCount -= 1
-                        }
-                        
-                        guard processedItemsCounter == finderItems.count else { return }
-                        
-                        isFinished = true
-                    }
-                    
-                }
                 
                 background.async {
                     self.finderItems.work(self.chosenScaleLevel, modelUsed: self.modelUsed!) { status in
@@ -989,7 +814,6 @@ struct ProcessingView: View {
                     } didFinishOneItem: { finished,total in
                         self.processedItemsCounter = finished
                     } completion: {
-                        print("yeah!")
                         isFinished = true
                     }
 
