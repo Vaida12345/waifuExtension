@@ -35,6 +35,27 @@ extension Array where Element == WorkItem {
         return self.contains(WorkItem(at: finderItem, type: .image))
     }
     
+    /// note: remember to add isCancelled into onStatusChanged.
+    func work(_ chosenScaleLevel: Int, modelUsed: Model, onStatusChanged status: @escaping ((_ staus: String)->()), onProgressChanged progress: @escaping ((_ progress: Double, _ total: Double) -> ()), completion: @escaping (() -> ())) {
+        
+        let images = self.filter({ $0.type == .image })
+        let videos = self.filter({ $0.type == .video })
+        let backgroundQueue = DispatchQueue(label: "[WorkItem] background dispatch queue")
+        
+        if !images.isEmpty {
+            status("processing images")
+            var concurrentProcessingImagesCount = 0
+            
+            DispatchQueue.concurrentPerform(iterations: images.count) { imageIndex in
+                let currentImage = images[imageIndex]
+                
+                
+            }
+            
+        }
+        
+    }
+    
 }
 
 class WorkItem: Equatable, Identifiable {
@@ -123,7 +144,7 @@ class WorkItem: Equatable, Identifiable {
                     } else {
                         return Float(duration)
                     }
-                }()) {
+                }()) { asset in
                     // generate frames and enlarge
                     onStatusChanged(.generatingImages)
                     let item = WorkItem(at: FinderItem(at: path), type: .video)

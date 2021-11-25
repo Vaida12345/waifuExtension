@@ -1212,3 +1212,82 @@ func pow(_ lhs: Int, _ rhs: Int) -> Int {
     return Int(pow(Double(lhs), Double(rhs)))
 }
 
+extension AVAsset {
+    
+    /// The audio track of the video file
+    var audioTrack: AVAssetTrack? {
+        return self.tracks(withMediaType: AVMediaType.audio).first
+    }
+    
+    /// All the frames of the video.
+    var frames: [NSImage]? {
+        let asset = self
+        let vidLength: CMTime = asset.duration
+        let seconds: Double = CMTimeGetSeconds(vidLength)
+        let frameRate = Double(asset.tracks(withMediaType: .video).first!.nominalFrameRate)
+        
+        var requiredFramesCount = Int(seconds * frameRate)
+        
+        if requiredFramesCount == 0 {
+            requiredFramesCount = 1
+        }
+        
+        let step = Int((vidLength.value / Int64(requiredFramesCount)))
+        var value: Int = 0
+        
+        var counter = 0
+        var images: [NSImage] = []
+        
+        print(requiredFramesCount)
+        
+        while counter < requiredFramesCount {
+            let imageGenerator = AVAssetImageGenerator(asset: asset)
+            imageGenerator.requestedTimeToleranceAfter = CMTime.zero
+            imageGenerator.requestedTimeToleranceBefore = CMTime.zero
+            let time: CMTime = CMTimeMake(value: Int64(value), timescale: vidLength.timescale)
+            var imageRef: CGImage?
+            do {
+                imageRef = try imageGenerator.copyCGImage(at: time, actualTime: nil)
+            } catch {
+                print(error)
+            }
+            guard let ref = imageRef else { continue }
+            let thumbnail = NSImage(cgImage: ref, size: NSSize(width: ref.width, height: ref.height))
+            
+            images.append(thumbnail)
+            
+            value += Int(step)
+            counter += 1
+        }
+        
+        return images
+    }
+    
+    var frameRate: Float? {
+        guard let value = self.tracks(withMediaType: .video).first else { return nil }
+        return value.nominalFrameRate
+    }
+    
+    var firstFrame: NSImage? {
+        let asset = self
+        let vidLength: CMTime = asset.duration
+        
+        let imageGenerator = AVAssetImageGenerator(asset: asset)
+        imageGenerator.requestedTimeToleranceAfter = CMTime.zero
+        imageGenerator.requestedTimeToleranceBefore = CMTime.zero
+        let time: CMTime = CMTimeMake(value: Int64(0), timescale: vidLength.timescale)
+        var imageRef: CGImage?
+        do {
+            imageRef = try imageGenerator.copyCGImage(at: time, actualTime: nil)
+        } catch {
+            print(error)
+        }
+        guard let ref = imageRef else { return nil }
+        return NSImage(cgImage: ref, size: NSSize(width: ref.width, height: ref.height))
+    }
+    
+    /// The audio track of the video file
+    var videoTrack: AVAssetTrack? {
+        return self.tracks(withMediaType: AVMediaType.video).first
+    }
+}

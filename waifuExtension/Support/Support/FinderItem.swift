@@ -829,7 +829,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         writeImagesAsMovie(allImages, videoPath: videoPath, videoSize: videoSize, videoFPS: videoFPS)
     }
     
-    static func trimVideo(sourceURL: URL, outputURL: URL, statTime:Float, endTime:Float, completion: @escaping (()->()))
+    static func trimVideo(sourceURL: URL, outputURL: URL, statTime:Float, endTime:Float, completion: @escaping ((_ asset: AVAsset)->()))
     {
         let asset = AVAsset(url: sourceURL as URL)
         let length = Float(asset.duration.value) / Float(asset.duration.timescale)
@@ -855,7 +855,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
             switch exportSession.status {
             case .completed:
                 print("exported at \(outputURL)")
-                completion()
+                completion(FinderItem(at: outputURL).avAsset!)
             case .failed:
                 print("failed \(exportSession.error.debugDescription)")
                 
