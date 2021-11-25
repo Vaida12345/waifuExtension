@@ -276,10 +276,8 @@ public class Waifu2x {
             counter += 1
         }
         
-        
         // this would take most of time
         self.in_pipeline.wait()
-        
         
         self.model_pipeline.wait()
         callback("wait_alpha")

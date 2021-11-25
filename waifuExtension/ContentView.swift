@@ -131,7 +131,6 @@ class WorkItem: Equatable, Identifiable {
                     print("frames: \(rawFrames.count)")
                     var rawFrameIndex = 1
                     for i in rawFrames {
-                        print("writting \(rawFramePath)/frame \(rawFrameIndex).png")
                         var frameSequence = String(rawFrameIndex)
                         while frameSequence.count <= 5 { frameSequence.insert("0", at: frameSequence.startIndex) }
                         i.write(to: "\(rawFramePath)/frame \(frameSequence).png")
@@ -139,6 +138,7 @@ class WorkItem: Equatable, Identifiable {
                         
                         rawFrameIndex += 1
                     }
+                    print("finished writting frames")
                     
                     let frames: [FinderItem] = FinderItem(at: rawFramePath).rawChildren!.sorted(by: { $0.rawPath < $1.rawPath })
                     
@@ -151,8 +151,8 @@ class WorkItem: Equatable, Identifiable {
                     var frameCounter = 1
                     
                     DispatchQueue.concurrentPerform(iterations: frames.count) { index in
-                        var image = frames[index].image!
-                        print(frames[index].path)
+                        guard var image = frames[index].image else { return }
+                        print("waifu2x working with", frames[index].path)
                         
                         if chosenScaleLevel >= 2 {
                             for _ in 1...chosenScaleLevel {
