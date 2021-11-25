@@ -143,6 +143,8 @@ extension Array where Element == WorkItem {
                     }
                 }
                 
+                let totalSegmentsCount = Double(Int(duration) / videoSegmentLength + 1)
+                
                 func generateImagesAndMergeToVideo(segmentsFinderItems: [FinderItem], completion: @escaping (()->())) {
                     guard !segmentsFinderItems.isEmpty else { return }
                     
@@ -153,15 +155,14 @@ extension Array where Element == WorkItem {
                     let framesToBeProcessed = asset.frames!
                     var outputFrames: [orderedImages] = []
                     
+                    print("frames to process: \(framesToBeProcessed.count)")
                     DispatchQueue.concurrentPerform(iterations: framesToBeProcessed.count) { frameIndex in
-                        
-                        onStatusProgressChanged(0, Int((duration / Double(videoSegmentLength)).rounded(.up)))
                         
                         var currentFrame = framesToBeProcessed[frameIndex]
                         
                         let waifu2x = Waifu2x()
                         waifu2x.didFinishedOneBlock = { total in
-                            currentVideo.progress += 1 / Double(total) / Double(framesToBeProcessed.count) / Double(Int(duration) / videoSegmentLength + 1)
+                            currentVideo.progress += 1 / Double(total) / Double(framesToBeProcessed.count) / totalSegmentsCount
                             onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / Double(totalItemCounter))
                         }
                         
@@ -201,7 +202,8 @@ extension Array where Element == WorkItem {
                     status("generating images for \(filePath)")
                     
                     //status: generating video segment frames
-    
+                    onStatusProgressChanged(0, Int((duration / Double(videoSegmentLength)).rounded(.up)))
+                    
                     generateImagesAndMergeToVideo(segmentsFinderItems: FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/splitVideo").children!) {
                         status("merging videos for \(filePath)")
                         
@@ -215,6 +217,7 @@ extension Array where Element == WorkItem {
                             
                             FinderItem.mergeVideoWithAudio(videoUrl: URL(fileURLWithPath: outputPath), audioUrl: URL(fileURLWithPath: audioPath)) { _ in
                                 status("Completed")
+                                try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp").removeFile()
                                 completion()
                             } failure: { error in
                                 print(error.debugDescription)
@@ -743,11 +746,13 @@ struct ProcessingView: View {
                         isSheetShown = true
                         workItem!.cancel()
                     }
+                    .disabled(true)
                     .padding(.trailing)
                     
                     Button(isPaused ? "Resume" : "Pause") {
                         isPaused.toggle()
                     }
+                    .disabled(true)
                 } else {
                     Button("Create PDF") {
                         finderItems = []
