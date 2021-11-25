@@ -187,7 +187,7 @@ extension Array where Element == WorkItem {
                     
                     FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: mergedVideoSegmentPath, videoSize: videoSize, videoFPS: Int32(currentVideo.finderItem.frameRate!)) {
                         finishedSegmentsCounter += 1
-                        onStatusProgressChanged(finishedItemsCounter,  Int((duration / Double(videoSegmentLength)).rounded(.up)))
+                        onStatusProgressChanged(finishedSegmentsCounter,  Int((duration / Double(videoSegmentLength)).rounded(.up)))
                         guard Int(finishedSegmentsCounter) == Int((duration / Double(videoSegmentLength)).rounded(.up)) else { generateImagesAndMergeToVideo(segmentsFinderItems: Array<FinderItem>(segmentsFinderItems.dropFirst()), completion: completion); return }
                         
                         completion()
@@ -208,6 +208,8 @@ extension Array where Element == WorkItem {
                         let outputPath = "\(NSHomeDirectory())/Downloads/Waifu Output/\(currentVideo.finderItem.fileName!).mov"
                         
                         FinderItem.mergeVideos(from: FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo").children!.map({ $0.avAsset! }), toPath: outputPath) { urlGet, errorGet in
+                            
+                            onStatusProgressChanged(nil, nil)
                             
                             status("merging video and audio for \(filePath)")
                             
@@ -636,6 +638,7 @@ struct ProcessingView: View {
     @State var status: String = "Loading..."
     @State var statusProgress: (progress: Int, total: Int)? = nil
     @State var isShowProgressDetail = false
+    @State var workItem: DispatchWorkItem? = nil
     
     var body: some View {
         VStack {
@@ -754,7 +757,8 @@ struct ProcessingView: View {
             }())
             .popover(isPresented: $isShowProgressDetail) {
                 Text("\(String(format: "%.2f", progress * 100))%")
-                    .padding(.all, 3)
+                    .padding(.all, 2)
+                    .frame(width: 20)
             }
             .onHover { bool in
                 isShowProgressDetail = bool
@@ -771,6 +775,7 @@ struct ProcessingView: View {
                         isFinished = true
                         isProcessing = false
                         isSheetShown = true
+                        workItem!.cancel()
                     }
                     .padding(.trailing)
                     
@@ -801,8 +806,8 @@ struct ProcessingView: View {
             .frame(width: 600, height: 350)
             .onAppear {
                 
-                background.async {
-                    self.finderItems.work(self.chosenScaleLevel, modelUsed: self.modelUsed!) { status in
+                self.workItem = DispatchWorkItem(qos: .background, flags: .inheritQoS) {
+                    finderItems.work(chosenScaleLevel, modelUsed: modelUsed!) { status in
                         self.status = status
                     } onStatusProgressChanged: { progress,total in
                         if progress != nil {
@@ -813,11 +818,14 @@ struct ProcessingView: View {
                     } onProgressChanged: { progress in
                         self.progress = progress
                     } didFinishOneItem: { finished,total in
-                        self.processedItemsCounter = finished
+                        processedItemsCounter = finished
                     } completion: {
                         isFinished = true
                     }
-
+                }
+                
+                background.async {
+                    workItem!.perform()
                 }
             }
             .onReceive(timer) { timer in
