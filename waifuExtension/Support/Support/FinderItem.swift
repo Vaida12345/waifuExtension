@@ -640,7 +640,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
             }
         } catch { }
         
-        if let exportSession = AVAssetExportSession(asset: mixComposition, presetName: AVAssetExportPresetHighestQuality) {
+        if let exportSession = AVAssetExportSession(asset: mixComposition, presetName: AVAssetExportPresetHEVCHighestQuality) {
             exportSession.outputURL = outputURL
             exportSession.outputFileType = AVFileType.mov
             exportSession.shouldOptimizeForNetworkUse = true
@@ -836,7 +836,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         let start = statTime
         let end = endTime
         
-        guard let exportSession = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHighestQuality) else { return }
+        guard let exportSession = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHEVCHighestQuality) else { return }
         exportSession.outputURL = outputURL
         exportSession.outputFileType = .mov
         
@@ -887,8 +887,9 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         
         let mixComposition = AVMutableComposition.init()
         for videoAsset in arrayVideos {
+            print(videoAsset.duration.seconds, completeTrackDuration.seconds)
             
-            let videoTrack = mixComposition.addMutableTrack(withMediaType: AVMediaType.video, preferredTrackID: Int32(kCMPersistentTrackID_Invalid))
+            let videoTrack = mixComposition.addMutableTrack(withMediaType: AVMediaType.video, preferredTrackID: kCMPersistentTrackID_Invalid)
             do {
                 if videoAsset == arrayVideos.first {
                     atTimeM = CMTime.zero
@@ -897,7 +898,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
                 }
                 try videoTrack!.insertTimeRange(CMTimeRangeMake(start: CMTime.zero, duration: videoAsset.duration),
                                                 of: videoAsset.tracks(withMediaType: AVMediaType.video)[0],
-                                                at: completeTrackDuration)
+                                                at: atTimeM)
                 videoSize = (videoTrack!.naturalSize)
 
             } catch let error as NSError {
@@ -905,7 +906,6 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
             }
             
             totalTime = CMTimeAdd(totalTime, videoAsset.duration)
-            
             completeTrackDuration = CMTimeAdd(completeTrackDuration, videoAsset.duration)
             
             let firstInstruction = videoCompositionInstruction(videoTrack!, asset: videoAsset)
@@ -923,15 +923,12 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         let mainComposition = AVMutableVideoComposition()
         mainComposition.instructions = [mainInstruction]
         mainComposition.frameDuration = CMTimeMake(value: 1, timescale: Int32(arbitraryVideo.nominalFrameRate))
-        mainComposition.renderSize = arbitraryVideo.naturalSize
+        mainComposition.renderSize = videoSize
         
-        let savePath = toPath
-        let url = NSURL(fileURLWithPath: savePath)
-        
-        let exporter = AVAssetExportSession(asset: mixComposition, presetName: AVAssetExportPresetHighestQuality)
-        exporter!.outputURL = url as URL
+        let exporter = AVAssetExportSession(asset: mixComposition, presetName: AVAssetExportPresetHEVCHighestQuality)
+        exporter!.outputURL = URL(fileURLWithPath: toPath)
         exporter!.outputFileType = AVFileType.mov
-        exporter!.shouldOptimizeForNetworkUse = true
+        exporter!.shouldOptimizeForNetworkUse = false
         exporter!.videoComposition = mainComposition
         exporter!.exportAsynchronously {
             completion(exporter?.outputURL, nil)

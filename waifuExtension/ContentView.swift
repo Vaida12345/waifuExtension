@@ -309,6 +309,12 @@ struct ContentView: View {
         .sheet(isPresented: $isCreatingPDF, onDismiss: nil) {
             ProcessingPDFView(isCreatingPDF: $isCreatingPDF, background: $pdfbackground)
         }
+        .onAppear {
+            let processedSplitVideoFinderItems = FinderItem(at: "/Users/vaida/Downloads/Waifu Output/tmp/Kamui/processed/splitVideo").children!
+            FinderItem.mergeVideos(from: processedSplitVideoFinderItems.map({ $0.avAsset! }), toPath: "/Users/vaida/Downloads/Waifu Output/tmp/Kamui/processed/video.mov") { urlGet, errorGet in
+                print("done")
+            }
+        }
     }
 }
 
