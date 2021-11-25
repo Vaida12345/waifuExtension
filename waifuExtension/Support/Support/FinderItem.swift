@@ -869,12 +869,9 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     /// from https://stackoverflow.com/questions/38972829/swift-merge-avasset-videos-array
     static func mergeVideos(from arrayVideos: [AVAsset], toPath: String, completion: @escaping (_ urlGet:URL?,_ errorGet:Error?) -> Void) {
         
-        try! FinderItem(at: toPath).removeFile()
-        
         func videoCompositionInstruction(_ track: AVCompositionTrack, asset: AVAsset)
         -> AVMutableVideoCompositionLayerInstruction {
             let instruction = AVMutableVideoCompositionLayerInstruction(assetTrack: track)
-            let assetTrack = asset.tracks(withMediaType: .video)[0]
             
             return instruction
         }

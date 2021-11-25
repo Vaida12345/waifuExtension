@@ -143,17 +143,17 @@ class WorkItem: Equatable, Identifiable {
                     
                     let frames: [FinderItem] = FinderItem(at: rawFramePath).rawChildren!.sorted(by: { $0.rawPath < $1.rawPath })
                     
-                    let waifu2x = Waifu2x()
-                    waifu2x.didFinishedOneBlock = { finished, total in
-                        self.progress += 1 / Double(total) / (duration + 1).rounded(.up) / Double(frames.count)
-                        onChangingProgress(self.progress, Double(total) * (duration + 1).rounded(.up) * Double(frames.count))
-                    }
-                    
                     var frameCounter = 1
                     
-                    for index in 0..<frames.count {
+                    DispatchQueue.concurrentPerform(iterations: frames.count) { index in
                         guard var image = frames[index].image else { return }
                         print("waifu2x working with", frames[index].path)
+                        
+                        let waifu2x = Waifu2x()
+                        waifu2x.didFinishedOneBlock = { finished, total in
+                            self.progress += 1 / Double(total) / (duration + 1).rounded(.up) / Double(frames.count)
+                            onChangingProgress(self.progress, Double(total) * (duration + 1).rounded(.up) * Double(frames.count))
+                        }
                         
                         if chosenScaleLevel >= 2 {
                             for _ in 1...chosenScaleLevel {
@@ -308,12 +308,6 @@ struct ContentView: View {
         }
         .sheet(isPresented: $isCreatingPDF, onDismiss: nil) {
             ProcessingPDFView(isCreatingPDF: $isCreatingPDF, background: $pdfbackground)
-        }
-        .onAppear {
-            let processedSplitVideoFinderItems = FinderItem(at: "/Users/vaida/Downloads/Waifu Output/tmp/Kamui/processed/splitVideo").children!
-            FinderItem.mergeVideos(from: processedSplitVideoFinderItems.map({ $0.avAsset! }), toPath: "/Users/vaida/Downloads/Waifu Output/tmp/Kamui/processed/video.mov") { urlGet, errorGet in
-                print("done")
-            }
         }
     }
 }
