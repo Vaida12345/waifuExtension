@@ -14,8 +14,9 @@ extension NSImage {
     /// Workaround: Apply two ML filters sequently will break the image
     ///
     /// - Returns: the reloaded image
-    public func reload() -> NSImage {
-        let tmpfile = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("temp.png")
+    public func reload(withIndex: Int? = nil) -> NSImage {
+        
+        let tmpfile = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("temp \(withIndex ?? 0).png")
         self.write(to: tmpfile.path)
         return NSImage(contentsOf: tmpfile)!
     }

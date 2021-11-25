@@ -130,24 +130,13 @@ class WorkItem: Equatable, Identifiable {
                     let rawFrames = item.finderItem.frames!
                     
                     print("frames: \(rawFrames.count)")
-                    var rawFrameIndex = 1
-                    for i in rawFrames {
-                        var frameSequence = String(rawFrameIndex)
-                        while frameSequence.count <= 5 { frameSequence.insert("0", at: frameSequence.startIndex) }
-                        i.write(to: "\(rawFramePath)/frame \(frameSequence).png")
-                        print("written \(rawFramePath)/frame \(frameSequence).png")
-                        
-                        rawFrameIndex += 1
-                    }
-                    print("finished writting frames")
                     
-                    let frames: [FinderItem] = FinderItem(at: rawFramePath).rawChildren!.sorted(by: { $0.rawPath < $1.rawPath })
+                    let frames: [NSImage] = rawFrames
                     
                     var frameCounter = 1
                     
                     DispatchQueue.concurrentPerform(iterations: frames.count) { index in
-                        guard var image = frames[index].image else { return }
-                        print("waifu2x working with", frames[index].path)
+                        var image = frames[index]
                         
                         let waifu2x = Waifu2x()
                         waifu2x.didFinishedOneBlock = { finished, total in
@@ -157,10 +146,10 @@ class WorkItem: Equatable, Identifiable {
                         
                         if chosenScaleLevel >= 2 {
                             for _ in 1...chosenScaleLevel {
-                                image = waifu2x.run(image, model: modelUsed)!.reload()
+                                image = waifu2x.run(image.reload(withIndex: index), model: modelUsed)!
                             }
                         } else {
-                            image = waifu2x.run(image, model: modelUsed)!
+                            image = waifu2x.run(image.reload(withIndex: index), model: modelUsed)!
                         }
                         
                         var frameSequence = String(frameCounter)
@@ -195,7 +184,7 @@ class WorkItem: Equatable, Identifiable {
                         guard Int(finalCounter) == Int(duration.rounded(.up)) else { return }
                         onStatusChanged(.mergingVideos)
                         
-                        let path = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/\(item.finderItem.fileName!).mov"
+                        let path = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/\(self.finderItem.fileName!).mov"
                         FinderItem.mergeVideos(from: FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo").children!.map({ $0.avAsset! }), toPath: path) { urlGet, errorGet in
                             
                             print("merge video completed.")
