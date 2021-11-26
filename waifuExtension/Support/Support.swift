@@ -1238,7 +1238,7 @@ extension AVAsset {
         var counter = 0
         var images: [NSImage] = []
         
-        print(requiredFramesCount)
+        print("required frames:", requiredFramesCount)
         
         while counter < requiredFramesCount {
             let imageGenerator = AVAssetImageGenerator(asset: asset)

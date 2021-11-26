@@ -37,8 +37,6 @@ extension Array where Element == WorkItem {
         return self.contains(WorkItem(at: finderItem, type: .image))
     }
     
-    //TODO: remember to add isCancelled into onStatusChanged.
-    
     func work(_ chosenScaleLevel: Int, modelUsed: Model, videoSegmentLength: Int = 10, onStatusChanged status: @escaping ((_ status: String)->()), onStatusProgressChanged: @escaping ((_ progress: Int?, _ total: Int?)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
         
         let images = self.filter({ $0.type == .image })
@@ -170,10 +168,6 @@ extension Array where Element == WorkItem {
                         var currentFrame = framesToBeProcessed[frameIndex]
                         
                         let waifu2x = Waifu2x()
-                        waifu2x.didFinishedOneBlock = { total in
-                            currentVideo.progress += 1 / Double(total) / Double(framesToBeProcessed.count) / totalSegmentsCount
-                            onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / Double(totalItemCounter))
-                        }
                         
                         if chosenScaleLevel >= 2 {
                             for _ in 1...chosenScaleLevel {
@@ -182,6 +176,9 @@ extension Array where Element == WorkItem {
                         } else {
                             currentFrame = waifu2x.run(currentFrame.reload(withIndex: "\(segmentSequence)\(frameIndex)"), model: modelUsed)!
                         }
+                        
+                        currentVideo.progress += 1 / Double(framesToBeProcessed.count) / totalSegmentsCount
+                        onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / Double(totalItemCounter))
                         
                         outputFrames.append(orderedImages(image: currentFrame, index: frameIndex))
                     }

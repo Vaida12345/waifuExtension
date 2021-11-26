@@ -91,9 +91,9 @@ public class Waifu2x {
         }
         
         var hasalpha = cgimg.alphaInfo != CGImageAlphaInfo.none
-        debugPrint("With Alpha: \(hasalpha)")
         var channels = 3
         var alpha: [UInt8]! = nil
+        
         if hasalpha {
             alpha = image.alpha()
             var ralpha = false
@@ -116,7 +116,7 @@ public class Waifu2x {
                 hasalpha = false
             }
         }
-        debugPrint("Really With Alpha: \(hasalpha)")
+        
         let out_width = width * out_scale
         let out_height = height * out_scale
         let out_fullWidth = fullWidth * out_scale
@@ -261,6 +261,7 @@ public class Waifu2x {
                 
                 y_exp += 1
             }
+            
             self.model_pipeline.appendObject(multi)
             
             if let didFinishedOneBlock = self.didFinishedOneBlock {
@@ -274,8 +275,10 @@ public class Waifu2x {
             counter += 1
         }
         
+        let date2 = Date()
         // this would take most of time
         self.in_pipeline.wait()
+        print("waifu 2x: processing costed:", date2.distance(to: Date()))
         
         self.model_pipeline.wait()
         callback("wait_alpha")
@@ -301,7 +304,7 @@ public class Waifu2x {
         let outImage = NSImage(cgImage: cgImage!, size: CGSize(width: out_width, height: out_height))
         callback("finished")
         
-        print(date.distance(to: Date()))
+        print("waifu2x finished with time:", date.distance(to: Date()))
         
         return outImage
     }
