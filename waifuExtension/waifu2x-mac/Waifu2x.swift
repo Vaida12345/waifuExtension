@@ -241,8 +241,6 @@ public class Waifu2x {
             let x = Int(rect.origin.x)
             let y = Int(rect.origin.y)
             let multi = try! MLMultiArray(shape: [3, NSNumber(value: self.block_size + 2 * self.shrink_size), NSNumber(value: self.block_size + 2 * self.shrink_size)], dataType: .float32)
-            var x_new: Int
-            var y_new: Int
             
             var y_exp = y
             
@@ -250,8 +248,8 @@ public class Waifu2x {
                 
                 var x_exp = x
                 while x_exp < (x + self.block_size + 2 * self.shrink_size) {
-                    x_new = x_exp - x
-                    y_new = y_exp - y
+                    let x_new = x_exp - x
+                    let y_new = y_exp - y
                     multi[y_new * (self.block_size + 2 * self.shrink_size) + x_new] = NSNumber(value: expanded[y_exp * expwidth + x_exp])
                     multi[y_new * (self.block_size + 2 * self.shrink_size) + x_new + (self.block_size + 2 * self.shrink_size) * (self.self.block_size + 2 * self.shrink_size)] = NSNumber(value: expanded[y_exp * expwidth + x_exp + expwidth * expheight])
                     multi[y_new * (self.block_size + 2 * self.shrink_size) + x_new + (self.block_size + 2 * self.shrink_size) * (self.block_size + 2 * self.shrink_size) * 2] = NSNumber(value: expanded[y_exp * expwidth + x_exp + expwidth * expheight * 2])
