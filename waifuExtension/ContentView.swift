@@ -8,6 +8,8 @@
 import SwiftUI
 import AVFoundation
 
+var isProcessingCancelled = false
+
 struct orderedImages {
     var image: NSImage
     var index: Int
@@ -51,6 +53,9 @@ extension Array where Element == WorkItem {
             var concurrentProcessingImagesCount = 0
             
             DispatchQueue.concurrentPerform(iterations: images.count) { imageIndex in
+                
+                guard !isProcessingCancelled else { return }
+                
                 backgroundQueue.async {
                     concurrentProcessingImagesCount += 1
                     
@@ -102,6 +107,8 @@ extension Array where Element == WorkItem {
             
             for currentVideo in videos {
                 
+                guard !isProcessingCancelled else { return }
+                
                 var finishedSegmentsCounter = 0
                 
                 let filePath = currentVideo.finderItem.relativePath ?? currentVideo.finderItem.fileName!
@@ -119,6 +126,7 @@ extension Array where Element == WorkItem {
                 
                 func splitVideo(withIndex segmentIndex: Int, completion: @escaping (()->())) {
                     
+                    guard !isProcessingCancelled else { return }
                     guard segmentIndex <= Int(duration) / videoSegmentLength else { return }
                     
                     var segmentSequence = String(segmentIndex)
@@ -146,6 +154,7 @@ extension Array where Element == WorkItem {
                 let totalSegmentsCount = Double(Int(duration) / videoSegmentLength + 1)
                 
                 func generateImagesAndMergeToVideo(segmentsFinderItems: [FinderItem], completion: @escaping (()->())) {
+                    guard !isProcessingCancelled else { return }
                     guard !segmentsFinderItems.isEmpty else { return }
                     
                     let segmentsFinderItem = segmentsFinderItems.first!
@@ -197,6 +206,7 @@ extension Array where Element == WorkItem {
                 
                 splitVideo(withIndex: 0) {
                     
+                    guard !isProcessingCancelled else { return }
                     onStatusProgressChanged(nil, nil)
                     
                     status("generating images for \(filePath)")
@@ -205,6 +215,7 @@ extension Array where Element == WorkItem {
                     onStatusProgressChanged(0, Int((duration / Double(videoSegmentLength)).rounded(.up)))
                     
                     generateImagesAndMergeToVideo(segmentsFinderItems: FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/splitVideo").children!) {
+                        guard !isProcessingCancelled else { return }
                         status("merging videos for \(filePath)")
                         
                         let outputPath = "\(NSHomeDirectory())/Downloads/Waifu Output/\(currentVideo.finderItem.fileName!).mov"
@@ -744,6 +755,7 @@ struct ProcessingView: View {
                         isFinished = true
                         isProcessing = false
                         isSheetShown = true
+                        isProcessingCancelled = true
                         workItem!.cancel()
                     }
                     .padding(.trailing)
@@ -751,6 +763,7 @@ struct ProcessingView: View {
                     Button(isPaused ? "Resume" : "Pause") {
                         isPaused.toggle()
                     }
+                    .disabled(true)
                 } else {
                     Button("Create PDF") {
                         finderItems = []
