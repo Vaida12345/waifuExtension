@@ -913,6 +913,8 @@ struct ProcessingPDFView: View {
         .frame(width: 600, height: 300)
         .onAppear {
             
+            isProcessingCancelled = false
+            
             var counter = 0
             FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output").iteratedOver { child in
                 guard child.image != nil else { return }
