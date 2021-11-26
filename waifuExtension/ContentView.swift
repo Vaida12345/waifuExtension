@@ -675,8 +675,8 @@ struct ProcessingView: View {
                         guard !isPaused else { return "paused" }
                         guard progress != 0 else { return "calculating..." }
                         
-                        var value = (pastTimeTaken + currentTimeTaken) / progress
-                        value -= pastTimeTaken + currentTimeTaken
+                        var value = (pastTimeTaken) / progress
+                        value -= pastTimeTaken
                         
                         guard value > 0 else { return "calculating..." }
                         
@@ -688,8 +688,8 @@ struct ProcessingView: View {
                         guard !isPaused else { return "paused" }
                         guard progress != 0 else { return "calculating..." }
                         
-                        var value = (pastTimeTaken + currentTimeTaken) / progress
-                        value -= pastTimeTaken + currentTimeTaken
+                        var value = (pastTimeTaken) / progress
+                        value -= pastTimeTaken
                         
                         guard value > 0 else { return "calculating..." }
                         
@@ -746,13 +746,11 @@ struct ProcessingView: View {
                         isSheetShown = true
                         workItem!.cancel()
                     }
-                    .disabled(true)
                     .padding(.trailing)
                     
                     Button(isPaused ? "Resume" : "Pause") {
                         isPaused.toggle()
                     }
-                    .disabled(true)
                 } else {
                     Button("Create PDF") {
                         finderItems = []
