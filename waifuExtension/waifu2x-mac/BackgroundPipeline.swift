@@ -39,7 +39,7 @@ class BackgroundPipeline <T> {
     ///   - obj: The object
     init(_ name: String, count: Int, waifu2x: Waifu2x, task: @escaping (_ index: Int, _ obj: T) -> Void) {
         self.count = count
-        background = DispatchQueue(label: name)
+        background = DispatchQueue(label: name, qos: .userInteractive)
         self.waifu2x = waifu2x
         
         background.async {
