@@ -265,8 +265,9 @@ public class Waifu2x {
             let arrayLengthFull = 3 * (self.block_size + 2 * self.shrink_size) * (self.block_size + 2 * self.shrink_size)
             let arrayLength = (self.block_size + 2 * self.shrink_size)
 
-            let expandedBuffer = device.makeBuffer(length: arrayLengthFull, options: .storageModeShared)!
-            let resultBuffer = device.makeBuffer(length: arrayLengthFull, options: .storageModeShared)!
+            let resultBuffer = device.makeBuffer(length: arrayLengthFull * Float.exponentBitCount, options: .storageModeShared)!
+            let expandedBuffer = device.makeBuffer(length: 0, options: .storageModeShared)!
+            
 
             commandEncoder.setComputePipelineState(pipelineState)
             commandEncoder.setBuffer(resultBuffer, offset: 0, index: 0)
@@ -285,6 +286,12 @@ public class Waifu2x {
             commandBuffer.commit()
             commandBuffer.waitUntilCompleted()
             
+            let rawPointer = resultBuffer.contents()
+            let typedPointer = rawPointer.bindMemory(to: Float.self, capacity: resultBuffer.length)
+            let bufferedPointer = UnsafeBufferPointer(start: typedPointer, count: arrayLengthFull)
+            for i in 0..<arrayLengthFull {
+                print(i, bufferedPointer[i])
+            }
             
 
             print("end")

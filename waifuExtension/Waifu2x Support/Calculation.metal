@@ -14,10 +14,10 @@ constant int expwidth [[function_constant(2)]];
 constant int expheight [[function_constant(3)]];
 constant int x [[function_constant(4)]];
 constant int y [[function_constant(5)]];
-constant int expanded [[function_constant(6)]];
 
 /// This is a Metal Shading Language (MSL) function equivalent to the add_arrays() C function, used to perform the calculation on a GPU.
-kernel void Calculation(device float* multi,
+kernel void Calculation(device const float* expanded,
+                       device float* multi,
                        uint2 index [[thread_position_in_grid]]) {
     // the for-loop is replaced with a collection of threads, each of which
     // calls this function.
