@@ -253,7 +253,6 @@ public class Waifu2x {
             constants.setConstantValue(&expheight, type: MTLDataType.int, index: 3)
             constants.setConstantValue(&x, type: MTLDataType.int, index: 4)
             constants.setConstantValue(&y, type: MTLDataType.int, index: 5)
-            constants.setConstantValue(expanded, type: MTLDataType.int, index: 6)
             
             let calculationFunction = try! library.makeFunction(name: "Calculation", constantValues: constants)
             let pipelineState = try! device.makeComputePipelineState(function: calculationFunction)
@@ -278,16 +277,15 @@ public class Waifu2x {
             if threadGroupSize > arrayLengthFull {
                 threadGroupSize = arrayLengthFull
             }
-            threadGroupSize = Int(sqrt(Double(threadGroupSize)))
             
-            let threadgroupSize = MTLSizeMake(threadGroupSize, threadGroupSize, 1)
+            let threadgroupSize = MTLSizeMake(threadGroupSize, 1, 1)
             commandEncoder.dispatchThreads(gridSize, threadsPerThreadgroup: threadgroupSize)
             commandEncoder.endEncoding()
             commandBuffer.commit()
             commandBuffer.waitUntilCompleted()
             
             let rawPointer = resultBuffer.contents()
-            let typedPointer = rawPointer.bindMemory(to: Float.self, capacity: resultBuffer.length * MemoryLayout<Float>.size)
+            let typedPointer = rawPointer.bindMemory(to: Float.self, capacity: arrayLengthFull * MemoryLayout<Float>.size)
             let bufferedPointer = UnsafeBufferPointer(start: typedPointer, count: arrayLengthFull)
             
             let multi = [Float](bufferedPointer)

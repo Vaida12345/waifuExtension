@@ -25,9 +25,9 @@ kernel void Calculation(device const float* expanded,
     int x_exp = index.x + x;
     int y_exp = index.y + y;
     
-    if (x_exp * y_exp > 3 * (block_size + 2 * shrink_size) * (block_size + 2 * shrink_size)) {
-        return;
-    }
+//    if (x_exp * y_exp > 3 * (block_size + 2 * shrink_size) * (block_size + 2 * shrink_size)) {
+//        return;
+//    }
     
     int x_new = x_exp - x;
     int y_new = y_exp - y;
