@@ -223,7 +223,7 @@ public class Waifu2x {
         let mlmodel = model.model
         self.model_pipeline = BackgroundPipeline<MLMultiArray>("model_pipeline", count: rects.count, waifu2x: self) { (index, array) in
             self.out_pipeline.appendObject(try! mlmodel.prediction(input: array))
-            callback("\((index * 100) / rects.count)")
+//            callback("\((index * 100) / rects.count)")
         }
         // Start running model
         let expwidth = fullWidth + 2 * self.shrink_size
@@ -302,22 +302,25 @@ public class Waifu2x {
         
         DispatchQueue.concurrentPerform(iterations: rects.count) { index in
             let rect = rects[index]
+            let sideLength = self.block_size + 2 * self.shrink_size
             
             let x = Int(rect.origin.x)
             let y = Int(rect.origin.y)
-            let multi = try! MLMultiArray(shape: [3, NSNumber(value: self.block_size + 2 * self.shrink_size), NSNumber(value: self.block_size + 2 * self.shrink_size)], dataType: .float32)
+            let multi = try! MLMultiArray(shape: [3, NSNumber(value: sideLength), NSNumber(value: sideLength)], dataType: .float32)
             
             var y_exp = y
             
-            while y_exp < (y + self.block_size + 2 * self.shrink_size) {
+            let y_expWithWidth = y_exp * expwidth
+            
+            while y_exp < (y + sideLength) {
                 
                 var x_exp = x
-                while x_exp < (x + self.block_size + 2 * self.shrink_size) {
+                while x_exp < (x + sideLength) {
                     let x_new = x_exp - x
                     let y_new = y_exp - y
-                    multi[y_new * (self.block_size + 2 * self.shrink_size) + x_new] = NSNumber(value: expanded[y_exp * expwidth + x_exp])
-                    multi[y_new * (self.block_size + 2 * self.shrink_size) + x_new + (self.block_size + 2 * self.shrink_size) * (self.self.block_size + 2 * self.shrink_size)] = NSNumber(value: expanded[y_exp * expwidth + x_exp + expwidth * expheight])
-                    multi[y_new * (self.block_size + 2 * self.shrink_size) + x_new + (self.block_size + 2 * self.shrink_size) * (self.block_size + 2 * self.shrink_size) * 2] = NSNumber(value: expanded[y_exp * expwidth + x_exp + expwidth * expheight * 2])
+                    multi[y_new * sideLength + x_new] = NSNumber(value: expanded[y_expWithWidth + x_exp])
+                    multi[y_new * sideLength + x_new + sideLength * sideLength] = NSNumber(value: expanded[y_expWithWidth + x_exp + expwidth * expheight])
+                    multi[y_new * sideLength + x_new + sideLength * sideLength * 2] = NSNumber(value: expanded[y_expWithWidth + x_exp + expwidth * expheight * 2])
                     
                     x_exp += 1
                 }
@@ -325,7 +328,9 @@ public class Waifu2x {
                 y_exp += 1
             }
             
-            self.model_pipeline.appendObject(multi)
+            DispatchQueue.main.async {
+                self.model_pipeline.appendObject(multi)
+            }
             
             if let didFinishedOneBlock = self.didFinishedOneBlock {
                 didFinishedOneBlock(rects.count)
