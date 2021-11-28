@@ -832,6 +832,7 @@ struct ProcessingView: View {
                         isProcessing = false
                         isCreatingPDF = true
                     }
+                    .disabled(!(FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu\\ Output").children?.filter({ $0.isDirectory }).isEmpty ?? false))
                     .padding(.trailing)
                     
                     Button("Show in Finder") {

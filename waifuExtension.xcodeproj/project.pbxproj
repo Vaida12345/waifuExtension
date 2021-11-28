@@ -181,7 +181,6 @@
 				B41C473D274AA7850024ECB7 /* ContentView.swift */,
 				B437F140275334CB00A1CE41 /* Models */,
 				B41C474A274AAF6A0024ECB7 /* Support */,
-				B47664D72753057900FD78EA /* Waifu2x Support */,
 				B49BFD6F274B4BC50046FDDF /* waifu2x-mac */,
 				B41C473F274AA7850024ECB7 /* Assets.xcassets */,
 				B41C4744274AA7850024ECB7 /* waifuExtension.entitlements */,
@@ -329,17 +328,10 @@
 			path = ukbench;
 			sourceTree = "<group>";
 		};
-		B47664D72753057900FD78EA /* Waifu2x Support */ = {
-			isa = PBXGroup;
-			children = (
-				B47664D52753056300FD78EA /* Calculation.metal */,
-			);
-			path = "Waifu2x Support";
-			sourceTree = "<group>";
-		};
 		B49BFD6F274B4BC50046FDDF /* waifu2x-mac */ = {
 			isa = PBXGroup;
 			children = (
+				B47664D52753056300FD78EA /* Calculation.metal */,
 				B49BFD70274B4BC50046FDDF /* BackgroundPipeline.swift */,
 				B49BFD72274B4BC50046FDDF /* MLModel+Prediction.swift */,
 				B49BFD73274B4BC50046FDDF /* waifu2x_mac.h */,
