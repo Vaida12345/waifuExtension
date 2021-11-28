@@ -37,8 +37,7 @@ public enum Model: String {
                                .photo_noise0_scale2x, .photo_noise1_scale2x, .photo_noise2_scale2x, .photo_noise3_scale2x]
     
     public func getMLModel() -> MLModel {
-        let bundle = Bundle(for: Dummy.self)
-        let assetPath = bundle.url(forResource: self.rawValue, withExtension: "mlmodelc")
-        return try! MLModel(contentsOf: assetPath!)
+        let assetPath = Bundle.main.url(forResource: "1", withExtension: "mlpackage", subdirectory: "Models")
+        return _1().model
     }
 }

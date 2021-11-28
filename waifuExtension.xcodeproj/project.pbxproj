@@ -65,6 +65,7 @@
 		B49BFDB4274B4BC50046FDDF /* NSImage+Bicubic.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD92274B4BC50046FDDF /* NSImage+Bicubic.swift */; };
 		B49BFDB5274B4BC50046FDDF /* MetalBicubic.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD93274B4BC50046FDDF /* MetalBicubic.swift */; };
 		B4B9EFF0274BC50400A8D380 /* UIImage+Reload.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4B9EFEF274BC50400A8D380 /* UIImage+Reload.swift */; };
+		B4E8248527528CED00657F51 /* 1.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = B4E8248427528CED00657F51 /* 1.mlpackage */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -129,6 +130,7 @@
 		B49BFD92274B4BC50046FDDF /* NSImage+Bicubic.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSImage+Bicubic.swift"; sourceTree = "<group>"; };
 		B49BFD93274B4BC50046FDDF /* MetalBicubic.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MetalBicubic.swift; sourceTree = "<group>"; };
 		B4B9EFEF274BC50400A8D380 /* UIImage+Reload.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIImage+Reload.swift"; sourceTree = "<group>"; };
+		B4E8248427528CED00657F51 /* 1.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = 1.mlpackage; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -163,6 +165,7 @@
 			children = (
 				B41C473B274AA7850024ECB7 /* waifuExtensionApp.swift */,
 				B41C473D274AA7850024ECB7 /* ContentView.swift */,
+				B4E8248327528BE000657F51 /* Models */,
 				B41C474A274AAF6A0024ECB7 /* Support */,
 				B49BFD6F274B4BC50046FDDF /* waifu2x-mac */,
 				B41C473F274AA7850024ECB7 /* Assets.xcassets */,
@@ -279,6 +282,14 @@
 				B49BFD87274B4BC50046FDDF /* anime_noise3_model.mlmodel */,
 			);
 			path = models;
+			sourceTree = "<group>";
+		};
+		B4E8248327528BE000657F51 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				B4E8248427528CED00657F51 /* 1.mlpackage */,
+			);
+			path = Models;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -407,6 +418,7 @@
 				B49BFDB4274B4BC50046FDDF /* NSImage+Bicubic.swift in Sources */,
 				B49BFD98274B4BC50046FDDF /* photo_noise0_model.mlmodel in Sources */,
 				B49BFDB2274B4BC50046FDDF /* bicubic.metal in Sources */,
+				B4E8248527528CED00657F51 /* 1.mlpackage in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -9,6 +9,8 @@
 import Foundation
 import CoreML
 import Cocoa
+import Metal
+import MetalKit
 
 public class Waifu2x {
     
@@ -54,6 +56,10 @@ public class Waifu2x {
             self.block_size = 142
             out_scale = 2
         }
+        
+        self.block_size = 128 // remember margin
+        out_scale = 1
+        
         let width = Int(image.representations[0].pixelsWide)
         let height = Int(image.representations[0].pixelsHigh)
         var fullWidth = width
