@@ -1,0 +1,15 @@
+{
+  "Outputs" : {
+    "conv7" : {
+      "MLFeatureShortDescription" : ""
+    }
+  },
+  "Inputs" : {
+    "input" : {
+      "MLFeatureShortDescription" : ""
+    }
+  },
+  "TrainingInputs" : {
+
+  }
+}

@@ -57,9 +57,6 @@ public class Waifu2x {
             out_scale = 2
         }
         
-        self.block_size = 128 // remember margin
-        out_scale = 1
-        
         let width = Int(image.representations[0].pixelsWide)
         let height = Int(image.representations[0].pixelsHigh)
         var fullWidth = width

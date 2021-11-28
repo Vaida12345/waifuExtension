@@ -1,0 +1,24 @@
+{
+    "fileFormatVersion": "1.0.0",
+    "itemInfoEntries": {
+        "9E4E7A73-DAEE-49A8-9C80-CF32DA0F7A93": {
+            "author": "com.apple.CoreML",
+            "description": "CoreML Model Specification",
+            "name": "anime_style_art_noise1_model.mlmodel",
+            "path": "com.apple.CoreML/anime_style_art_noise1_model.mlmodel"
+        },
+        "9F7D8316-1DF3-4591-90D4-097515D36652": {
+            "author": "com.apple.CoreML",
+            "description": "External FeatureDescription Overlay",
+            "name": "FeatureDescriptions.json",
+            "path": "com.apple.CoreML/FeatureDescriptions.json"
+        },
+        "ED0CEA2A-C09B-48A6-BDD7-E5749B6219C7": {
+            "author": "com.apple.CoreML",
+            "description": "External Metadata Overlay",
+            "name": "Metadata.json",
+            "path": "com.apple.CoreML/Metadata.json"
+        }
+    },
+    "rootModelIdentifier": "9E4E7A73-DAEE-49A8-9C80-CF32DA0F7A93"
+}
