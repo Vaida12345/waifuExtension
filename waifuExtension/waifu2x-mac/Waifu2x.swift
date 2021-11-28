@@ -266,11 +266,11 @@ public class Waifu2x {
             let arrayLength = (self.block_size + 2 * self.shrink_size)
 
             let resultBuffer = device.makeBuffer(length: arrayLengthFull * Float.exponentBitCount, options: .storageModeShared)!
-            let expandedBuffer = device.makeBuffer(length: 0, options: .storageModeShared)!
-            
+            let expandedBuffer = device.makeBuffer(bytes: UnsafeRawPointer(UnsafeMutablePointer(mutating: expanded)), length: arrayLengthFull * Float.exponentBitCount, options: .storageModeShared)!
 
             commandEncoder.setComputePipelineState(pipelineState)
-            commandEncoder.setBuffer(resultBuffer, offset: 0, index: 0)
+            commandEncoder.setBuffer(expandedBuffer, offset: 0, index: 0)
+            commandEncoder.setBuffer(resultBuffer, offset: 0, index: 1)
 
             let gridSize = MTLSizeMake(arrayLength, arrayLength, 1)
 
@@ -289,14 +289,8 @@ public class Waifu2x {
             let rawPointer = resultBuffer.contents()
             let typedPointer = rawPointer.bindMemory(to: Float.self, capacity: resultBuffer.length)
             let bufferedPointer = UnsafeBufferPointer(start: typedPointer, count: arrayLengthFull)
-            for i in 0..<arrayLengthFull {
-                print(i, bufferedPointer[i])
-            }
             
-
-            print("end")
-            
-            var multi: [Float] = []
+            var multi = [Float](bufferedPointer)
             
             let shape = [3, Int(self.block_size + 2 * self.shrink_size), Int(self.block_size + 2 * self.shrink_size)]
             let array = MLMultiArray(MLShapedArray(scalars: multi, shape: shape))
