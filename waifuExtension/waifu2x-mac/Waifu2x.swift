@@ -43,7 +43,7 @@ public class Waifu2x {
             return image
         }
         
-        let date = Date()
+        let fullDate = Date()
         
         self.interrupt = false
         self.block_size = model.block_size
@@ -130,11 +130,13 @@ public class Waifu2x {
             }
             return output
         }
+        
         let bufferSize = out_block_size * out_block_size * 3
         let imgData = UnsafeMutablePointer<UInt8>.allocate(capacity: out_width * out_height * channels)
         defer {
             imgData.deallocate()
         }
+        
         // Alpha channel support
         var alpha_task: BackgroundTask? = nil
         if hasalpha {
@@ -181,7 +183,7 @@ public class Waifu2x {
             }
         }
         
-        // Output, will not take much time
+        // Output, takes no time
         self.out_pipeline = BackgroundPipeline<MLMultiArray>("out_pipeline", count: rects.count, waifu2x: self) { (index, array) in
             let rect = rects[index]
             let origin_x = Int(rect.origin.x) * out_scale
@@ -218,18 +220,19 @@ public class Waifu2x {
             }
         }
         
+        let date = Date()
+        
         // Prepare for model pipeline
         // Run prediction on each block
         let mlmodel = model.model
-        self.model_pipeline = BackgroundPipeline<MLMultiArray>("model_pipeline", count: rects.count, waifu2x: self) { (index, array) in
-            self.out_pipeline.appendObject(try! mlmodel.prediction(input: array))
-//            callback("\((index * 100) / rects.count)")
-        }
+        
         // Start running model
         let expwidth = fullWidth + 2 * self.shrink_size
         let expheight = fullHeight + 2 * self.shrink_size
         let expanded = fullCG.expand(withAlpha: hasalpha, in: self)
         callback("processing")
+        
+        print("date: \(date.distance(to: Date()))")
         
         let in_pipeDate = Date()
         
@@ -328,8 +331,10 @@ public class Waifu2x {
                 y_exp += 1
             }
             
+            let mlResult = try! mlmodel.prediction(input: multi)
+            
             DispatchQueue.main.async {
-                self.model_pipeline.appendObject(multi)
+                self.out_pipeline.appendObject(mlResult)
             }
             
             if let didFinishedOneBlock = self.didFinishedOneBlock {
@@ -340,13 +345,13 @@ public class Waifu2x {
         
         print("In Pipe: \(in_pipeDate.distance(to: Date()))")
         
-        let model_pipelineDate = Date()
-        self.model_pipeline.wait()
-        print("ML: \(model_pipelineDate.distance(to: Date()))")
+        // the rest takes no time.
         
+        let out_pipeDate = Date()
         callback("wait_alpha")
         alpha_task?.wait()
         self.out_pipeline.wait()
+        print("outpipe: \(out_pipeDate.distance(to: Date()))")
         
         self.model_pipeline = nil
         self.out_pipeline = nil
@@ -366,7 +371,7 @@ public class Waifu2x {
         let outImage = NSImage(cgImage: cgImage!, size: CGSize(width: out_width, height: out_height))
         callback("finished")
         
-        print("waifu2x finished with time:", date.distance(to: Date()))
+        print("waifu2x finished with time:", fullDate.distance(to: Date()))
         
         return outImage
     }
