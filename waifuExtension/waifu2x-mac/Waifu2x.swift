@@ -35,7 +35,7 @@ public class Waifu2x {
     
     var didFinishedOneBlock: (( _ total: Int)->Void)? = nil
     
-    public func run(_ image: NSImage!, model: Model!, _ callback: @escaping (String) -> Void = { _ in }) -> NSImage? {
+    func run(_ image: NSImage!, model: Waifu2xModel!, _ callback: @escaping (String) -> Void = { _ in }) -> NSImage? {
         guard image != nil else {
             return nil
         }
@@ -47,15 +47,8 @@ public class Waifu2x {
         let date = Date()
         
         self.interrupt = false
-        var out_scale: Int
-        switch model! {
-        case .anime_noise0, .anime_noise1, .anime_noise2, .anime_noise3, .photo_noise0, .photo_noise1, .photo_noise2, .photo_noise3:
-            self.block_size = 128
-            out_scale = 1
-        default:
-            self.block_size = 142
-            out_scale = 2
-        }
+        self.block_size = model.block_size
+        let out_scale = model.scale
         
         let width = Int(image.representations[0].pixelsWide)
         let height = Int(image.representations[0].pixelsHigh)
@@ -228,7 +221,7 @@ public class Waifu2x {
         
         // Prepare for model pipeline
         // Run prediction on each block
-        let mlmodel = model.getMLModel()
+        let mlmodel = model.model
         self.model_pipeline = BackgroundPipeline<MLMultiArray>("model_pipeline", count: rects.count, waifu2x: self) { (index, array) in
             self.out_pipeline.appendObject(try! mlmodel.prediction(input: array))
             callback("\((index * 100) / rects.count)")

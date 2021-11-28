@@ -58,27 +58,8 @@
 		B437F174275334DB00A1CE41 /* Waifu2xModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B437F173275334DB00A1CE41 /* Waifu2xModel.swift */; };
 		B47664D62753056300FD78EA /* Calculation.metal in Sources */ = {isa = PBXBuildFile; fileRef = B47664D52753056300FD78EA /* Calculation.metal */; };
 		B49BFD94274B4BC50046FDDF /* BackgroundPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD70274B4BC50046FDDF /* BackgroundPipeline.swift */; };
-		B49BFD95274B4BC50046FDDF /* ModelFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD71274B4BC50046FDDF /* ModelFactory.swift */; };
 		B49BFD96274B4BC50046FDDF /* MLModel+Prediction.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD72274B4BC50046FDDF /* MLModel+Prediction.swift */; };
 		B49BFD97274B4BC50046FDDF /* NSImage+PNG.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD74274B4BC50046FDDF /* NSImage+PNG.swift */; };
-		B49BFD98274B4BC50046FDDF /* photo_noise0_model.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD76274B4BC50046FDDF /* photo_noise0_model.mlmodel */; };
-		B49BFD99274B4BC50046FDDF /* anime_noise2_model.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD77274B4BC50046FDDF /* anime_noise2_model.mlmodel */; };
-		B49BFD9A274B4BC50046FDDF /* anime_noise1_model.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD78274B4BC50046FDDF /* anime_noise1_model.mlmodel */; };
-		B49BFD9B274B4BC50046FDDF /* photo_noise3_model.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD79274B4BC50046FDDF /* photo_noise3_model.mlmodel */; };
-		B49BFD9C274B4BC50046FDDF /* up_photo_noise1_scale2x_model.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD7A274B4BC50046FDDF /* up_photo_noise1_scale2x_model.mlmodel */; };
-		B49BFD9D274B4BC50046FDDF /* up_anime_noise2_scale2x_model.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD7B274B4BC50046FDDF /* up_anime_noise2_scale2x_model.mlmodel */; };
-		B49BFD9E274B4BC50046FDDF /* up_photo_scale2x_model.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD7C274B4BC50046FDDF /* up_photo_scale2x_model.mlmodel */; };
-		B49BFD9F274B4BC50046FDDF /* up_anime_noise0_scale2x_model.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD7D274B4BC50046FDDF /* up_anime_noise0_scale2x_model.mlmodel */; };
-		B49BFDA0274B4BC50046FDDF /* up_photo_noise3_scale2x_model.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD7E274B4BC50046FDDF /* up_photo_noise3_scale2x_model.mlmodel */; };
-		B49BFDA1274B4BC50046FDDF /* up_anime_scale2x_model.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD7F274B4BC50046FDDF /* up_anime_scale2x_model.mlmodel */; };
-		B49BFDA2274B4BC50046FDDF /* anime_noise0_model.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD80274B4BC50046FDDF /* anime_noise0_model.mlmodel */; };
-		B49BFDA3274B4BC50046FDDF /* up_photo_noise0_scale2x_model.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD81274B4BC50046FDDF /* up_photo_noise0_scale2x_model.mlmodel */; };
-		B49BFDA4274B4BC50046FDDF /* up_anime_noise3_scale2x_model.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD82274B4BC50046FDDF /* up_anime_noise3_scale2x_model.mlmodel */; };
-		B49BFDA5274B4BC50046FDDF /* photo_noise2_model.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD83274B4BC50046FDDF /* photo_noise2_model.mlmodel */; };
-		B49BFDA6274B4BC50046FDDF /* up_anime_noise1_scale2x_model.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD84274B4BC50046FDDF /* up_anime_noise1_scale2x_model.mlmodel */; };
-		B49BFDA7274B4BC50046FDDF /* photo_noise1_model.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD85274B4BC50046FDDF /* photo_noise1_model.mlmodel */; };
-		B49BFDA8274B4BC50046FDDF /* up_photo_noise2_scale2x_model.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD86274B4BC50046FDDF /* up_photo_noise2_scale2x_model.mlmodel */; };
-		B49BFDA9274B4BC50046FDDF /* anime_noise3_model.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD87274B4BC50046FDDF /* anime_noise3_model.mlmodel */; };
 		B49BFDAA274B4BC50046FDDF /* CGImage+Crop.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD88274B4BC50046FDDF /* CGImage+Crop.swift */; };
 		B49BFDAB274B4BC50046FDDF /* Bicubic.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD89274B4BC50046FDDF /* Bicubic.swift */; };
 		B49BFDAC274B4BC50046FDDF /* Waifu2x.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD8A274B4BC50046FDDF /* Waifu2x.swift */; };
@@ -148,28 +129,9 @@
 		B437F173275334DB00A1CE41 /* Waifu2xModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Waifu2xModel.swift; sourceTree = "<group>"; };
 		B47664D52753056300FD78EA /* Calculation.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Calculation.metal; sourceTree = "<group>"; };
 		B49BFD70274B4BC50046FDDF /* BackgroundPipeline.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BackgroundPipeline.swift; sourceTree = "<group>"; };
-		B49BFD71274B4BC50046FDDF /* ModelFactory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ModelFactory.swift; sourceTree = "<group>"; };
 		B49BFD72274B4BC50046FDDF /* MLModel+Prediction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "MLModel+Prediction.swift"; sourceTree = "<group>"; };
 		B49BFD73274B4BC50046FDDF /* waifu2x_mac.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = waifu2x_mac.h; sourceTree = "<group>"; };
 		B49BFD74274B4BC50046FDDF /* NSImage+PNG.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSImage+PNG.swift"; sourceTree = "<group>"; };
-		B49BFD76274B4BC50046FDDF /* photo_noise0_model.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = photo_noise0_model.mlmodel; sourceTree = "<group>"; };
-		B49BFD77274B4BC50046FDDF /* anime_noise2_model.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = anime_noise2_model.mlmodel; sourceTree = "<group>"; };
-		B49BFD78274B4BC50046FDDF /* anime_noise1_model.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = anime_noise1_model.mlmodel; sourceTree = "<group>"; };
-		B49BFD79274B4BC50046FDDF /* photo_noise3_model.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = photo_noise3_model.mlmodel; sourceTree = "<group>"; };
-		B49BFD7A274B4BC50046FDDF /* up_photo_noise1_scale2x_model.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = up_photo_noise1_scale2x_model.mlmodel; sourceTree = "<group>"; };
-		B49BFD7B274B4BC50046FDDF /* up_anime_noise2_scale2x_model.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = up_anime_noise2_scale2x_model.mlmodel; sourceTree = "<group>"; };
-		B49BFD7C274B4BC50046FDDF /* up_photo_scale2x_model.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = up_photo_scale2x_model.mlmodel; sourceTree = "<group>"; };
-		B49BFD7D274B4BC50046FDDF /* up_anime_noise0_scale2x_model.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = up_anime_noise0_scale2x_model.mlmodel; sourceTree = "<group>"; };
-		B49BFD7E274B4BC50046FDDF /* up_photo_noise3_scale2x_model.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = up_photo_noise3_scale2x_model.mlmodel; sourceTree = "<group>"; };
-		B49BFD7F274B4BC50046FDDF /* up_anime_scale2x_model.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = up_anime_scale2x_model.mlmodel; sourceTree = "<group>"; };
-		B49BFD80274B4BC50046FDDF /* anime_noise0_model.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = anime_noise0_model.mlmodel; sourceTree = "<group>"; };
-		B49BFD81274B4BC50046FDDF /* up_photo_noise0_scale2x_model.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = up_photo_noise0_scale2x_model.mlmodel; sourceTree = "<group>"; };
-		B49BFD82274B4BC50046FDDF /* up_anime_noise3_scale2x_model.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = up_anime_noise3_scale2x_model.mlmodel; sourceTree = "<group>"; };
-		B49BFD83274B4BC50046FDDF /* photo_noise2_model.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = photo_noise2_model.mlmodel; sourceTree = "<group>"; };
-		B49BFD84274B4BC50046FDDF /* up_anime_noise1_scale2x_model.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = up_anime_noise1_scale2x_model.mlmodel; sourceTree = "<group>"; };
-		B49BFD85274B4BC50046FDDF /* photo_noise1_model.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = photo_noise1_model.mlmodel; sourceTree = "<group>"; };
-		B49BFD86274B4BC50046FDDF /* up_photo_noise2_scale2x_model.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = up_photo_noise2_scale2x_model.mlmodel; sourceTree = "<group>"; };
-		B49BFD87274B4BC50046FDDF /* anime_noise3_model.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = anime_noise3_model.mlmodel; sourceTree = "<group>"; };
 		B49BFD88274B4BC50046FDDF /* CGImage+Crop.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "CGImage+Crop.swift"; sourceTree = "<group>"; };
 		B49BFD89274B4BC50046FDDF /* Bicubic.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Bicubic.swift; sourceTree = "<group>"; };
 		B49BFD8A274B4BC50046FDDF /* Waifu2x.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Waifu2x.swift; sourceTree = "<group>"; };
@@ -379,11 +341,9 @@
 			isa = PBXGroup;
 			children = (
 				B49BFD70274B4BC50046FDDF /* BackgroundPipeline.swift */,
-				B49BFD71274B4BC50046FDDF /* ModelFactory.swift */,
 				B49BFD72274B4BC50046FDDF /* MLModel+Prediction.swift */,
 				B49BFD73274B4BC50046FDDF /* waifu2x_mac.h */,
 				B49BFD74274B4BC50046FDDF /* NSImage+PNG.swift */,
-				B49BFD75274B4BC50046FDDF /* models */,
 				B49BFD88274B4BC50046FDDF /* CGImage+Crop.swift */,
 				B49BFD89274B4BC50046FDDF /* Bicubic.swift */,
 				B49BFD8A274B4BC50046FDDF /* Waifu2x.swift */,
@@ -399,31 +359,6 @@
 				B4B9EFEF274BC50400A8D380 /* UIImage+Reload.swift */,
 			);
 			path = "waifu2x-mac";
-			sourceTree = "<group>";
-		};
-		B49BFD75274B4BC50046FDDF /* models */ = {
-			isa = PBXGroup;
-			children = (
-				B49BFD76274B4BC50046FDDF /* photo_noise0_model.mlmodel */,
-				B49BFD77274B4BC50046FDDF /* anime_noise2_model.mlmodel */,
-				B49BFD78274B4BC50046FDDF /* anime_noise1_model.mlmodel */,
-				B49BFD79274B4BC50046FDDF /* photo_noise3_model.mlmodel */,
-				B49BFD7A274B4BC50046FDDF /* up_photo_noise1_scale2x_model.mlmodel */,
-				B49BFD7B274B4BC50046FDDF /* up_anime_noise2_scale2x_model.mlmodel */,
-				B49BFD7C274B4BC50046FDDF /* up_photo_scale2x_model.mlmodel */,
-				B49BFD7D274B4BC50046FDDF /* up_anime_noise0_scale2x_model.mlmodel */,
-				B49BFD7E274B4BC50046FDDF /* up_photo_noise3_scale2x_model.mlmodel */,
-				B49BFD7F274B4BC50046FDDF /* up_anime_scale2x_model.mlmodel */,
-				B49BFD80274B4BC50046FDDF /* anime_noise0_model.mlmodel */,
-				B49BFD81274B4BC50046FDDF /* up_photo_noise0_scale2x_model.mlmodel */,
-				B49BFD82274B4BC50046FDDF /* up_anime_noise3_scale2x_model.mlmodel */,
-				B49BFD83274B4BC50046FDDF /* photo_noise2_model.mlmodel */,
-				B49BFD84274B4BC50046FDDF /* up_anime_noise1_scale2x_model.mlmodel */,
-				B49BFD85274B4BC50046FDDF /* photo_noise1_model.mlmodel */,
-				B49BFD86274B4BC50046FDDF /* up_photo_noise2_scale2x_model.mlmodel */,
-				B49BFD87274B4BC50046FDDF /* anime_noise3_model.mlmodel */,
-			);
-			path = models;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -500,29 +435,20 @@
 				B437F174275334DB00A1CE41 /* Waifu2xModel.swift in Sources */,
 				B49BFDAE274B4BC50046FDDF /* NSImage+Crop.swift in Sources */,
 				B437F165275334CB00A1CE41 /* upconv_7_anime_style_art_rgb_noise2_scale2.mlpackage in Sources */,
-				B49BFD9B274B4BC50046FDDF /* photo_noise3_model.mlmodel in Sources */,
-				B49BFDA2274B4BC50046FDDF /* anime_noise0_model.mlmodel in Sources */,
-				B49BFD99274B4BC50046FDDF /* anime_noise2_model.mlmodel in Sources */,
 				B437F168275334CB00A1CE41 /* upconv_7_photo_scale2.mlpackage in Sources */,
 				B437F15E275334CB00A1CE41 /* upconv_7_anime_style_art_rgb_noise3_scale2.mlpackage in Sources */,
-				B49BFDA8274B4BC50046FDDF /* up_photo_noise2_scale2x_model.mlmodel in Sources */,
 				B41C4772274AAF6A0024ECB7 /* Polynomial.swift in Sources */,
 				B437F15C275334CB00A1CE41 /* photo_noise2_model.mlpackage in Sources */,
 				B41C4765274AAF6A0024ECB7 /* PreciseFloat.swift in Sources */,
-				B49BFD9D274B4BC50046FDDF /* up_anime_noise2_scale2x_model.mlmodel in Sources */,
-				B49BFD9E274B4BC50046FDDF /* up_photo_scale2x_model.mlmodel in Sources */,
 				B437F15A275334CB00A1CE41 /* anime_style_art_rgb_noise3_model.mlpackage in Sources */,
-				B49BFD9C274B4BC50046FDDF /* up_photo_noise1_scale2x_model.mlmodel in Sources */,
 				B41C4767274AAF6A0024ECB7 /* PreciseInt.swift in Sources */,
 				B41C4762274AAF6A0024ECB7 /* Fraction.swift in Sources */,
 				B49BFD97274B4BC50046FDDF /* NSImage+PNG.swift in Sources */,
 				B437F169275334CB00A1CE41 /* upconv_7_photo_noise1_scale2.mlpackage in Sources */,
-				B49BFDA7274B4BC50046FDDF /* photo_noise1_model.mlmodel in Sources */,
 				B437F162275334CB00A1CE41 /* photo_noise3_model.mlpackage in Sources */,
 				B4B9EFF0274BC50400A8D380 /* UIImage+Reload.swift in Sources */,
 				B437F171275334CB00A1CE41 /* photo_noise0_model.mlpackage in Sources */,
 				B437F16E275334CB00A1CE41 /* photo_scale2.mlpackage in Sources */,
-				B49BFD9A274B4BC50046FDDF /* anime_noise1_model.mlmodel in Sources */,
 				B41C4768274AAF6A0024ECB7 /* CommentCreator.swift in Sources */,
 				B41C476C274AAF6A0024ECB7 /* MachineLearning.swift in Sources */,
 				B41C4769274AAF6A0024ECB7 /* Bechmark.swift in Sources */,
@@ -534,50 +460,40 @@
 				B49BFD96274B4BC50046FDDF /* MLModel+Prediction.swift in Sources */,
 				B49BFDAB274B4BC50046FDDF /* Bicubic.swift in Sources */,
 				B437F170275334CB00A1CE41 /* upconv_7_photo_noise0_scale2.mlpackage in Sources */,
-				B49BFDA6274B4BC50046FDDF /* up_anime_noise1_scale2x_model.mlmodel in Sources */,
 				B437F166275334CB00A1CE41 /* anime_style_art_noise1_model.mlpackage in Sources */,
 				B49BFDAA274B4BC50046FDDF /* CGImage+Crop.swift in Sources */,
 				B49BFD94274B4BC50046FDDF /* BackgroundPipeline.swift in Sources */,
 				B41C476D274AAF6A0024ECB7 /* FinderItem.swift in Sources */,
 				B41C473E274AA7850024ECB7 /* ContentView.swift in Sources */,
-				B49BFDA9274B4BC50046FDDF /* anime_noise3_model.mlmodel in Sources */,
 				B437F16F275334CB00A1CE41 /* anime_style_art_rgb_noise1_model.mlpackage in Sources */,
 				B41C4763274AAF6A0024ECB7 /* Int10.swift in Sources */,
 				B41C476A274AAF6A0024ECB7 /* Point.swift in Sources */,
 				B41C4771274AAF6A0024ECB7 /* Expression.swift in Sources */,
-				B49BFDA5274B4BC50046FDDF /* photo_noise2_model.mlmodel in Sources */,
 				B437F16B275334CB00A1CE41 /* anime_style_art_rgb_noise0_model.mlpackage in Sources */,
 				B437F15F275334CB00A1CE41 /* anime_style_art_noise2_model.mlpackage in Sources */,
 				B49BFDB1274B4BC50046FDDF /* CGImage+Expand.swift in Sources */,
 				B437F172275334CB00A1CE41 /* upconv_7_anime_style_art_rgb_noise0_scale2.mlpackage in Sources */,
 				B41C4774274AAF6A0024ECB7 /* Plane.swift in Sources */,
-				B49BFD95274B4BC50046FDDF /* ModelFactory.swift in Sources */,
 				B49BFDB0274B4BC50046FDDF /* NSImage+Alpha.swift in Sources */,
 				B437F15B275334CB00A1CE41 /* upconv_7_photo_noise3_scale2.mlpackage in Sources */,
 				B41C4764274AAF6A0024ECB7 /* Complex.swift in Sources */,
 				B49BFDAF274B4BC50046FDDF /* Queue.swift in Sources */,
 				B437F15D275334CB00A1CE41 /* anime_style_art_scale2.mlpackage in Sources */,
 				B49BFDAC274B4BC50046FDDF /* Waifu2x.swift in Sources */,
-				B49BFD9F274B4BC50046FDDF /* up_anime_noise0_scale2x_model.mlmodel in Sources */,
 				B47664D62753056300FD78EA /* Calculation.metal in Sources */,
-				B49BFDA1274B4BC50046FDDF /* up_anime_scale2x_model.mlmodel in Sources */,
 				B41C476E274AAF6A0024ECB7 /* Support.swift in Sources */,
-				B49BFDA0274B4BC50046FDDF /* up_photo_noise3_scale2x_model.mlmodel in Sources */,
 				B41C4773274AAF6A0024ECB7 /* Matrix.swift in Sources */,
 				B437F16C275334CB00A1CE41 /* upconv_7_anime_style_art_rgb_noise1_scale2.mlpackage in Sources */,
 				B41C473C274AA7850024ECB7 /* waifuExtensionApp.swift in Sources */,
 				B437F16D275334CB00A1CE41 /* upconv_7_anime_style_art_rgb_scale2.mlpackage in Sources */,
-				B49BFDA3274B4BC50046FDDF /* up_photo_noise0_scale2x_model.mlmodel in Sources */,
 				B41C4766274AAF6A0024ECB7 /* Arithmetical.swift in Sources */,
 				B41C476B274AAF6A0024ECB7 /* Canvas.swift in Sources */,
 				B437F163275334CB00A1CE41 /* anime_style_art_noise3_model.mlpackage in Sources */,
-				B49BFDA4274B4BC50046FDDF /* up_anime_noise3_scale2x_model.mlmodel in Sources */,
 				B437F161275334CB00A1CE41 /* upconv_7_photo_noise2_scale2.mlpackage in Sources */,
 				B437F160275334CB00A1CE41 /* ukbench_scale2.mlpackage in Sources */,
 				B49BFDB4274B4BC50046FDDF /* NSImage+Bicubic.swift in Sources */,
 				B437F167275334CB00A1CE41 /* photo_noise1_model.mlpackage in Sources */,
 				B437F16A275334CB00A1CE41 /* anime_style_art_rgb_scale2.mlpackage in Sources */,
-				B49BFD98274B4BC50046FDDF /* photo_noise0_model.mlmodel in Sources */,
 				B49BFDB2274B4BC50046FDDF /* bicubic.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

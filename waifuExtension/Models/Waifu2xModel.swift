@@ -8,7 +8,7 @@
 import CoreML
 import Foundation
 
-private struct Waifu2xModel: Equatable {
+struct Waifu2xModel: Equatable {
     
     let `class`: String
     let model: MLModel
@@ -30,10 +30,10 @@ private struct Waifu2xModel: Equatable {
     static let configuration = MLModelConfiguration()
     
     static let allModels: [Waifu2xModel] = [
-        Waifu2xModel(class: "anime_style_art", model: try! anime_style_art_scale2(configuration: configuration).model, stye: "anime", scale: 2, noise: nil),
-        Waifu2xModel(class: "anime_style_art", model: try! anime_style_art_noise1_model(configuration: configuration).model, stye: "anime", scale: 1, noise: 1),
-        Waifu2xModel(class: "anime_style_art", model: try! anime_style_art_noise2_model(configuration: configuration).model, stye: "anime", scale: 1, noise: 2),
-        Waifu2xModel(class: "anime_style_art", model: try! anime_style_art_noise3_model(configuration: configuration).model, stye: "anime", scale: 1, noise: 3),
+//        Waifu2xModel(class: "anime_style_art", model: try! anime_style_art_scale2(configuration: configuration).model, stye: "anime", scale: 2, noise: nil),
+//        Waifu2xModel(class: "anime_style_art", model: try! anime_style_art_noise1_model(configuration: configuration).model, stye: "anime", scale: 1, noise: 1),
+//        Waifu2xModel(class: "anime_style_art", model: try! anime_style_art_noise2_model(configuration: configuration).model, stye: "anime", scale: 1, noise: 2),
+//        Waifu2xModel(class: "anime_style_art", model: try! anime_style_art_noise3_model(configuration: configuration).model, stye: "anime", scale: 1, noise: 3),
         
         Waifu2xModel(class: "anime_style_art_rgb", model: try! anime_style_art_rgb_scale2(configuration: configuration).model, stye: "anime", scale: 2, noise: nil),
         Waifu2xModel(class: "anime_style_art_rgb", model: try! anime_style_art_rgb_noise0_model(configuration: configuration).model, stye: "anime", scale: 1, noise: 0),

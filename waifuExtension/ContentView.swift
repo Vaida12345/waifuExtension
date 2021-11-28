@@ -37,7 +37,7 @@ extension Array where Element == WorkItem {
         return self.contains(WorkItem(at: finderItem, type: .image))
     }
     
-    func work(_ chosenScaleLevel: Int, modelUsed: Model, videoSegmentLength: Int = 10, onStatusChanged status: @escaping ((_ status: String)->()), onStatusProgressChanged: @escaping ((_ progress: Int?, _ total: Int?)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
+    func work(_ chosenScaleLevel: Int, modelUsed: Waifu2xModel, videoSegmentLength: Int = 10, onStatusChanged status: @escaping ((_ status: String)->()), onStatusProgressChanged: @escaping ((_ progress: Int?, _ total: Int?)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
         
         let images = self.filter({ $0.type == .image })
         let videos = self.filter({ $0.type == .video })
@@ -288,7 +288,7 @@ struct ContentView: View {
     @State var isSheetShown: Bool = false
     @State var isProcessing: Bool = false
     @State var isCreatingPDF: Bool = false
-    @State var modelUsed: Model? = nil
+    @State var modelUsed: Waifu2xModel? = nil
     @State var background = DispatchQueue(label: "Background", qos: .userInteractive)
     @State var pdfbackground = DispatchQueue(label: "PDF Background")
     @State var chosenScaleLevel: Int = 1
@@ -458,20 +458,41 @@ struct ConfigurationView: View {
     
     @Binding var isShown: Bool
     @Binding var isProcessing: Bool
-    @Binding var modelUsed: Model?
-    @Binding var chosenScaleLevel: Int
+    @Binding var modelUsed: Waifu2xModel?
+    @Binding var chosenScaleLevel: Int {
+        didSet {
+            findModelClass()
+        }
+    }
     
     let styleNames: [String] = ["anime", "photo"]
-    @State var chosenStyle = "anime"
+    @State var chosenStyle = "anime" {
+        didSet {
+            findModelClass()
+        }
+    }
     
-    let noiceLevels: [String] = ["0", "1", "2", "3"]
-    @State var chosenNoiceLevel = "3"
+    let noiseLevels: [String] = ["none", "0", "1", "2", "3"]
+    @State var chosenNoiseLevel = "3" {
+        didSet {
+            findModelClass()
+        }
+    }
     
     let scaleLevels: [Int] = [Int](0...5)
+    
+    @State var modelClass: [String] = []
+    @State var chosenModelClass: String = ""
     
     @State var isShowingStyleHint: Bool = false
     @State var isShowingNoiceHint: Bool = false
     @State var isShowingScaleHint: Bool = false
+    @State var isShowingModelClassHint: Bool = false
+    
+    func findModelClass() {
+        self.modelClass = Array(Set(Waifu2xModel.allModels.filter({ ($0.style == chosenStyle || $0.style == nil) && $0.noise == Int(chosenNoiseLevel) && $0.scale == ( chosenScaleLevel == 0 ? 1 : 2 ) }).map({ $0.class })))
+        self.chosenModelClass = modelClass[0]
+    }
     
     var body: some View {
         VStack {
@@ -502,6 +523,16 @@ struct ConfigurationView: View {
                                 isShowingScaleHint = bool
                             }
                     }
+                    
+                    if !modelClass.isEmpty {
+                        HStack {
+                            Spacer()
+                            Text("Model Class:")
+                                .onHover { bool in
+                                    isShowingModelClassHint = bool
+                                }
+                        }
+                    }
                 }
                 
                 VStack(spacing: 15) {
@@ -524,10 +555,10 @@ struct ConfigurationView: View {
                         
                     }
                     
-                    Menu(chosenNoiceLevel.description) {
-                        ForEach(noiceLevels, id: \.self) { item in
+                    Menu(chosenNoiseLevel.description) {
+                        ForEach(noiseLevels, id: \.self) { item in
                             Button(item.description) {
-                                chosenNoiceLevel = item
+                                chosenNoiseLevel = item
                             }
                         }
                     }
@@ -548,6 +579,21 @@ struct ConfigurationView: View {
                         Text("Choose how much you want to scale.")
                             .padding(.all)
                         
+                    }
+                    
+                    if !modelClass.isEmpty {
+                        Menu(chosenModelClass) {
+                            ForEach(modelClass, id: \.self) { item in
+                                Button(item) {
+                                    chosenModelClass = item
+                                }
+                            }
+                        }
+                        .popover(isPresented: $isShowingModelClassHint) {
+                            Text("To be determined")
+                                .padding(.all)
+                            
+                        }
                     }
                 }
                 
@@ -572,10 +618,7 @@ struct ConfigurationView: View {
                     isProcessing = true
                     isShown = false
                     
-                    //change here
-                    let modelName = (chosenScaleLevel == 0 ? "" : "up_") + "\(chosenStyle)_noise\(chosenNoiceLevel)\(chosenScaleLevel == 0 ? "" : "_scale2x")_model"
-                    
-                    self.modelUsed = Model(rawValue: modelName)!
+                    self.modelUsed = Waifu2xModel.allModels.filter({ ($0.style == chosenModelClass || $0.style == nil) && $0.noise == Int(chosenNoiseLevel) && $0.scale == ( chosenScaleLevel == 0 ? 1 : 2 ) && $0.class == self.chosenModelClass }).first!
                     
                 } label: {
                     Text("OK")
@@ -586,6 +629,9 @@ struct ConfigurationView: View {
         }
             .padding(.all)
             .frame(width: 600, height: 300)
+            .onAppear {
+                findModelClass()
+            }
     }
     
 }
@@ -595,7 +641,7 @@ struct ProcessingView: View {
     
     @Binding var isProcessing: Bool
     @Binding var finderItems: [WorkItem]
-    @Binding var modelUsed: Model?
+    @Binding var modelUsed: Waifu2xModel?
     @Binding var isSheetShown: Bool
     @Binding var background: DispatchQueue
     @Binding var chosenScaleLevel: Int
@@ -671,7 +717,7 @@ struct ProcessingView: View {
                             Text("\(statusProgress.progress) / \(statusProgress.total)")
                         }
                         
-                        Text(modelUsed!.rawValue)
+                        Text(modelUsed!.class)
                     }
                     
                     Spacer()
