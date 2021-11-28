@@ -20,7 +20,7 @@ public class Waifu2x {
     var block_size = 128
     
     /// The difference between output and input block size
-    var shrink_size = 7
+    let shrink_size = 7
     
     /// Do not exactly know its function
     /// However it can on average improve PSNR by 0.09
@@ -237,90 +237,36 @@ public class Waifu2x {
             callback("\((index * 100) / rects.count)")
         }
         // Start running model
-        var expwidth = fullWidth + 2 * self.shrink_size
-        var expheight = fullHeight + 2 * self.shrink_size
+        let expwidth = fullWidth + 2 * self.shrink_size
+        let expheight = fullHeight + 2 * self.shrink_size
         let expanded = fullCG.expand(withAlpha: hasalpha, in: self)
         callback("processing")
         
         // this process will not take much time, but executing would
         self.in_pipeline = BackgroundPipeline<CGRect>("in_pipeline", count: rects.count, waifu2x: self, task: { (index, rect) in
-            var x = Int(rect.origin.x)
-            var y = Int(rect.origin.y)
-            let arrayLength = (y + self.block_size + 2 * self.shrink_size) * (self.block_size + 2 * self.shrink_size) + (x + self.block_size + 2 * self.shrink_size) + (self.block_size + 2 * self.shrink_size) * (self.self.block_size + 2 * self.shrink_size) * 2
-            var multi = [Float](repeating: 0, count: arrayLength)
-            
-//            let device = MTLCreateSystemDefaultDevice()!
-//            let library = try! device.makeDefaultLibrary(bundle: Bundle(for: type(of: self)))
-//
-//            let constants = MTLFunctionConstantValues()
-//            constants.setConstantValue(&self.block_size, type: MTLDataType.int, index: 0)
-//            constants.setConstantValue(&self.shrink_size, type: MTLDataType.int, index: 1)
-//            constants.setConstantValue(&expwidth, type: MTLDataType.int, index: 2)
-//            constants.setConstantValue(&expheight, type: MTLDataType.int, index: 3)
-//            constants.setConstantValue(&x, type: MTLDataType.int, index: 4)
-//            constants.setConstantValue(&y, type: MTLDataType.int, index: 5)
+            let x = Int(rect.origin.x)
+            let y = Int(rect.origin.y)
+            let multi = try! MLMultiArray(shape: [3, NSNumber(value: self.block_size + 2 * self.shrink_size), NSNumber(value: self.block_size + 2 * self.shrink_size)], dataType: .float32)
             
             var y_exp = y
             
             while y_exp < (y + self.block_size + 2 * self.shrink_size) {
                 
-//                constants.setConstantValue(&y_exp, type: MTLDataType.int, index: 6)
-//                let calculationFunction = try! library.makeFunction(name: "Calculation", constantValues: constants)
-//                let pipelineState = try! device.makeComputePipelineState(function: calculationFunction)
-//                let commandQueue = device.makeCommandQueue()!
-//
-//                let commandBuffer = commandQueue.makeCommandBuffer()
-//                let commandEncoder = commandBuffer?.makeComputeCommandEncoder()
-//
-//                print(arrayLength)
-//
-//                let expandedBuffer = device.makeBuffer(length: arrayLength, options: .storageModeShared)
-//                let resultBuffer = device.makeBuffer(length: arrayLength, options: .storageModeShared)
-//
-//                commandEncoder?.setComputePipelineState(pipelineState)
-//                commandEncoder?.setBuffer(expandedBuffer, offset: 0, index: 0)
-//                commandEncoder?.setBuffer(resultBuffer, offset: 0, index: 1)
-//
-//                let gridSize = MTLSizeMake(arrayLength, 1, 1)
-//
-//                var threadGroupSize = pipelineState.maxTotalThreadsPerThreadgroup
-//                if threadGroupSize > arrayLength {
-//                    threadGroupSize = arrayLength
-//                }
-//                let threadgroupSize = MTLSizeMake(threadGroupSize, 1, 1)
-//                commandEncoder?.dispatchThreads(gridSize, threadsPerThreadgroup: threadgroupSize)
-//                commandEncoder?.endEncoding()
-//                commandBuffer?.commit()
-//                commandBuffer?.waitUntilCompleted()
-//
-//                let result = resultBuffer?.contents()
-//                let floatPtr = result!.bindMemory(to: Float.self, capacity: arrayLength)
-//                let floatBuffer = UnsafeBufferPointer<Float>(start: floatPtr, count: arrayLength)
-//
-//                let resultArray = Array(floatBuffer)
-//
-//                print("end")
-                
-                
-                
                 var x_exp = x
                 while x_exp < (x + self.block_size + 2 * self.shrink_size) {
                     let x_new = x_exp - x
                     let y_new = y_exp - y
-                    multi[y_new * (self.block_size + 2 * self.shrink_size) + x_new] = expanded[y_exp * expwidth + x_exp]
-                    multi[y_new * (self.block_size + 2 * self.shrink_size) + x_new + (self.block_size + 2 * self.shrink_size) * (self.block_size + 2 * self.shrink_size)] = expanded[y_exp * expwidth + x_exp + expwidth * expheight]
-                    multi[y_new * (self.block_size + 2 * self.shrink_size) + x_new + (self.block_size + 2 * self.shrink_size) * (self.block_size + 2 * self.shrink_size) * 2] = expanded[y_exp * expwidth + x_exp + expwidth * expheight * 2]
-
+                    multi[y_new * (self.block_size + 2 * self.shrink_size) + x_new] = NSNumber(value: expanded[y_exp * expwidth + x_exp])
+                    multi[y_new * (self.block_size + 2 * self.shrink_size) + x_new + (self.block_size + 2 * self.shrink_size) * (self.self.block_size + 2 * self.shrink_size)] = NSNumber(value: expanded[y_exp * expwidth + x_exp + expwidth * expheight])
+                    multi[y_new * (self.block_size + 2 * self.shrink_size) + x_new + (self.block_size + 2 * self.shrink_size) * (self.block_size + 2 * self.shrink_size) * 2] = NSNumber(value: expanded[y_exp * expwidth + x_exp + expwidth * expheight * 2])
+                    
                     x_exp += 1
                 }
                 
                 y_exp += 1
             }
             
-            let shape = [3, Int(self.block_size + 2 * self.shrink_size), Int(self.block_size + 2 * self.shrink_size)]
-            let array = MLMultiArray(MLShapedArray(scalars: multi, shape: shape))
-            
-            self.model_pipeline.appendObject(array)
+            self.model_pipeline.appendObject(multi)
             
             if let didFinishedOneBlock = self.didFinishedOneBlock {
                 didFinishedOneBlock(rects.count)
@@ -336,7 +282,9 @@ public class Waifu2x {
         // this would take most of time
         self.in_pipeline.wait()
         
+        let model_pipelineDate = Date()
         self.model_pipeline.wait()
+        print("ML: \(model_pipelineDate.distance(to: Date()))")
         callback("wait_alpha")
         alpha_task?.wait()
         self.out_pipeline.wait()
