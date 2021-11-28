@@ -232,8 +232,13 @@ public class Waifu2x {
         let expanded = fullCG.expand(withAlpha: hasalpha, in: self)
         callback("processing")
         
-        // this process will not take much time, but executing would
-        self.in_pipeline = BackgroundPipeline<CGRect>("in_pipeline", count: rects.count, waifu2x: self, task: { (index, rect) in
+        
+        let in_pipeDate = Date()
+        // this would take most of time
+        
+        DispatchQueue.concurrentPerform(iterations: rects.count) { index in
+            let rect = rects[index]
+            
             let x = Int(rect.origin.x)
             let y = Int(rect.origin.y)
             let multi = try! MLMultiArray(shape: [3, NSNumber(value: self.block_size + 2 * self.shrink_size), NSNumber(value: self.block_size + 2 * self.shrink_size)], dataType: .float32)
@@ -261,17 +266,9 @@ public class Waifu2x {
             if let didFinishedOneBlock = self.didFinishedOneBlock {
                 didFinishedOneBlock(rects.count)
             }
-        })
-        
-        var counter = 0
-        
-        while counter < rects.count {
-            self.in_pipeline.appendObject(rects[counter])
-            counter += 1
         }
         
-        // this would take most of time
-        self.in_pipeline.wait()
+        print("In Pipe: \(in_pipeDate.distance(to: Date()))")
         
         let model_pipelineDate = Date()
         self.model_pipeline.wait()
