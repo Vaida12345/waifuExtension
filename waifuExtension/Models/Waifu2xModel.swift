@@ -20,6 +20,15 @@ struct Waifu2xModel: Equatable {
     
     var model: MLModel {
         switch self.name{
+        case "anime_style_art_scale2":
+            return try! anime_style_art_scale2(configuration: Waifu2xModel.configuration).model
+        case "anime_style_art_noise1_model":
+            return try! anime_style_art_noise1_model(configuration: Waifu2xModel.configuration).model
+        case "anime_style_art_noise2_model":
+            return try! anime_style_art_noise2_model(configuration: Waifu2xModel.configuration).model
+        case "anime_style_art_noise3_model":
+            return try! anime_style_art_noise3_model(configuration: Waifu2xModel.configuration).model
+            
         case "anime_style_art_rgb_scale2":
             return try! anime_style_art_rgb_scale2(configuration: Waifu2xModel.configuration).model
         case "anime_style_art_rgb_noise0_model":
