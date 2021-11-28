@@ -618,12 +618,12 @@ struct ConfigurationView: View {
                     isProcessing = true
                     isShown = false
                     
-                    self.modelUsed = Waifu2xModel.allModels.filter({ ($0.style == chosenModelClass || $0.style == nil) && $0.noise == Int(chosenNoiseLevel) && $0.scale == ( chosenScaleLevel == 0 ? 1 : 2 ) && $0.class == self.chosenModelClass }).first!
+                    self.modelUsed = Waifu2xModel.allModels.filter({ ($0.style == chosenStyle || $0.style == nil) && $0.noise == Int(chosenNoiseLevel) && $0.scale == ( chosenScaleLevel == 0 ? 1 : 2 ) && $0.class == self.chosenModelClass }).first!
                     
                 } label: {
                     Text("OK")
                         .frame(width: 80)
-                }
+                }.disabled(modelClass.isEmpty)
             }
                 .padding(.all)
         }
