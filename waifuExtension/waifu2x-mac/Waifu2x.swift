@@ -264,6 +264,7 @@ public class Waifu2x {
         })
         
         var counter = 0
+        
         while counter < rects.count {
             self.in_pipeline.appendObject(rects[counter])
             counter += 1
