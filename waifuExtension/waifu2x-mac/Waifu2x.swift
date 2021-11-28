@@ -266,7 +266,7 @@ public class Waifu2x {
             let arrayLength = (self.block_size + 2 * self.shrink_size)
 
             let resultBuffer = device.makeBuffer(length: arrayLengthFull * MemoryLayout<Float>.size, options: .storageModeShared)!
-            let expandedBuffer = device.makeBuffer(bytes: UnsafeRawPointer(UnsafeMutablePointer(mutating: expanded)), length: arrayLengthFull * MemoryLayout<Float>.size, options: .storageModeShared)!
+            let expandedBuffer = device.makeBuffer(bytes: expanded, length: expanded.capacity , options: .storageModeShared)!
 
             commandEncoder.setComputePipelineState(pipelineState)
             commandEncoder.setBuffer(expandedBuffer, offset: 0, index: 0)
