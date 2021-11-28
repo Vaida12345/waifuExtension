@@ -29,7 +29,6 @@ public class Waifu2x {
     
     var interrupt = false
     
-    private var in_pipeline: BackgroundPipeline<CGRect>! = nil
     private var model_pipeline: BackgroundPipeline<MLMultiArray>! = nil
     private var out_pipeline: BackgroundPipeline<MLMultiArray>! = nil
     
@@ -232,16 +231,17 @@ public class Waifu2x {
         let expanded = fullCG.expand(withAlpha: hasalpha, in: self)
         callback("processing")
         
-        
         let in_pipeDate = Date()
-        // this would take most of time
         
-        DispatchQueue.concurrentPerform(iterations: rects.count) { index in
+        var index = 0
+        
+        // this would take most of time
+        while index < rects.count {
             let rect = rects[index]
             
             let x = Int(rect.origin.x)
             let y = Int(rect.origin.y)
-            let multi = try! MLMultiArray(shape: [3, NSNumber(value: self.block_size + 2 * self.shrink_size), NSNumber(value: self.block_size + 2 * self.shrink_size)], dataType: .float32)
+            let multi = [Float](repeating: 0, count:  3 * (self.block_size + 2 * self.shrink_size) * (self.block_size + 2 * self.shrink_size))
             
             var y_exp = y
             
@@ -261,11 +261,16 @@ public class Waifu2x {
                 y_exp += 1
             }
             
-            self.model_pipeline.appendObject(multi)
+            let shape = [3, Int(self.block_size + 2 * self.shrink_size), Int(self.block_size + 2 * self.shrink_size)]
+            let array = MLMultiArray(MLShapedArray(scalars: multi, shape: shape))
+            
+            self.model_pipeline.appendObject(array)
             
             if let didFinishedOneBlock = self.didFinishedOneBlock {
                 didFinishedOneBlock(rects.count)
             }
+            
+            index += 1
         }
         
         print("In Pipe: \(in_pipeDate.distance(to: Date()))")
@@ -277,7 +282,6 @@ public class Waifu2x {
         alpha_task?.wait()
         self.out_pipeline.wait()
         
-        self.in_pipeline = nil
         self.model_pipeline = nil
         self.out_pipeline = nil
         if self.interrupt {
