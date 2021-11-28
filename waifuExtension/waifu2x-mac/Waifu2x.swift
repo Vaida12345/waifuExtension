@@ -241,7 +241,9 @@ public class Waifu2x {
             
             let x = Int(rect.origin.x)
             let y = Int(rect.origin.y)
-            let multi = [Float](repeating: 0, count:  3 * (self.block_size + 2 * self.shrink_size) * (self.block_size + 2 * self.shrink_size))
+            var multi = [Float](repeating: 0, count:  3 * (self.block_size + 2 * self.shrink_size) * (self.block_size + 2 * self.shrink_size))
+            
+            
             
             var y_exp = y
             
