@@ -220,19 +220,15 @@ public class Waifu2x {
             }
         }
         
-        let date = Date()
-        
         // Prepare for model pipeline
         // Run prediction on each block
         let mlmodel = model.model
-        
         // Start running model
         let expwidth = fullWidth + 2 * self.shrink_size
         let expheight = fullHeight + 2 * self.shrink_size
+        
         let expanded = fullCG.expand(withAlpha: hasalpha, in: self)
         callback("processing")
-        
-        print("date: \(date.distance(to: Date()))")
         
         let in_pipeDate = Date()
         
@@ -347,11 +343,9 @@ public class Waifu2x {
         
         // the rest takes no time.
         
-        let out_pipeDate = Date()
         callback("wait_alpha")
         alpha_task?.wait()
         self.out_pipeline.wait()
-        print("outpipe: \(out_pipeDate.distance(to: Date()))")
         
         self.model_pipeline = nil
         self.out_pipeline = nil
