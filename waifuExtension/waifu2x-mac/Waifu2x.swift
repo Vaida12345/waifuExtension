@@ -223,10 +223,12 @@ public class Waifu2x {
         // Prepare for model pipeline
         // Run prediction on each block
         let mlmodel = model.model
+        self.model_pipeline = BackgroundPipeline<MLMultiArray>("model_pipeline", count: rects.count, waifu2x: self) { (index, array) in
+            self.out_pipeline.appendObject(try! mlmodel.prediction(input: array))
+        }
         // Start running model
         let expwidth = fullWidth + 2 * self.shrink_size
         let expheight = fullHeight + 2 * self.shrink_size
-        
         let expanded = fullCG.expand(withAlpha: hasalpha, in: self)
         callback("processing")
         
@@ -299,27 +301,26 @@ public class Waifu2x {
 //            index += 1
 //        }
         
+        var in_pipeResults: [(index: Int, value: MLMultiArray)] = []
+        
         DispatchQueue.concurrentPerform(iterations: rects.count) { index in
             let rect = rects[index]
-            let sideLength = self.block_size + 2 * self.shrink_size
             
             let x = Int(rect.origin.x)
             let y = Int(rect.origin.y)
-            let multi = try! MLMultiArray(shape: [3, NSNumber(value: sideLength), NSNumber(value: sideLength)], dataType: .float32)
+            let multi = try! MLMultiArray(shape: [3, NSNumber(value: self.block_size + 2 * self.shrink_size), NSNumber(value: self.block_size + 2 * self.shrink_size)], dataType: .float32)
             
             var y_exp = y
             
-            let y_expWithWidth = y_exp * expwidth
-            
-            while y_exp < (y + sideLength) {
+            while y_exp < (y + self.block_size + 2 * self.shrink_size) {
                 
                 var x_exp = x
-                while x_exp < (x + sideLength) {
+                while x_exp < (x + self.block_size + 2 * self.shrink_size) {
                     let x_new = x_exp - x
                     let y_new = y_exp - y
-                    multi[y_new * sideLength + x_new] = NSNumber(value: expanded[y_expWithWidth + x_exp])
-                    multi[y_new * sideLength + x_new + sideLength * sideLength] = NSNumber(value: expanded[y_expWithWidth + x_exp + expwidth * expheight])
-                    multi[y_new * sideLength + x_new + sideLength * sideLength * 2] = NSNumber(value: expanded[y_expWithWidth + x_exp + expwidth * expheight * 2])
+                    multi[y_new * (self.block_size + 2 * self.shrink_size) + x_new] = NSNumber(value: expanded[y_exp * expwidth + x_exp])
+                    multi[y_new * (self.block_size + 2 * self.shrink_size) + x_new + (self.block_size + 2 * self.shrink_size) * (self.self.block_size + 2 * self.shrink_size)] = NSNumber(value: expanded[y_exp * expwidth + x_exp + expwidth * expheight])
+                    multi[y_new * (self.block_size + 2 * self.shrink_size) + x_new + (self.block_size + 2 * self.shrink_size) * (self.block_size + 2 * self.shrink_size) * 2] = NSNumber(value: expanded[y_exp * expwidth + x_exp + expwidth * expheight * 2])
                     
                     x_exp += 1
                 }
@@ -327,21 +328,23 @@ public class Waifu2x {
                 y_exp += 1
             }
             
-            let mlResult = try! mlmodel.prediction(input: multi)
-            
-            DispatchQueue.main.async {
-                self.out_pipeline.appendObject(mlResult)
-            }
+            in_pipeResults.append((index, multi))
             
             if let didFinishedOneBlock = self.didFinishedOneBlock {
                 didFinishedOneBlock(rects.count)
             }
         }
         
+        for i in in_pipeResults.sorted(by: { $0.index < $1.index }) {
+            model_pipeline.appendObject(i.value)
+        }
+        
         
         print("In Pipe: \(in_pipeDate.distance(to: Date()))")
         
-        // the rest takes no time.
+        let model_pipelineDate = Date()
+        self.model_pipeline.wait()
+        print("ML: \(model_pipelineDate.distance(to: Date()))")
         
         callback("wait_alpha")
         alpha_task?.wait()

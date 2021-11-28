@@ -289,7 +289,6 @@ struct ContentView: View {
     @State var isProcessing: Bool = false
     @State var isCreatingPDF: Bool = false
     @State var modelUsed: Waifu2xModel? = nil
-    @State var background = DispatchQueue(label: "Background", qos: .userInteractive)
     @State var pdfbackground = DispatchQueue(label: "PDF Background")
     @State var chosenScaleLevel: Int = 1
     
@@ -365,7 +364,7 @@ struct ContentView: View {
             ConfigurationView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel)
         }
         .sheet(isPresented: $isProcessing, onDismiss: nil) {
-            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, background: $background, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF)
+            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF)
         }
         .sheet(isPresented: $isCreatingPDF, onDismiss: nil) {
             ProcessingPDFView(isCreatingPDF: $isCreatingPDF, background: $pdfbackground)
@@ -643,7 +642,6 @@ struct ProcessingView: View {
     @Binding var finderItems: [WorkItem]
     @Binding var modelUsed: Waifu2xModel?
     @Binding var isSheetShown: Bool
-    @Binding var background: DispatchQueue
     @Binding var chosenScaleLevel: Int
     @Binding var isCreatingPDF: Bool
     
@@ -680,6 +678,7 @@ struct ProcessingView: View {
     @State var statusProgress: (progress: Int, total: Int)? = nil
     @State var isShowProgressDetail = false
     @State var workItem: DispatchWorkItem? = nil
+    var background: DispatchQueue = DispatchQueue(label: "background")
     
     var body: some View {
         VStack {
