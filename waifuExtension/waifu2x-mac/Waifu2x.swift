@@ -265,8 +265,8 @@ public class Waifu2x {
             let arrayLengthFull = 3 * (self.block_size + 2 * self.shrink_size) * (self.block_size + 2 * self.shrink_size)
             let arrayLength = (self.block_size + 2 * self.shrink_size)
 
-            let resultBuffer = device.makeBuffer(length: arrayLengthFull * Float.exponentBitCount, options: .storageModeShared)!
-            let expandedBuffer = device.makeBuffer(bytes: UnsafeRawPointer(UnsafeMutablePointer(mutating: expanded)), length: arrayLengthFull * Float.exponentBitCount, options: .storageModeShared)!
+            let resultBuffer = device.makeBuffer(length: arrayLengthFull * MemoryLayout<Float>.size, options: .storageModeShared)!
+            let expandedBuffer = device.makeBuffer(bytes: UnsafeRawPointer(UnsafeMutablePointer(mutating: expanded)), length: arrayLengthFull * MemoryLayout<Float>.size, options: .storageModeShared)!
 
             commandEncoder.setComputePipelineState(pipelineState)
             commandEncoder.setBuffer(expandedBuffer, offset: 0, index: 0)
@@ -287,10 +287,10 @@ public class Waifu2x {
             commandBuffer.waitUntilCompleted()
             
             let rawPointer = resultBuffer.contents()
-            let typedPointer = rawPointer.bindMemory(to: Float.self, capacity: resultBuffer.length)
+            let typedPointer = rawPointer.bindMemory(to: Float.self, capacity: resultBuffer.length * MemoryLayout<Float>.size)
             let bufferedPointer = UnsafeBufferPointer(start: typedPointer, count: arrayLengthFull)
             
-            var multi = [Float](bufferedPointer)
+            let multi = [Float](bufferedPointer)
             
             let shape = [3, Int(self.block_size + 2 * self.shrink_size), Int(self.block_size + 2 * self.shrink_size)]
             let array = MLMultiArray(MLShapedArray(scalars: multi, shape: shape))
