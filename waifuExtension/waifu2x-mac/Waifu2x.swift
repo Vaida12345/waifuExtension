@@ -343,6 +343,7 @@ public class Waifu2x {
         let model_pipelineDate = Date()
         self.model_pipeline.wait()
         print("ML: \(model_pipelineDate.distance(to: Date()))")
+        
         callback("wait_alpha")
         alpha_task?.wait()
         self.out_pipeline.wait()
