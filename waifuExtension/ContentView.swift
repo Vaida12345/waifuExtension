@@ -442,10 +442,10 @@ struct GridItemView: View {
             .frame(width: geometry.size.width / 5, height: geometry.size.width / 5)
             .contextMenu {
                 Button("Open") {
-                    _ = shell(["open \(item.finderItem.path)"])
+                    _ = shell(["open \(item.finderItem.path.replacingOccurrences(of: " ", with: "\\ "))"])
                 }
                 Button("Show in Finder") {
-                    _ = shell(["open \(item.finderItem.path) -R"])
+                    _ = shell(["open \(item.finderItem.path.replacingOccurrences(of: " ", with: "\\ ")) -R"])
                 }
                 Button("Delete") {
                     finderItems.remove(at: finderItems.firstIndex(of: item)!)
