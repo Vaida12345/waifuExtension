@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B40B65A82754B95200AB08D2 /* ComparisonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B40B65A72754B95200AB08D2 /* ComparisonView.swift */; };
 		B41C473C274AA7850024ECB7 /* waifuExtensionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C473B274AA7850024ECB7 /* waifuExtensionApp.swift */; };
 		B41C473E274AA7850024ECB7 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C473D274AA7850024ECB7 /* ContentView.swift */; };
 		B41C4740274AA7850024ECB7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B41C473F274AA7850024ECB7 /* Assets.xcassets */; };
@@ -76,6 +77,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		B40B65A72754B95200AB08D2 /* ComparisonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComparisonView.swift; sourceTree = "<group>"; };
 		B41C4738274AA7850024ECB7 /* waifuExtension.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = waifuExtension.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B41C473B274AA7850024ECB7 /* waifuExtensionApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = waifuExtensionApp.swift; sourceTree = "<group>"; };
 		B41C473D274AA7850024ECB7 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -179,6 +181,7 @@
 			children = (
 				B41C473B274AA7850024ECB7 /* waifuExtensionApp.swift */,
 				B41C473D274AA7850024ECB7 /* ContentView.swift */,
+				B40B65A72754B95200AB08D2 /* ComparisonView.swift */,
 				B437F140275334CB00A1CE41 /* Models */,
 				B41C474A274AAF6A0024ECB7 /* Support */,
 				B49BFD6F274B4BC50046FDDF /* waifu2x-mac */,
@@ -427,6 +430,7 @@
 				B437F174275334DB00A1CE41 /* Waifu2xModel.swift in Sources */,
 				B49BFDAE274B4BC50046FDDF /* NSImage+Crop.swift in Sources */,
 				B437F165275334CB00A1CE41 /* upconv_7_anime_style_art_rgb_noise2_scale2.mlpackage in Sources */,
+				B40B65A82754B95200AB08D2 /* ComparisonView.swift in Sources */,
 				B437F168275334CB00A1CE41 /* upconv_7_photo_scale2.mlpackage in Sources */,
 				B437F15E275334CB00A1CE41 /* upconv_7_anime_style_art_rgb_noise3_scale2.mlpackage in Sources */,
 				B41C4772274AAF6A0024ECB7 /* Polynomial.swift in Sources */,
