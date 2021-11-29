@@ -528,6 +528,7 @@ struct ConfigurationView: View {
                                 isShowingStyleHint = bool
                             }
                     }
+                    
                     HStack {
                         Spacer()
                         Text("Denoise Level:")
@@ -535,6 +536,7 @@ struct ConfigurationView: View {
                                 isShowingNoiceHint = bool
                             }
                     }
+                    
                     HStack {
                         Spacer()
                         Text("Scale Level:")
@@ -550,6 +552,7 @@ struct ConfigurationView: View {
                                 .onHover { bool in
                                     isShowingModelClassHint = bool
                                 }
+                                .padding(.bottom)
                         }
                     }
                     
@@ -626,6 +629,7 @@ struct ConfigurationView: View {
                                 }
                             }
                         }
+                        .padding(.bottom)
                         .popover(isPresented: $isShowingModelClassHint) {
                             Text("To be determined")
                                 .padding(.all)
@@ -647,7 +651,7 @@ struct ConfigurationView: View {
                     }
                     
                     if !finderItems.filter({ $0.type == .video }).isEmpty {
-                        Menu(videoSegmentLength.description) {
+                        Menu(videoSegmentLength.description + "s") {
                             ForEach(videoSegmentOptions, id: \.self) { item in
                                 Button(item.description + "s") {
                                      videoSegmentLength = item
@@ -693,7 +697,7 @@ struct ConfigurationView: View {
                 .padding(.all)
         }
             .padding(.all)
-            .frame(width: 600, height: 400)
+            .frame(width: 600, height: 350)
             .onAppear {
                 findModelClass()
             }
