@@ -507,6 +507,7 @@ struct ConfigurationView: View {
     @State var isShowingScaleHint: Bool = false
     @State var isShowingModelClassHint: Bool = false
     @State var isShowingGPUHint: Bool = false
+    @State var isShowingVideoSegmentHint: Bool = false
     
     func findModelClass() {
         self.modelClass = Array(Set(Waifu2xModel.allModels.filter({ ($0.style == chosenStyle || $0.style == nil) && $0.noise == Int(chosenNoiseLevel) && $0.scale == ( chosenScaleLevel == 0 ? 1 : 2 ) }).map({ $0.class })))
@@ -569,7 +570,7 @@ struct ConfigurationView: View {
                             Spacer()
                             Text("Video Segment Length:")
                                 .onHover { bool in
-                                    isShowingGPUHint = bool
+                                    isShowingVideoSegmentHint = bool
                                 }
                         }
                     }
@@ -631,7 +632,7 @@ struct ConfigurationView: View {
                         }
                         .padding(.bottom)
                         .popover(isPresented: $isShowingModelClassHint) {
-                            Text("To be determined")
+                            Text("The model to use.")
                                 .padding(.all)
                             
                         }
@@ -658,8 +659,8 @@ struct ConfigurationView: View {
                                 }
                             }
                         }
-                        .popover(isPresented: $isShowingGPUHint) {
-                            Text("To be determined")
+                        .popover(isPresented: $isShowingVideoSegmentHint) {
+                            Text("Larger the value, more storage required, but more storage(maybe)")
                                 .padding(.all)
                             
                         }
