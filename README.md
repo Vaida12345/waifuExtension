@@ -25,6 +25,10 @@ This app was written with [SwiftUI](https://developer.apple.com/xcode/swiftui/).
 ## Preview
 <img width="1417" alt="Screen Shot 2021-11-29 at 2 44 41 PM" src="https://user-images.githubusercontent.com/91354917/143820789-45edbf68-a0c5-4478-be80-b26da1a3ce9c.png">
 
+## Denoise Level
+You can compare results from different model by choosing Compare > Compare Models. Example:
+<img width="1446" alt="Screen Shot 2021-11-29 at 5 58 27 PM" src="https://user-images.githubusercontent.com/91354917/143847147-b6b12fee-9761-4dab-8899-fa49ea02c63f.png">
+
 ## Credits
  - [waifu2x-ios](https://github.com/imxieyi/waifu2x-ios) for nearly all the algorithms used to enlarge images.
  - [waifu2x-caffe](https://github.com/lltcggie/waifu2x-caffe) for all the models.
