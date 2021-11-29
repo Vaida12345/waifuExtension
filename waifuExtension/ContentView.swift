@@ -177,6 +177,7 @@ extension Array where Element == WorkItem {
                 let enlargedFrames = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames").children!.map({ $0.image! })
                 
                 FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: mergedVideoSegmentPath, videoSize: CGSize(width: arbitraryFrameCGImage.width, height: arbitraryFrameCGImage.height), videoFPS: Int32(currentVideo.finderItem.frameRate!)) {
+                    try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames").removeFile()
                     onStatusProgressChanged(finishedSegmentsCounter,  Int((duration / Double(videoSegmentLength)).rounded(.up)))
                     
                     guard Int(finishedSegmentsCounter + 1) == Int((duration / Double(videoSegmentLength)).rounded(.up)) else {
