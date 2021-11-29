@@ -341,7 +341,7 @@ struct ContentView: View {
                     ScrollView {
                         LazyVGrid(columns: Array(repeating: .init(.flexible()), count: 5)) {
                             ForEach(finderItems) { item in
-                                GridItemView(item: item, geometry: geometry, finderItems: $finderItems)
+                                GridItemView(finderItems: $finderItems, item: item, geometry: geometry)
                                 
                             }
                         }
@@ -438,9 +438,12 @@ struct welcomeView: View {
 
 struct GridItemView: View {
     
+    @Binding var finderItems: [WorkItem]
+    
+    @State var isShowingHint: Bool = false
+    
     let item: WorkItem
     let geometry: GeometryProxy
-    @Binding var finderItems: [WorkItem]
     
     var body: some View {
         if let image = item.finderItem.image ?? item.finderItem.firstFrame {
@@ -450,10 +453,21 @@ struct GridItemView: View {
                     .cornerRadius(5)
                     .aspectRatio(contentMode: .fit)
                     .padding([.top, .leading, .trailing])
+                    .popover(isPresented: $isShowingHint) {
+                        Text("""
+                        name: \(item.finderItem.fileName ?? "???")
+                        path: \(item.finderItem.path)
+                        """)
+                            .multilineTextAlignment(.center)
+                            .padding()
+                    }
                 
                 Text(((item.finderItem.relativePath ?? item.finderItem.fileName) ?? item.finderItem.path) + "\n" + "\(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.width) × \(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.height)")
                     .multilineTextAlignment(.center)
                     .padding([.leading, .bottom, .trailing])
+                    .onHover { bool in
+                        self.isShowingHint = bool
+                    }
             }
             .frame(width: geometry.size.width / 5, height: geometry.size.width / 5)
             .contextMenu {
