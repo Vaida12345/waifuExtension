@@ -195,6 +195,11 @@ struct ImageView: View {
         .onTapGesture(count: 2) {
             openFile()
         }
+        .contextMenu {
+            Button("Open") {
+               openFile()
+            }
+        }
     }
     
 }

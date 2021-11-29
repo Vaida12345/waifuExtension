@@ -604,7 +604,7 @@ struct ConfigurationView: View {
                         }
                     }
                     .popover(isPresented: $isShowingNoiceHint) {
-                        Text("Denoise could counter the effect due to compressions of JPGs. \nThis is not recommended for PNGs.")
+                        Text("denoise level 3 recommended.\nHint: Don't know which to choose? go to Compare > Compare Models and try by yourself!")
                             .padding(.all)
                         
                     }
