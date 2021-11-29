@@ -24,3 +24,8 @@ This app was written with [SwiftUI](https://developer.apple.com/xcode/swiftui/).
 
 ## Preview
 <img width="1417" alt="Screen Shot 2021-11-29 at 2 44 41 PM" src="https://user-images.githubusercontent.com/91354917/143820789-45edbf68-a0c5-4478-be80-b26da1a3ce9c.png">
+
+## Credits
+ - [waifu2x-ios](https://github.com/imxieyi/waifu2x-ios) for nearly all the algorithms used to enlarge images.
+ - [waifu2x-caffe](https://github.com/lltcggie/waifu2x-caffe) for all the models.
+ - [Answers at stack overflow](https://stackoverflow.com) for answering all my questions.
