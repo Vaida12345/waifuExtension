@@ -241,8 +241,6 @@ public class Waifu2x {
         if isGPUEnabled {
             // calculation with GPU
             
-            let prepareDate = Date()
-            
             var arrayLengthFull = 3 * (self.block_size + 2 * self.shrink_size) * (self.block_size + 2 * self.shrink_size)
             let arrayLength = (self.block_size + 2 * self.shrink_size)
             
@@ -281,24 +279,15 @@ public class Waifu2x {
                 threadGroupSize = arrayLengthFull * rects.count
             }
             
-            print("prepare: \(prepareDate.distance(to: Date()))")
-            let runDate = Date()
-            
             let threadgroupSize = MTLSizeMake(threadGroupSize, 1, 1)
             commandEncoder.dispatchThreads(gridSize, threadsPerThreadgroup: threadgroupSize)
             commandEncoder.endEncoding()
             commandBuffer.commit()
             commandBuffer.waitUntilCompleted()
             
-            print("run: \(runDate.distance(to: Date()))")
-            let postDate1 = Date()
-            
             let rawPointer = resultBuffer.contents()
             let shape = [rects.count, 3, Int(self.block_size + 2 * self.shrink_size), Int(self.block_size + 2 * self.shrink_size)]
             let shapedArray = MLShapedArray<Float>(bytesNoCopy: rawPointer, shape: shape, strides: shape.map({ $0 * MemoryLayout<Float>.size }), deallocator: .none)
-            
-            print("postDate: \(postDate1.distance(to: Date()))")
-            let postDate2 = Date()
             
             var multiCounter = 0
             while multiCounter < rects.count {
@@ -308,8 +297,6 @@ public class Waifu2x {
                 self.model_pipeline.appendObject(array)
                 multiCounter += 1
             }
-            
-            print("post2: \(postDate2.distance(to: Date()))")
             
             if let didFinishedOneBlock = self.didFinishedOneBlock {
                 didFinishedOneBlock(1)
