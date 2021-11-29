@@ -13,7 +13,7 @@ Files and source code could be found in [releases](https://github.com/Vaida12345
 The models where obtained from [waifu2x-caffe](https://github.com/lltcggie/waifu2x-caffe), and translated to coreML via [coremltools](https://github.com/apple/coremltools).
 
 ## Note
-This project was based on the work of [waifu2x-ios](https://github.com/imxieyi/waifu2x-ios). Nearly all the files in waifu2x-mac were created by him. However, I modified a few things to make it run much faster.
+This project was based on the work of [waifu2x-ios](https://github.com/imxieyi/waifu2x-ios). Nearly all the files in waifu2x-mac were created by him. However, modifications were done to improve speed.
 
 ## Speed
 When processing a stanard 1080p image (1920 × 1080), Macbook Pro with the M1 Max chip took only 0.7 seconds.
@@ -28,4 +28,4 @@ This app was written with [SwiftUI](https://developer.apple.com/xcode/swiftui/).
 ## Credits
  - [waifu2x-ios](https://github.com/imxieyi/waifu2x-ios) for nearly all the algorithms used to enlarge images.
  - [waifu2x-caffe](https://github.com/lltcggie/waifu2x-caffe) for all the models.
- - [stack overflow](https://stackoverflow.com) for answering all my questions.
+ - [stack overflow](https://stackoverflow.com) for all the solutions.
