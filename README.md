@@ -1,5 +1,10 @@
 # waifuExtension
-The waifu2x on Mac
+The waifu2x on Mac.
+
+The new version is capable of taking advantages of CPU, GPU, and ANE.
+
+<img width="850" alt="Screen Shot 2021-11-29 at 2 20 33 PM" src="https://user-images.githubusercontent.com/91354917/143818434-ae0570f0-b8ec-4485-90c4-963cb488d6a8.png">
+<img width="850" alt="Screen Shot 2021-11-29 at 2 20 36 PM" src="https://user-images.githubusercontent.com/91354917/143818466-7458c38d-061d-4679-8213-5a0244daa791.png">
 
 ## Usage
 Enlarge videos or images with machine learning on Mac.
