@@ -104,6 +104,8 @@ extension Array where Element == WorkItem {
         if !videos.isEmpty {
             //helper functions
             
+            var segmentCompletedCounter = 0
+            
             func splitVideo(withIndex segmentIndex: Int, duration: Double, filePath: String, currentVideo: WorkItem, completion: @escaping (()->())) {
                 
                 guard !isProcessingCancelled else { return }
@@ -177,18 +179,19 @@ extension Array where Element == WorkItem {
                 let enlargedFrames = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(segmentSequence)").children!.map({ $0.image! })
                 
                 FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: mergedVideoSegmentPath, videoSize: CGSize(width: arbitraryFrameCGImage.width, height: arbitraryFrameCGImage.height), videoFPS: Int32(currentVideo.finderItem.frameRate!)) {
-                    try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(segmentSequence)").removeFile()
-                    onStatusProgressChanged(finishedSegmentsCounter,  Int((duration / Double(videoSegmentLength)).rounded(.up)))
+                    segmentCompletedCounter += 1
                     
-                    guard Int(finishedSegmentsCounter + 1) == Int((duration / Double(videoSegmentLength)).rounded(.up)) else {
+                    try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(segmentSequence)").removeFile()
+                    onStatusProgressChanged(segmentCompletedCounter,  Int((duration / Double(videoSegmentLength)).rounded(.up)))
+                    
+                    guard segmentCompletedCounter == Int((duration / Double(videoSegmentLength)).rounded(.up)) else {
                         return
                     }
-                    
                     // completion after all videos are finished.
                     completion()
                 }
                 
-                guard Int(finishedSegmentsCounter + 1) == Int((duration / Double(videoSegmentLength)).rounded(.up)) else {
+                if Int(finishedSegmentsCounter + 1) != Int((duration / Double(videoSegmentLength)).rounded(.up)) {
                     generateImagesAndMergeToVideo(segmentsFinderItems: Array<FinderItem>(segmentsFinderItems.dropFirst()), currentVideo: currentVideo, filePath: filePath, totalSegmentsCount: totalSegmentsCount, finishedSegmentsCounter: finishedSegmentsCounter + 1, duration: duration, completion: completion)
                     return
                 }
