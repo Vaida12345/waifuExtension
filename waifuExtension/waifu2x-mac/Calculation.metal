@@ -16,8 +16,8 @@ constant int fullLength [[function_constant(4)]];
 
 /// This is a Metal Shading Language (MSL) function
 kernel void Calculation(device const float* expanded,
-                        device const int* xArray,
-                        device const int* yArray,
+                        device const float* xArray,
+                        device const float* yArray,
                         device float* multi,
                         uint3 index [[thread_position_in_grid]]) {
     // the for-loop is replaced with a collection of threads, each of which calls this function.
