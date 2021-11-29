@@ -1,0 +1,24 @@
+{
+    "fileFormatVersion": "1.0.0",
+    "itemInfoEntries": {
+        "7BFA9F56-0AB0-45CC-8AD7-559A8B6862EF": {
+            "author": "com.apple.CoreML",
+            "description": "External Metadata Overlay",
+            "name": "Metadata.json",
+            "path": "com.apple.CoreML/Metadata.json"
+        },
+        "92C52739-CFA9-4D74-9036-CDAC80D06744": {
+            "author": "com.apple.CoreML",
+            "description": "CoreML Model Specification",
+            "name": "upconv_7_anime_style_art_rgb_scale2.mlmodel",
+            "path": "com.apple.CoreML/upconv_7_anime_style_art_rgb_scale2.mlmodel"
+        },
+        "96CD4C91-4BA3-4747-A485-FBD6AF70252D": {
+            "author": "com.apple.CoreML",
+            "description": "External FeatureDescription Overlay",
+            "name": "FeatureDescriptions.json",
+            "path": "com.apple.CoreML/FeatureDescriptions.json"
+        }
+    },
+    "rootModelIdentifier": "92C52739-CFA9-4D74-9036-CDAC80D06744"
+}
