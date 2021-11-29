@@ -14,6 +14,12 @@ struct waifuExtensionApp: App {
         WindowGroup {
             ContentView()
                 .frame(minWidth: 800, maxWidth: .infinity, minHeight: 400, maxHeight: .infinity)
+                .onAppear {
+                    let finderItem = FinderItem(at: "\(NSHomeDirectory())/tmp")
+                    if finderItem.isExistence {
+                        try! finderItem.removeFile()
+                    }
+                }
         }
         .commands {
             CommandMenu("Compare") {
