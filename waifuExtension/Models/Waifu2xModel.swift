@@ -146,9 +146,9 @@ struct Waifu2xModel: Equatable {
     static let waifu2x_upconv_7_photo_noise3_scale2 = Waifu2xModel(class: "upconv_7_photo", name: "upconv_7_photo_noise3_scale2", stye: "photo", scale: 2, noise: 3)
     
     static let waifu2x_photo_scale2 = Waifu2xModel(class: "photo", name: "photo_scale2", stye: "photo", scale: 2, noise: nil)
-    static let photo_noise0 = Waifu2xModel(class: "photo", name: "photo_noise0_model", stye: "photo", scale: 1, noise: 0)
-    static let photo_noise1 = Waifu2xModel(class: "photo", name: "photo_noise1_model", stye: "photo", scale: 1, noise: 1)
-    static let photo_noise2 = Waifu2xModel(class: "photo", name: "photo_noise2_model", stye: "photo", scale: 1, noise: 2)
-    static let photo_noise3 = Waifu2xModel(class: "photo", name: "photo_noise3_model", stye: "photo", scale: 1, noise: 3)
+    static let waifu2x_photo_noise0 = Waifu2xModel(class: "photo", name: "photo_noise0_model", stye: "photo", scale: 1, noise: 0)
+    static let waifu2x_photo_noise1 = Waifu2xModel(class: "photo", name: "photo_noise1_model", stye: "photo", scale: 1, noise: 1)
+    static let waifu2x_photo_noise2 = Waifu2xModel(class: "photo", name: "photo_noise2_model", stye: "photo", scale: 1, noise: 2)
+    static let waifu2x_photo_noise3 = Waifu2xModel(class: "photo", name: "photo_noise3_model", stye: "photo", scale: 1, noise: 3)
 }
 

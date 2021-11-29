@@ -13,8 +13,20 @@ struct ComparisonView: View {
             self.finderItemImage = finderItem!.image!
             
             //render anime
-            let waifu2x = Waifu2x()
-//            self.animeScale2DenoiseNone waifu2x.run(self.finderItemImage, model: )
+            DispatchQueue(label: "background").async {
+                let waifu2x = Waifu2x()
+                self.animeScale2DenoiseNone = waifu2x.run(self.finderItemImage, model: .waifu2x_upconv_7_anime_style_art_rgb_scale2)
+                self.animeScale2Denoise0 = waifu2x.run(self.finderItemImage, model: .waifu2x_upconv_7_anime_style_art_rgb_noise0_scale2)
+                self.animeScale2Denoise1 = waifu2x.run(self.finderItemImage, model: .waifu2x_upconv_7_anime_style_art_rgb_noise1_scale2)
+                self.animeScale2Denoise2 = waifu2x.run(self.finderItemImage, model: .waifu2x_upconv_7_anime_style_art_rgb_noise2_scale2)
+                self.animeScale2Denoise3 = waifu2x.run(self.finderItemImage, model: .waifu2x_upconv_7_anime_style_art_rgb_noise3_scale2)
+                
+                self.photoScale2DenoiseNone = waifu2x.run(self.finderItemImage, model: .waifu2x_upconv_7_photo_scale2)
+                self.photoScale2Denoise0 = waifu2x.run(self.finderItemImage, model: .waifu2x_upconv_7_photo_noise0_scale2)
+                self.photoScale2Denoise1 = waifu2x.run(self.finderItemImage, model: .waifu2x_upconv_7_photo_noise1_scale2)
+                self.photoScale2Denoise2 = waifu2x.run(self.finderItemImage, model: .waifu2x_upconv_7_photo_noise2_scale2)
+                self.photoScale2Denoise3 = waifu2x.run(self.finderItemImage, model: .waifu2x_upconv_7_photo_noise3_scale2)
+            }
         }
     }
     @State var finderItemImage: NSImage? = nil
