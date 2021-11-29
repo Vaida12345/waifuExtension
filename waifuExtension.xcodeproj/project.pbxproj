@@ -8,8 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		B40B65A82754B95200AB08D2 /* ComparisonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B40B65A72754B95200AB08D2 /* ComparisonView.swift */; };
-		B41527F727555D9F0051CE81 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = B41527F627555D9F0051CE81 /* README.md */; };
-		B41527F927555DA50051CE81 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = B41527F827555DA50051CE81 /* LICENSE */; };
+		B41527FB27555EC80051CE81 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = B41527FA27555EC80051CE81 /* README.md */; };
+		B41527FD27555ECF0051CE81 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = B41527FC27555ECF0051CE81 /* LICENSE */; };
 		B41C473C274AA7850024ECB7 /* waifuExtensionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C473B274AA7850024ECB7 /* waifuExtensionApp.swift */; };
 		B41C473E274AA7850024ECB7 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C473D274AA7850024ECB7 /* ContentView.swift */; };
 		B41C4740274AA7850024ECB7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B41C473F274AA7850024ECB7 /* Assets.xcassets */; };
@@ -80,8 +80,8 @@
 
 /* Begin PBXFileReference section */
 		B40B65A72754B95200AB08D2 /* ComparisonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComparisonView.swift; sourceTree = "<group>"; };
-		B41527F627555D9F0051CE81 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		B41527F827555DA50051CE81 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		B41527FA27555EC80051CE81 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		B41527FC27555ECF0051CE81 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		B41C4738274AA7850024ECB7 /* waifuExtension.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = waifuExtension.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B41C473B274AA7850024ECB7 /* waifuExtensionApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = waifuExtensionApp.swift; sourceTree = "<group>"; };
 		B41C473D274AA7850024ECB7 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -167,6 +167,8 @@
 		B41C472F274AA7850024ECB7 = {
 			isa = PBXGroup;
 			children = (
+				B41527FA27555EC80051CE81 /* README.md */,
+				B41527FC27555ECF0051CE81 /* LICENSE */,
 				B41C473A274AA7850024ECB7 /* waifuExtension */,
 				B41C4739274AA7850024ECB7 /* Products */,
 			);
@@ -191,8 +193,6 @@
 				B49BFD6F274B4BC50046FDDF /* waifu2x-mac */,
 				B41C473F274AA7850024ECB7 /* Assets.xcassets */,
 				B41C4744274AA7850024ECB7 /* waifuExtension.entitlements */,
-				B41527F627555D9F0051CE81 /* README.md */,
-				B41527F827555DA50051CE81 /* LICENSE */,
 				B41C4741274AA7850024ECB7 /* Preview Content */,
 			);
 			path = waifuExtension;
@@ -422,9 +422,9 @@
 			files = (
 				B41C4743274AA7850024ECB7 /* Preview Assets.xcassets in Resources */,
 				B41C4740274AA7850024ECB7 /* Assets.xcassets in Resources */,
-				B41527F727555D9F0051CE81 /* README.md in Resources */,
+				B41527FB27555EC80051CE81 /* README.md in Resources */,
 				B49BFDB3274B4BC50046FDDF /* Info.plist in Resources */,
-				B41527F927555DA50051CE81 /* LICENSE in Resources */,
+				B41527FD27555ECF0051CE81 /* LICENSE in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
