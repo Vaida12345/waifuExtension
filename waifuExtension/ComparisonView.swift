@@ -187,7 +187,7 @@ struct ImageView: View {
                 .aspectRatio(contentMode: .fit)
                 .cornerRadius(5)
                 .popover(isPresented: $showHint) {
-                    Text("Click to show detail")
+                    Text("Double click to show detail")
                         .padding()
                 }
             
