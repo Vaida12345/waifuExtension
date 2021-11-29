@@ -37,7 +37,7 @@ extension Array where Element == WorkItem {
         return self.contains(WorkItem(at: finderItem, type: .image))
     }
     
-    func work(_ chosenScaleLevel: Int, modelUsed: Waifu2xModel, videoSegmentLength: Int = 10, isUsingGPU: Bool, onStatusChanged status: @escaping ((_ status: String)->()), onStatusProgressChanged: @escaping ((_ progress: Int?, _ total: Int?)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
+    func work(_ chosenScaleLevel: Int, modelUsed: Waifu2xModel, videoSegmentLength: Int = 1, isUsingGPU: Bool, onStatusChanged status: @escaping ((_ status: String)->()), onStatusProgressChanged: @escaping ((_ progress: Int?, _ total: Int?)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
         
         let images = self.filter({ $0.type == .image })
         let videos = self.filter({ $0.type == .video })
@@ -298,6 +298,7 @@ struct ContentView: View {
     @State var pdfbackground = DispatchQueue(label: "PDF Background")
     @State var chosenScaleLevel: Int = 1
     @State var chosenComputeOption = "GPU"
+    @State var videoSegmentLength = 10
     
     var body: some View {
         VStack {
@@ -368,10 +369,10 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $isSheetShown, onDismiss: nil) {
-            ConfigurationView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel, chosenComputeOption: $chosenComputeOption)
+            ConfigurationView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel, chosenComputeOption: $chosenComputeOption, videoSegmentLength: $videoSegmentLength)
         }
         .sheet(isPresented: $isProcessing, onDismiss: nil) {
-            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF, chosenComputeOption: $chosenComputeOption)
+            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF, chosenComputeOption: $chosenComputeOption, videoSegmentLength: $videoSegmentLength)
         }
         .sheet(isPresented: $isCreatingPDF, onDismiss: nil) {
             ProcessingPDFView(isCreatingPDF: $isCreatingPDF, background: $pdfbackground)
@@ -477,6 +478,7 @@ struct ConfigurationView: View {
         }
     }
     @Binding var chosenComputeOption: String
+    @Binding var videoSegmentLength: Int
     
     let styleNames: [String] = ["anime", "photo"]
     @State var chosenStyle = "anime" {
@@ -498,6 +500,7 @@ struct ConfigurationView: View {
     @State var chosenModelClass: String = ""
     
     let computeOptions = ["CPU", "GPU"]
+    let videoSegmentOptions = [1, 5, 10, 15, 30, 60]
     
     @State var isShowingStyleHint: Bool = false
     @State var isShowingNoiceHint: Bool = false
@@ -556,6 +559,16 @@ struct ConfigurationView: View {
                             .onHover { bool in
                                 isShowingGPUHint = bool
                             }
+                    }
+                    
+                    if !finderItems.filter({ $0.type == .video }).isEmpty {
+                        HStack {
+                            Spacer()
+                            Text("Video Segment Length:")
+                                .onHover { bool in
+                                    isShowingGPUHint = bool
+                                }
+                        }
                     }
                 }
                 
@@ -632,6 +645,21 @@ struct ConfigurationView: View {
                             .padding(.all)
                         
                     }
+                    
+                    if !finderItems.filter({ $0.type == .video }).isEmpty {
+                        Menu(videoSegmentLength.description) {
+                            ForEach(videoSegmentOptions, id: \.self) { item in
+                                Button(item.description + "s") {
+                                     videoSegmentLength = item
+                                }
+                            }
+                        }
+                        .popover(isPresented: $isShowingGPUHint) {
+                            Text("To be determined")
+                                .padding(.all)
+                            
+                        }
+                    }
                 }
                 
             }
@@ -665,7 +693,7 @@ struct ConfigurationView: View {
                 .padding(.all)
         }
             .padding(.all)
-            .frame(width: 600, height: 300)
+            .frame(width: 600, height: 400)
             .onAppear {
                 findModelClass()
             }
@@ -683,6 +711,7 @@ struct ProcessingView: View {
     @Binding var chosenScaleLevel: Int
     @Binding var isCreatingPDF: Bool
     @Binding var chosenComputeOption: String
+    @Binding var videoSegmentLength: Int
     
     @State var processedItemsCounter: Int = 0
     @State var currentTimeTaken: Double = 0 // up to 1s
@@ -885,7 +914,7 @@ struct ProcessingView: View {
             .onAppear {
                 
                 self.workItem = DispatchWorkItem(qos: .background, flags: .inheritQoS) {
-                    finderItems.work(chosenScaleLevel, modelUsed: modelUsed!, isUsingGPU: chosenComputeOption == "GPU") { status in
+                    finderItems.work(chosenScaleLevel, modelUsed: modelUsed!, videoSegmentLength: videoSegmentLength, isUsingGPU: chosenComputeOption == "GPU") { status in
                         self.status = status
                     } onStatusProgressChanged: { progress,total in
                         if progress != nil {
