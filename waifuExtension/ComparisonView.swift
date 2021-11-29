@@ -160,19 +160,28 @@ struct ImageView: View {
     @State var name: String
     @State var showHint = false
     
+    let placeholder = NSImage(named: "placeholder")!
+    
     func openFile() {
         guard let image = image else {
             return
         }
         
-        let path = "\(NSHomeDirectory())/\(name).png"
+        let formatter = DateFormatter()
+        formatter.dateStyle = .none
+        formatter.timeStyle = .medium
+        
+        FinderItem(at: "\(NSHomeDirectory())/temp").generateDirectory()
+        
+        let path = "\(NSHomeDirectory())/temp/\(formatter.string(from: Date()))-\(name).png"
+        print(path)
         image.write(to: path)
         _ = shell(["open \(path.replacingOccurrences(of: " ", with: "\\ "))"])
     }
     
     var body: some View {
         VStack {
-            Image(nsImage: image ?? defaultImage!)
+            Image(nsImage: image ?? defaultImage ?? placeholder)
                 .resizable()
                 .renderingMode(image == nil ? .template : .original )
                 .aspectRatio(contentMode: .fit)
@@ -186,9 +195,6 @@ struct ImageView: View {
                 .onHover { bool in
                     self.showHint = bool
                 }
-        }
-        .onTapGesture(count: 1) {
-            openFile()
         }
         .onTapGesture(count: 2) {
             openFile()

@@ -377,6 +377,14 @@ struct ContentView: View {
         .sheet(isPresented: $isCreatingPDF, onDismiss: nil) {
             ProcessingPDFView(isCreatingPDF: $isCreatingPDF, background: $pdfbackground)
         }
+        .onAppear {
+            DispatchQueue(label: "background").async {
+                let finderItem = FinderItem(at: "\(NSHomeDirectory())/temp")
+                if finderItem.isExistence {
+                    try! finderItem.removeFile()
+                }
+            }
+        }
     }
 }
 
@@ -412,17 +420,6 @@ struct welcomeView: View {
             }
             
             return true
-        }
-        .onTapGesture {
-            let panel = NSOpenPanel()
-            panel.allowsMultipleSelection = true
-            panel.canChooseDirectories = true
-            if panel.runModal() == .OK {
-                for i in panel.urls {
-                    let item = FinderItem(at: i)
-                    addItemIfPossible(of: item, to: &finderItems)
-                }
-            }
         }
         .onTapGesture(count: 2) {
             let panel = NSOpenPanel()
