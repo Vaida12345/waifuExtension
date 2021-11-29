@@ -143,7 +143,7 @@ extension Array where Element == WorkItem {
                 
                 print("frames to process: \(framesToBeProcessed.count)")
                 
-                FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames").generateDirectory()
+                FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(segmentSequence)").generateDirectory()
                 DispatchQueue.concurrentPerform(iterations: framesToBeProcessed.count) { frameIndex in
                     
                     var currentFrame = framesToBeProcessed[frameIndex]
@@ -164,7 +164,7 @@ extension Array where Element == WorkItem {
                     var sequence = String(frameIndex)
                     while sequence.count < 5 { sequence.insert("0", at: sequence.startIndex) }
                     
-                    currentFrame.write(to: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(sequence).png")
+                    currentFrame.write(to: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(segmentSequence)/\(sequence).png")
                 }
                 
                 // status: merge videos
@@ -172,21 +172,25 @@ extension Array where Element == WorkItem {
                 let mergedVideoSegmentPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo/\(segmentSequence).mov"
                 FinderItem(at: mergedVideoSegmentPath).generateDirectory()
                 
-                let arbitraryFrame = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/00000.png")
+                let arbitraryFrame = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(segmentSequence)/00000.png")
                 let arbitraryFrameCGImage = arbitraryFrame.image!.cgImage(forProposedRect: nil, context: nil, hints: nil)!
                 let enlargedFrames = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames").children!.map({ $0.image! })
                 
                 FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: mergedVideoSegmentPath, videoSize: CGSize(width: arbitraryFrameCGImage.width, height: arbitraryFrameCGImage.height), videoFPS: Int32(currentVideo.finderItem.frameRate!)) {
-                    try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames").removeFile()
+                    try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(segmentSequence)").removeFile()
                     onStatusProgressChanged(finishedSegmentsCounter,  Int((duration / Double(videoSegmentLength)).rounded(.up)))
                     
                     guard Int(finishedSegmentsCounter + 1) == Int((duration / Double(videoSegmentLength)).rounded(.up)) else {
-                        generateImagesAndMergeToVideo(segmentsFinderItems: Array<FinderItem>(segmentsFinderItems.dropFirst()), currentVideo: currentVideo, filePath: filePath, totalSegmentsCount: totalSegmentsCount, finishedSegmentsCounter: finishedSegmentsCounter + 1, duration: duration, completion: completion)
                         return
                     }
                     
                     // completion after all videos are finished.
                     completion()
+                }
+                
+                guard Int(finishedSegmentsCounter + 1) == Int((duration / Double(videoSegmentLength)).rounded(.up)) else {
+                    generateImagesAndMergeToVideo(segmentsFinderItems: Array<FinderItem>(segmentsFinderItems.dropFirst()), currentVideo: currentVideo, filePath: filePath, totalSegmentsCount: totalSegmentsCount, finishedSegmentsCounter: finishedSegmentsCounter + 1, duration: duration, completion: completion)
+                    return
                 }
             }
             
