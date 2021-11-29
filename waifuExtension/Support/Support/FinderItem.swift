@@ -829,11 +829,8 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         writeImagesAsMovie(allImages, videoPath: videoPath, videoSize: videoSize, videoFPS: videoFPS)
     }
     
-    static func trimVideo(sourceURL: URL, outputURL: URL, statTime:Float, endTime:Float, completion: @escaping ((_ asset: AVAsset)->()))
-    {
+    static func trimVideo(sourceURL: URL, outputURL: URL, statTime:Float, endTime:Float, completion: @escaping ((_ asset: AVAsset)->())) {
         let asset = AVAsset(url: sourceURL as URL)
-        let length = Float(asset.duration.value) / Float(asset.duration.timescale)
-        print("video length: \(length) seconds")
         
         let start = statTime
         let end = endTime

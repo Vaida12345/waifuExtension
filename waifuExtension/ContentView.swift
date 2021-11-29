@@ -141,33 +141,40 @@ extension Array where Element == WorkItem {
                 let asset = segmentsFinderItem.avAsset!
                 let segmentSequence = segmentsFinderItem.fileName!
                 
-                let framesToBeProcessed = asset.frames!
+                var framesToBeProcessed = asset.frames
                 
-                print("frames to process: \(framesToBeProcessed.count)")
+                print("frames to process: \(framesToBeProcessed!.count)")
                 
                 FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(segmentSequence)").generateDirectory()
-                DispatchQueue.concurrentPerform(iterations: framesToBeProcessed.count) { frameIndex in
+                DispatchQueue.concurrentPerform(iterations: framesToBeProcessed!.count) { frameIndex in
                     
-                    var currentFrame = framesToBeProcessed[frameIndex]
-                    
-                    let waifu2x = Waifu2x()
-                    
-                    if chosenScaleLevel >= 2 {
-                        for _ in 1...chosenScaleLevel {
-                            currentFrame = waifu2x.run(currentFrame.reload(withIndex: "\(segmentSequence)\(frameIndex)"), model: modelUsed)!
+                    autoreleasepool {
+                        var currentFrame: NSImage? = framesToBeProcessed![frameIndex]
+                        
+                        let waifu2x = Waifu2x()
+                        
+                        if chosenScaleLevel >= 2 {
+                            for _ in 1...chosenScaleLevel {
+                                currentFrame = waifu2x.run(currentFrame!.reload(withIndex: "\(segmentSequence)\(frameIndex)"), model: modelUsed)!
+                            }
+                        } else {
+                            currentFrame = waifu2x.run(currentFrame!.reload(withIndex: "\(segmentSequence)\(frameIndex)"), model: modelUsed)!
                         }
-                    } else {
-                        currentFrame = waifu2x.run(currentFrame.reload(withIndex: "\(segmentSequence)\(frameIndex)"), model: modelUsed)!
+                        
+                        currentVideo.progress += 1 / Double(framesToBeProcessed!.count) / totalSegmentsCount
+                        onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / Double(totalItemCounter))
+                        
+                        var sequence = String(frameIndex)
+                        while sequence.count < 5 { sequence.insert("0", at: sequence.startIndex) }
+                        
+                        currentFrame!.write(to: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(segmentSequence)/\(sequence).png")
+                        
+                        currentFrame = nil
                     }
                     
-                    currentVideo.progress += 1 / Double(framesToBeProcessed.count) / totalSegmentsCount
-                    onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / Double(totalItemCounter))
-                    
-                    var sequence = String(frameIndex)
-                    while sequence.count < 5 { sequence.insert("0", at: sequence.startIndex) }
-                    
-                    currentFrame.write(to: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(segmentSequence)/\(sequence).png")
                 }
+                
+                framesToBeProcessed = nil
                 
                 // status: merge videos
                 
@@ -176,9 +183,10 @@ extension Array where Element == WorkItem {
                 
                 let arbitraryFrame = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(segmentSequence)/00000.png")
                 let arbitraryFrameCGImage = arbitraryFrame.image!.cgImage(forProposedRect: nil, context: nil, hints: nil)!
-                let enlargedFrames = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(segmentSequence)").children!.map({ $0.image! })
+                var enlargedFrames: [NSImage]? = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(segmentSequence)").children!.map({ $0.image! })
                 
-                FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: mergedVideoSegmentPath, videoSize: CGSize(width: arbitraryFrameCGImage.width, height: arbitraryFrameCGImage.height), videoFPS: Int32(currentVideo.finderItem.frameRate!)) {
+                FinderItem.convertImageSequenceToVideo(enlargedFrames!, videoPath: mergedVideoSegmentPath, videoSize: CGSize(width: arbitraryFrameCGImage.width, height: arbitraryFrameCGImage.height), videoFPS: Int32(currentVideo.finderItem.frameRate!)) {
+                    enlargedFrames = nil
                     segmentCompletedCounter += 1
                     
                     try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(segmentSequence)").removeFile()
