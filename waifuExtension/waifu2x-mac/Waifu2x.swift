@@ -227,6 +227,9 @@ public class Waifu2x {
         let mlmodel = model.model
         self.model_pipeline = BackgroundPipeline<MLMultiArray>("model_pipeline", count: rects.count, waifu2x: self) { (index, array) in
             self.out_pipeline.appendObject(try! mlmodel.prediction(input: array))
+            if let didFinishedOneBlock = self.didFinishedOneBlock {
+                didFinishedOneBlock(2 * rects.count)
+            }
         }
         // Start running model
         var expwidth = fullWidth + 2 * self.shrink_size
@@ -350,10 +353,6 @@ public class Waifu2x {
         callback("wait_alpha")
         alpha_task?.wait()
         self.out_pipeline.wait()
-        
-        if let didFinishedOneBlock = self.didFinishedOneBlock {
-            didFinishedOneBlock(2)
-        }
         
         self.model_pipeline = nil
         self.out_pipeline = nil
