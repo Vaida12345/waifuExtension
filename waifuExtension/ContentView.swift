@@ -138,10 +138,10 @@ extension Array where Element == WorkItem {
                 guard !segmentsFinderItems.isEmpty else { return }
                 
                 let segmentsFinderItem = segmentsFinderItems.first!
-                let asset = segmentsFinderItem.avAsset!
+                var asset = segmentsFinderItem.avAsset
                 let segmentSequence = segmentsFinderItem.fileName!
                 
-                var framesToBeProcessed = asset.frames
+                var framesToBeProcessed = asset?.frames
                 
                 print("frames to process: \(framesToBeProcessed!.count)")
                 
@@ -175,6 +175,7 @@ extension Array where Element == WorkItem {
                 }
                 
                 framesToBeProcessed = nil
+                asset = nil
                 
                 // status: merge videos
                 
@@ -186,7 +187,6 @@ extension Array where Element == WorkItem {
                 var enlargedFrames: [NSImage]? = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(segmentSequence)").children!.map({ $0.image! })
                 
                 FinderItem.convertImageSequenceToVideo(enlargedFrames!, videoPath: mergedVideoSegmentPath, videoSize: CGSize(width: arbitraryFrameCGImage.width, height: arbitraryFrameCGImage.height), videoFPS: Int32(currentVideo.finderItem.frameRate!)) {
-                    enlargedFrames = nil
                     segmentCompletedCounter += 1
                     
                     try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(segmentSequence)").removeFile()
@@ -198,6 +198,7 @@ extension Array where Element == WorkItem {
                     // completion after all videos are finished.
                     completion()
                 }
+                enlargedFrames = nil
                 
                 if Int(finishedSegmentsCounter + 1) != Int((duration / Double(videoSegmentLength)).rounded(.up)) {
                     generateImagesAndMergeToVideo(segmentsFinderItems: Array<FinderItem>(segmentsFinderItems.dropFirst()), currentVideo: currentVideo, filePath: filePath, totalSegmentsCount: totalSegmentsCount, finishedSegmentsCounter: finishedSegmentsCounter + 1, duration: duration, completion: completion)
