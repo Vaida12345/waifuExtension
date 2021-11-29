@@ -16,7 +16,7 @@ This app works completely offfline and requires no internet connection. Nothing 
 The models where obtained from [waifu2x-caffe](https://github.com/lltcggie/waifu2x-caffe), and translated to coreML via [coremltools](https://github.com/apple/coremltools).
 
 ## Note
-This app was based on the work of [waifu2x-ios](https://github.com/imxieyi/waifu2x-ios). Nearly all the files in waifu2x-mac were created by him. However, modifications were done to improve speed.
+This app was based on the work of [waifu2x-ios](https://github.com/imxieyi/waifu2x-ios). Nearly all the files in the folder "waifu2x-mac" were created by him. However, modifications were done to improve speed.
 
 ## Speed
 When processing a stanard 1080p image (1920 × 1080), Macbook Pro with the M1 Max chip took only 0.7 seconds.
