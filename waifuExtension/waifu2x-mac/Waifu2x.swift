@@ -310,7 +310,7 @@ public class Waifu2x {
             
             var multiCounter = 0
             while multiCounter < multis.count {
-                let array = MLMultiArray(MLShapedArray(scalars: , shape: shape))
+                let array = MLMultiArray(MLShapedArray(scalars: multis[multiCounter], shape: shape))
                 
                 self.model_pipeline.appendObject(array)
                 multiCounter += 1
