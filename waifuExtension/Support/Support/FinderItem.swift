@@ -672,11 +672,11 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     /// Convert image sequence to video.
     ///
     /// from https://stackoverflow.com/questions/3741323/how-do-i-export-uiimage-array-as-a-movie/3742212#36297656
-    static func convertImageSequenceToVideo(_ allImages: [NSImage], videoPath: String, videoSize: CGSize, videoFPS: Int32, completion: (()->Void)? = nil) {
+    static func convertImageSequenceToVideo(_ allImages: [FinderItem], videoPath: String, videoSize: CGSize, videoFPS: Int32, completion: (()->Void)? = nil) {
         
         FinderItem(at: videoPath).generateDirectory()
         
-        func writeImagesAsMovie(_ allImages: [NSImage], videoPath: String, videoSize: CGSize, videoFPS: Int32) {
+        func writeImagesAsMovie(_ allImages: [FinderItem], videoPath: String, videoSize: CGSize, videoFPS: Int32) {
             // Create AVAssetWriter to write video
             guard let assetWriter = createAssetWriter(videoPath, size: videoSize) else {
                 print("Error converting images to video: AVAssetWriter not created")
@@ -772,7 +772,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         }
         
         
-        func appendPixelBufferForImageAtURL(_ image: NSImage, size: CGSize, pixelBufferAdaptor: AVAssetWriterInputPixelBufferAdaptor, presentationTime: CMTime) -> Bool {
+        func appendPixelBufferForImageAtURL(_ image: FinderItem, size: CGSize, pixelBufferAdaptor: AVAssetWriterInputPixelBufferAdaptor, presentationTime: CMTime) -> Bool {
             var appendSucceeded = false
             
             autoreleasepool {
@@ -800,7 +800,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         }
         
         
-        func fillPixelBufferFromImage(_ image: NSImage, pixelBuffer: CVPixelBuffer, size: CGSize) {
+        func fillPixelBufferFromImage(_ image: FinderItem, pixelBuffer: CVPixelBuffer, size: CGSize) {
             CVPixelBufferLockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: CVOptionFlags(0)))
             
             let pixelData = CVPixelBufferGetBaseAddress(pixelBuffer)
@@ -809,8 +809,8 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
             // Create CGBitmapContext
             let context = CGContext(
                 data: pixelData,
-                width: Int(image.size.width),
-                height: Int(image.size.height),
+                width: Int(videoSize.width),
+                height: Int(videoSize.height),
                 bitsPerComponent: 8,
                 bytesPerRow: CVPixelBufferGetBytesPerRow(pixelBuffer),
                 space: rgbColorSpace,
@@ -818,9 +818,9 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
             )!
             
             // Draw image into context
-            let drawCGRect = CGRect(x:0, y:0, width:image.size.width, height:image.size.height)
+            let drawCGRect = CGRect(x: 0, y: 0, width: videoSize.width, height: videoSize.height)
             var drawRect = NSRectFromCGRect(drawCGRect);
-            let cgImage = image.cgImage(forProposedRect: &drawRect, context: nil, hints: nil)!
+            let cgImage = image.image!.cgImage(forProposedRect: &drawRect, context: nil, hints: nil)!
             context.draw(cgImage, in: CGRect(x: 0.0,y: 0.0, width: size.width,height: size.height))
             
             CVPixelBufferUnlockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: CVOptionFlags(0)))
