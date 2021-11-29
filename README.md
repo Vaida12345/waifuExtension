@@ -23,9 +23,4 @@ This app was written with [SwiftUI](https://developer.apple.com/xcode/swiftui/).
 <img width="1720" alt="Screen Shot 2021-11-29 at 2 20 33 PM" src="https://user-images.githubusercontent.com/91354917/143818805-dffb73c7-835c-4b06-9227-a531c90b6364.png">
 
 ## Preview
-Before: (800 × 1100)
-![Mikoto 3](https://user-images.githubusercontent.com/91354917/143819622-11d94755-e161-4e3a-84dc-5a9ae8f8c608.png)
-
-After: (1600 × 2200)(with scale level 2, denoise level 3)
-![Mikoto 3 2](https://user-images.githubusercontent.com/91354917/143819692-1b14b730-a634-44cb-9fa2-866e148170c1.png)
-
+![Uploading Screen Shot 2021-11-29 at 2.44.41 PM.png…]()
