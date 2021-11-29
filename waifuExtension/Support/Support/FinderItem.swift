@@ -715,7 +715,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
                     let lastFrameTime = CMTimeMake(value: Int64(frameCount), timescale: videoFPS)
                     let presentationTime = frameCount == 0 ? lastFrameTime : CMTimeAdd(lastFrameTime, frameDuration)
                     
-                    if !appendPixelBufferForImageAtURL(allImages[frameCount], pixelBufferAdaptor: pixelBufferAdaptor, presentationTime: presentationTime) {
+                    if !appendPixelBufferForImageAtURL(allImages[frameCount], size: videoSize, pixelBufferAdaptor: pixelBufferAdaptor, presentationTime: presentationTime) {
                         print("Error converting images to video: AVAssetWriterInputPixelBufferAdapter failed to append pixel buffer")
                         return
                     }
@@ -772,7 +772,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         }
         
         
-        func appendPixelBufferForImageAtURL(_ image: NSImage, pixelBufferAdaptor: AVAssetWriterInputPixelBufferAdaptor, presentationTime: CMTime) -> Bool {
+        func appendPixelBufferForImageAtURL(_ image: NSImage, size: CGSize, pixelBufferAdaptor: AVAssetWriterInputPixelBufferAdaptor, presentationTime: CMTime) -> Bool {
             var appendSucceeded = false
             
             autoreleasepool {
@@ -785,7 +785,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
                     )
                     
                     if let pixelBuffer = pixelBufferPointer.pointee , status == 0 {
-                        fillPixelBufferFromImage(image, pixelBuffer: pixelBuffer)
+                        fillPixelBufferFromImage(image, pixelBuffer: pixelBuffer, size: size)
                         appendSucceeded = pixelBufferAdaptor.append(pixelBuffer, withPresentationTime: presentationTime)
                         pixelBufferPointer.deinitialize(count: 1)
                     } else {
@@ -800,7 +800,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         }
         
         
-        func fillPixelBufferFromImage(_ image: NSImage, pixelBuffer: CVPixelBuffer) {
+        func fillPixelBufferFromImage(_ image: NSImage, pixelBuffer: CVPixelBuffer, size: CGSize) {
             CVPixelBufferLockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: CVOptionFlags(0)))
             
             let pixelData = CVPixelBufferGetBaseAddress(pixelBuffer)
@@ -821,7 +821,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
             let drawCGRect = CGRect(x:0, y:0, width:image.size.width, height:image.size.height)
             var drawRect = NSRectFromCGRect(drawCGRect);
             let cgImage = image.cgImage(forProposedRect: &drawRect, context: nil, hints: nil)!
-            context.draw(cgImage, in: CGRect(x: 0.0,y: 0.0,width: image.size.width,height: image.size.height))
+            context.draw(cgImage, in: CGRect(x: 0.0,y: 0.0, width: size.width,height: size.height))
             
             CVPixelBufferUnlockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: CVOptionFlags(0)))
         }

@@ -140,9 +140,10 @@ extension Array where Element == WorkItem {
                 let segmentSequence = segmentsFinderItem.fileName!
                 
                 let framesToBeProcessed = asset.frames!
-                var outputFrames: [orderedImages] = []
                 
                 print("frames to process: \(framesToBeProcessed.count)")
+                
+                FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames").generateDirectory()
                 DispatchQueue.concurrentPerform(iterations: framesToBeProcessed.count) { frameIndex in
                     
                     var currentFrame = framesToBeProcessed[frameIndex]
@@ -160,19 +161,22 @@ extension Array where Element == WorkItem {
                     currentVideo.progress += 1 / Double(framesToBeProcessed.count) / totalSegmentsCount
                     onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / Double(totalItemCounter))
                     
-                    outputFrames.append(orderedImages(image: currentFrame, index: frameIndex))
+                    var sequence = String(frameIndex)
+                    while sequence.count < 5 { sequence.insert("0", at: sequence.startIndex) }
+                    
+                    currentFrame.write(to: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(sequence).png")
                 }
-                
-                let enlargedFrames = outputFrames.sorted(by: { $0.index < $1.index }).map({ $0.image })
                 
                 // status: merge videos
                 
                 let mergedVideoSegmentPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo/\(segmentSequence).mov"
                 FinderItem(at: mergedVideoSegmentPath).generateDirectory()
                 
-                let videoSize = NSSize(width: enlargedFrames.first!.cgImage(forProposedRect: nil, context: nil, hints: nil)!.width, height: enlargedFrames.first!.cgImage(forProposedRect: nil, context: nil, hints: nil)!.height)
+                let arbitraryFrame = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/00000.png")
+                let arbitraryFrameCGImage = arbitraryFrame.image!.cgImage(forProposedRect: nil, context: nil, hints: nil)!
+                let enlargedFrames = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames").children!.map({ $0.image! })
                 
-                FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: mergedVideoSegmentPath, videoSize: videoSize, videoFPS: Int32(currentVideo.finderItem.frameRate!)) {
+                FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: mergedVideoSegmentPath, videoSize: CGSize(width: arbitraryFrameCGImage.width, height: arbitraryFrameCGImage.height), videoFPS: Int32(currentVideo.finderItem.frameRate!)) {
                     onStatusProgressChanged(finishedSegmentsCounter,  Int((duration / Double(videoSegmentLength)).rounded(.up)))
                     
                     guard Int(finishedSegmentsCounter + 1) == Int((duration / Double(videoSegmentLength)).rounded(.up)) else {

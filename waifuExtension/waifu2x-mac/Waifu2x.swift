@@ -287,7 +287,7 @@ public class Waifu2x {
             
             let rawPointer = resultBuffer.contents()
             let shape = [rects.count, 3, Int(self.block_size + 2 * self.shrink_size), Int(self.block_size + 2 * self.shrink_size)]
-            let shapedArray = MLShapedArray<Float>(bytesNoCopy: rawPointer, shape: shape, deallocator: .virtualMemory)
+            let shapedArray = MLShapedArray<Float>(bytesNoCopy: rawPointer, shape: shape, deallocator: .none)
             
             var multiCounter = 0
             while multiCounter < rects.count {
