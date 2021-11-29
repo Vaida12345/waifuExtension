@@ -263,8 +263,12 @@ public class Waifu2x {
             
             let expandedBuffer = device.makeBuffer(bytes: expanded, length: expanded.count * MemoryLayout<Float>.size, options: .storageModeShared)!
             let resultBuffer = device.makeBuffer(length: arrayLengthFull * rects.count * MemoryLayout<Float>.size, options: .storageModeShared)!
-            let xArrayBuffer = device.makeBuffer(bytes: rects.map({ Double($0.origin.x) }), length: rects.count * MemoryLayout<Float>.size, options: .storageModeShared)!
-            let yArrayBuffer = device.makeBuffer(bytes: rects.map({ Double($0.origin.y) }), length: rects.count * MemoryLayout<Float>.size, options: .storageModeShared)!
+            let xArrayBuffer = device.makeBuffer(bytes: rects.map({ Int($0.origin.x) }), length: rects.count * MemoryLayout<Int>.size, options: .storageModeShared)!
+            let yArrayBuffer = device.makeBuffer(bytes: rects.map({ Int($0.origin.y) }), length: rects.count * MemoryLayout<Int>.size, options: .storageModeShared)!
+            
+            print(arrayLengthFull)
+            print(rects.count)
+            print(expanded.count)
             
             commandEncoder.setComputePipelineState(pipelineState)
             commandEncoder.setBuffer(expandedBuffer, offset: 0, index: 0)
