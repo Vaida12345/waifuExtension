@@ -11,8 +11,6 @@ Files and source code could be found in [releases](https://github.com/Vaida12345
 
 ## Models
 The models where obtained from [waifu2x-caffe](https://github.com/lltcggie/waifu2x-caffe), and translated to coreML via [coremltools](https://github.com/apple/coremltools).
-###note:
-I converted the models with my old intel-based Mac.
 
 ## Note
 This project was based on the work of [waifu2x-ios](https://github.com/imxieyi/waifu2x-ios). Nearly all the files in waifu2x-mac were created by him. However, I modified a few things to make it run much faster.
