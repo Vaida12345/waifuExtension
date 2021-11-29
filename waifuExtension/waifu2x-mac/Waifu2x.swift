@@ -297,7 +297,7 @@ public class Waifu2x {
             }
             
             if let didFinishedOneBlock = self.didFinishedOneBlock {
-                didFinishedOneBlock(1)
+                didFinishedOneBlock(2)
             }
             
         } else {
@@ -332,7 +332,7 @@ public class Waifu2x {
                 in_pipeResults.append((index, multi))
                 
                 if let didFinishedOneBlock = self.didFinishedOneBlock {
-                    didFinishedOneBlock(rects.count)
+                    didFinishedOneBlock(rects.count * 2)
                 }
             }
             
@@ -350,6 +350,10 @@ public class Waifu2x {
         callback("wait_alpha")
         alpha_task?.wait()
         self.out_pipeline.wait()
+        
+        if let didFinishedOneBlock = self.didFinishedOneBlock {
+            didFinishedOneBlock(2)
+        }
         
         self.model_pipeline = nil
         self.out_pipeline = nil
