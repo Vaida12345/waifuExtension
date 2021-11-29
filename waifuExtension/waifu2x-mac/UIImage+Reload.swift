@@ -16,9 +16,10 @@ extension NSImage {
     /// - Returns: the reloaded image
     public func reload(withIndex: String? = nil) -> NSImage {
         
-        let tmpfile = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("temp/\(withIndex ?? "").png")
-        self.write(to: tmpfile.path)
-        return NSImage(contentsOf: tmpfile)!
+        let tempfile = "\(NSHomeDirectory())/tmp/\(withIndex ?? "file").png"
+        FinderItem(at: tempfile).generateDirectory()
+        self.write(to: tempfile)
+        return NSImage(contentsOf: URL(fileURLWithPath: tempfile))!
     }
     
 }

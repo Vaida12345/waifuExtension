@@ -855,6 +855,15 @@ struct ProcessingView: View {
                         guard !isPaused else { return "paused" }
                         guard progress != 0 else { return "calculating..." }
                         
+                        let factor: Int
+                        if chosenScaleLevel > 1 {
+                            factor = chosenScaleLevel
+                        } else {
+                            factor = 1
+                        }
+                        
+                        let progress = progress / Double(factor)
+                        
                         var value = (pastTimeTaken) / progress
                         value -= pastTimeTaken
                         
@@ -867,6 +876,15 @@ struct ProcessingView: View {
                         guard !isFinished else { return "finished" }
                         guard !isPaused else { return "paused" }
                         guard progress != 0 else { return "calculating..." }
+                        
+                        let factor: Int
+                        if chosenScaleLevel > 1 {
+                            factor = chosenScaleLevel
+                        } else {
+                            factor = 1
+                        }
+                        
+                        let progress = progress / Double(factor)
                         
                         var value = (pastTimeTaken) / progress
                         value -= pastTimeTaken
