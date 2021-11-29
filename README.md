@@ -3,9 +3,6 @@ The waifu2x on Mac.
 
 The new version is capable of taking advantages of CPU, GPU, and ANE.
 
-<img width="850" alt="Screen Shot 2021-11-29 at 2 20 33 PM" src="https://user-images.githubusercontent.com/91354917/143818434-ae0570f0-b8ec-4485-90c4-963cb488d6a8.png">
-<img width="850" alt="Screen Shot 2021-11-29 at 2 20 36 PM" src="https://user-images.githubusercontent.com/91354917/143818466-7458c38d-061d-4679-8213-5a0244daa791.png">
-
 ## Usage
 Enlarge videos or images with machine learning on Mac.
 
@@ -17,3 +14,7 @@ This project was based on the work of [waifu2x-ios](https://github.com/imxieyi/w
 
 ## Speed
 When processing a stanard 1080p image (1920 x 1080), my Macbook Pro with the M1Max chip took only 0.7 seconds. Please note that it may be slow to run on intel-based Macs, as Macs with Apple silicon can accelerate machine learning results with ANE, aka, Apple Neural Engine.
+
+## UI
+This app was written with [SwiftUI](https://developer.apple.com/xcode/swiftui/).
+<img width="1720" alt="Screen Shot 2021-11-29 at 2 20 33 PM" src="https://user-images.githubusercontent.com/91354917/143818805-dffb73c7-835c-4b06-9227-a531c90b6364.png">
