@@ -51,50 +51,53 @@ extension Array where Element == WorkItem {
             var concurrentProcessingImagesCount = 0
             
             DispatchQueue.concurrentPerform(iterations: images.count) { imageIndex in
-                
-                guard !isProcessingCancelled else { return }
-                
-                backgroundQueue.async {
-                    concurrentProcessingImagesCount += 1
+                autoreleasepool {
                     
-                    status("processing \(concurrentProcessingImagesCount) images in parallel")
-                }
-                
-                let currentImage = images[imageIndex]
-                var image = currentImage.finderItem.image!
-                
-                let waifu2x = Waifu2x()
-                waifu2x.didFinishedOneBlock = { total in
-                    currentImage.progress += 1 / Double(total)
-                    onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / Double(totalItemCounter))
-                }
-                waifu2x.isGPUEnabled = isUsingGPU
-                
-                if chosenScaleLevel >= 2 {
-                    for _ in 1...chosenScaleLevel {
-                        image = waifu2x.run(image, model: modelUsed)!.reload()
+                    guard !isProcessingCancelled else { return }
+                    
+                    backgroundQueue.async {
+                        concurrentProcessingImagesCount += 1
+                        
+                        status("processing \(concurrentProcessingImagesCount) images in parallel")
                     }
-                } else {
-                    image = waifu2x.run(image, model: modelUsed)!
-                }
-                
-                let outputFileName: String
-                if let name = currentImage.finderItem.relativePath {
-                    outputFileName = name[..<name.lastIndex(of: ".")!] + ".png"
-                } else {
-                    outputFileName = currentImage.finderItem.fileName! + ".png"
-                }
-                
-                let finderItemAtImageOutputPath = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/\(outputFileName)")
-                
-                finderItemAtImageOutputPath.generateDirectory()
-                image.write(to: finderItemAtImageOutputPath.path)
-                
-                backgroundQueue.async {
-                    concurrentProcessingImagesCount -= 1
-                    status("processing \(concurrentProcessingImagesCount) images in parallel")
-                    finishedItemsCounter += 1
-                    didFinishOneItem(finishedItemsCounter, totalItemCounter)
+                    
+                    let currentImage = images[imageIndex]
+                    var image = currentImage.finderItem.image!
+                    
+                    let waifu2x = Waifu2x()
+                    waifu2x.didFinishedOneBlock = { total in
+                        currentImage.progress += 1 / Double(total)
+                        onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / Double(totalItemCounter))
+                    }
+                    waifu2x.isGPUEnabled = isUsingGPU
+                    
+                    if chosenScaleLevel >= 2 {
+                        for _ in 1...chosenScaleLevel {
+                            image = waifu2x.run(image, model: modelUsed)!.reload()
+                        }
+                    } else {
+                        image = waifu2x.run(image, model: modelUsed)!
+                    }
+                    
+                    let outputFileName: String
+                    if let name = currentImage.finderItem.relativePath {
+                        outputFileName = name[..<name.lastIndex(of: ".")!] + ".png"
+                    } else {
+                        outputFileName = currentImage.finderItem.fileName! + ".png"
+                    }
+                    
+                    let finderItemAtImageOutputPath = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/\(outputFileName)")
+                    
+                    finderItemAtImageOutputPath.generateDirectory()
+                    image.write(to: finderItemAtImageOutputPath.path)
+                    
+                    backgroundQueue.async {
+                        concurrentProcessingImagesCount -= 1
+                        status("processing \(concurrentProcessingImagesCount) images in parallel")
+                        finishedItemsCounter += 1
+                        didFinishOneItem(finishedItemsCounter, totalItemCounter)
+                    }
+                    
                 }
             }
             
