@@ -14,11 +14,14 @@ struct waifuExtensionApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .frame(minWidth: 800, maxWidth: .infinity, minHeight: 400, maxHeight: .infinity)
         }
         .commands {
             CommandMenu("Compare") {
                 Button("Compare Models") {
-                    ComparisonView().openInWindow(title: "Comparison", sender: self)
+                    ComparisonView()
+                        .frame(minWidth: 800, maxWidth: .infinity, minHeight: 400, maxHeight: .infinity)
+                        .openInWindow(title: "Comparison", sender: self)
                 }
             }
         }

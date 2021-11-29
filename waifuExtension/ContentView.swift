@@ -424,6 +424,17 @@ struct welcomeView: View {
                 }
             }
         }
+        .onTapGesture(count: 2) {
+            let panel = NSOpenPanel()
+            panel.allowsMultipleSelection = true
+            panel.canChooseDirectories = true
+            if panel.runModal() == .OK {
+                for i in panel.urls {
+                    let item = FinderItem(at: i)
+                    addItemIfPossible(of: item, to: &finderItems)
+                }
+            }
+        }
     }
 }
 

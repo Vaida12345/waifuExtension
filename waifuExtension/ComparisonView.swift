@@ -56,7 +56,6 @@ struct ComparisonView: View {
                     .multilineTextAlignment(.center)
                     .padding(.all)
             }
-            .frame(minWidth: 1200, maxWidth: .infinity, minHeight: 600, maxHeight: .infinity)
             .padding(.all, 0.0)
             .onDrop(of: [.fileURL], isTargeted: nil) { providers in
                 for i in providers {
@@ -134,7 +133,6 @@ struct ComparisonView: View {
                     
                 }
             }
-            .frame(minWidth: 1200, maxWidth: .infinity, minHeight: 600, maxHeight: .infinity)
             .onDrop(of: [.fileURL], isTargeted: nil) { providers in
                 for i in providers {
                     i.loadItem(forTypeIdentifier: "public.file-url", options: nil) { urlData, error in
