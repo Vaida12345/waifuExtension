@@ -294,25 +294,16 @@ public class Waifu2x {
             let postDate1 = Date()
             
             let rawPointer = resultBuffer.contents()
-            let typedPointer = rawPointer.bindMemory(to: Float.self, capacity: arrayLengthFull * rects.count * MemoryLayout<Float>.size)
-            let bufferedPointer = UnsafeBufferPointer(start: typedPointer, count: arrayLengthFull * rects.count)
-            let rawArray = [Float](bufferedPointer)
-            
-            var multis: [[Float]] = []
-            var rectsCounter = 0
-            while rectsCounter < rects.count {
-                let slice = rawArray[rectsCounter*arrayLengthFull..<((rectsCounter+1)*arrayLengthFull)]
-                multis.append(Array(slice))
-                rectsCounter += 1
-            }
-            let shape = [3, Int(self.block_size + 2 * self.shrink_size), Int(self.block_size + 2 * self.shrink_size)]
+            let shape = [rects.count, 3, Int(self.block_size + 2 * self.shrink_size), Int(self.block_size + 2 * self.shrink_size)]
+            let shapedArray = MLShapedArray<Float>(bytesNoCopy: rawPointer, shape: shape, strides: shape.map({ $0 * MemoryLayout<Float>.size }), deallocator: .none)
             
             print("postDate: \(postDate1.distance(to: Date()))")
             let postDate2 = Date()
             
             var multiCounter = 0
-            while multiCounter < multis.count {
-                let array = MLMultiArray(MLShapedArray(scalars: multis[multiCounter], shape: shape))
+            while multiCounter < rects.count {
+                
+                let array = MLMultiArray(shapedArray[multiCounter])
                 
                 self.model_pipeline.appendObject(array)
                 multiCounter += 1
