@@ -331,7 +331,6 @@
 		B49BFD6F274B4BC50046FDDF /* waifu2x-mac */ = {
 			isa = PBXGroup;
 			children = (
-				B47664D52753056300FD78EA /* Calculation.metal */,
 				B49BFD70274B4BC50046FDDF /* BackgroundPipeline.swift */,
 				B49BFD72274B4BC50046FDDF /* MLModel+Prediction.swift */,
 				B49BFD73274B4BC50046FDDF /* waifu2x_mac.h */,
@@ -344,6 +343,7 @@
 				B49BFD8D274B4BC50046FDDF /* Queue.swift */,
 				B49BFD8E274B4BC50046FDDF /* NSImage+Alpha.swift */,
 				B49BFD8F274B4BC50046FDDF /* CGImage+Expand.swift */,
+				B47664D52753056300FD78EA /* Calculation.metal */,
 				B49BFD90274B4BC50046FDDF /* bicubic.metal */,
 				B49BFD91274B4BC50046FDDF /* Info.plist */,
 				B49BFD92274B4BC50046FDDF /* NSImage+Bicubic.swift */,
