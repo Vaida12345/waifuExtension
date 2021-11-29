@@ -29,12 +29,14 @@ public class Waifu2x {
     
     var interrupt = false
     
+    var isGPUEnabled: Bool = true
+    
     private var model_pipeline: BackgroundPipeline<MLMultiArray>! = nil
     private var out_pipeline: BackgroundPipeline<MLMultiArray>! = nil
     
     var didFinishedOneBlock: (( _ total: Int)->Void)? = nil
     
-    func run(_ image: NSImage!, model: Waifu2xModel!, isGPUEnabled: Bool = true, _ callback: @escaping (String) -> Void = { _ in }) -> NSImage? {
+    func run(_ image: NSImage!, model: Waifu2xModel!, _ callback: @escaping (String) -> Void = { _ in }) -> NSImage? {
         guard image != nil else {
             return nil
         }
@@ -319,7 +321,7 @@ public class Waifu2x {
             print("post2: \(postDate2.distance(to: Date()))")
             
             if let didFinishedOneBlock = self.didFinishedOneBlock {
-                didFinishedOneBlock(rects.count)
+                didFinishedOneBlock(1)
             }
             
         } else {

@@ -37,7 +37,7 @@ extension Array where Element == WorkItem {
         return self.contains(WorkItem(at: finderItem, type: .image))
     }
     
-    func work(_ chosenScaleLevel: Int, modelUsed: Waifu2xModel, videoSegmentLength: Int = 10, onStatusChanged status: @escaping ((_ status: String)->()), onStatusProgressChanged: @escaping ((_ progress: Int?, _ total: Int?)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
+    func work(_ chosenScaleLevel: Int, modelUsed: Waifu2xModel, videoSegmentLength: Int = 10, isUsingGPU: Bool, onStatusChanged status: @escaping ((_ status: String)->()), onStatusProgressChanged: @escaping ((_ progress: Int?, _ total: Int?)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
         
         let images = self.filter({ $0.type == .image })
         let videos = self.filter({ $0.type == .video })
@@ -68,6 +68,7 @@ extension Array where Element == WorkItem {
                     currentImage.progress += 1 / Double(total)
                     onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / Double(totalItemCounter))
                 }
+                waifu2x.isGPUEnabled = isUsingGPU
                 
                 if chosenScaleLevel >= 2 {
                     for _ in 1...chosenScaleLevel {
@@ -291,6 +292,7 @@ struct ContentView: View {
     @State var modelUsed: Waifu2xModel? = nil
     @State var pdfbackground = DispatchQueue(label: "PDF Background")
     @State var chosenScaleLevel: Int = 1
+    @State var chosenComputeOption = "GPU"
     
     var body: some View {
         VStack {
@@ -361,10 +363,10 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $isSheetShown, onDismiss: nil) {
-            ConfigurationView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel)
+            ConfigurationView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel, chosenComputeOption: $chosenComputeOption)
         }
         .sheet(isPresented: $isProcessing, onDismiss: nil) {
-            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF)
+            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF, chosenComputeOption: $chosenComputeOption)
         }
         .sheet(isPresented: $isCreatingPDF, onDismiss: nil) {
             ProcessingPDFView(isCreatingPDF: $isCreatingPDF, background: $pdfbackground)
@@ -469,6 +471,7 @@ struct ConfigurationView: View {
             findModelClass()
         }
     }
+    @Binding var chosenComputeOption: String
     
     let styleNames: [String] = ["anime", "photo"]
     @State var chosenStyle = "anime" {
@@ -489,10 +492,13 @@ struct ConfigurationView: View {
     @State var modelClass: [String] = []
     @State var chosenModelClass: String = ""
     
+    let computeOptions = ["CPU", "GPU"]
+    
     @State var isShowingStyleHint: Bool = false
     @State var isShowingNoiceHint: Bool = false
     @State var isShowingScaleHint: Bool = false
     @State var isShowingModelClassHint: Bool = false
+    @State var isShowingGPUHint: Bool = false
     
     func findModelClass() {
         self.modelClass = Array(Set(Waifu2xModel.allModels.filter({ ($0.style == chosenStyle || $0.style == nil) && $0.noise == Int(chosenNoiseLevel) && $0.scale == ( chosenScaleLevel == 0 ? 1 : 2 ) }).map({ $0.class })))
@@ -537,6 +543,14 @@ struct ConfigurationView: View {
                                     isShowingModelClassHint = bool
                                 }
                         }
+                    }
+                    
+                    HStack {
+                        Spacer()
+                        Text("Compute With:")
+                            .onHover { bool in
+                                isShowingGPUHint = bool
+                            }
                     }
                 }
                 
@@ -600,6 +614,19 @@ struct ConfigurationView: View {
                             
                         }
                     }
+                    
+                    Menu(chosenComputeOption) {
+                        ForEach(computeOptions, id: \.self) { item in
+                            Button(item) {
+                                chosenComputeOption = item
+                            }
+                        }
+                    }
+                    .popover(isPresented: $isShowingGPUHint) {
+                        Text("GPU recommended")
+                            .padding(.all)
+                        
+                    }
                 }
                 
             }
@@ -650,6 +677,7 @@ struct ProcessingView: View {
     @Binding var isSheetShown: Bool
     @Binding var chosenScaleLevel: Int
     @Binding var isCreatingPDF: Bool
+    @Binding var chosenComputeOption: String
     
     @State var processedItemsCounter: Int = 0
     @State var currentTimeTaken: Double = 0 // up to 1s
@@ -852,7 +880,7 @@ struct ProcessingView: View {
             .onAppear {
                 
                 self.workItem = DispatchWorkItem(qos: .background, flags: .inheritQoS) {
-                    finderItems.work(chosenScaleLevel, modelUsed: modelUsed!) { status in
+                    finderItems.work(chosenScaleLevel, modelUsed: modelUsed!, isUsingGPU: chosenComputeOption == "GPU") { status in
                         self.status = status
                     } onStatusProgressChanged: { progress,total in
                         if progress != nil {
