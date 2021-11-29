@@ -1,7 +1,7 @@
 # waifuExtension
 The waifu2x on Mac.
 
-The new version is capable of taking advantages of CPU, GPU, and ANE.
+The new version is capable of taking advantages of CPU, GPU, and [ANE](https://github.com/hollance/neural-engine).
 
 ## Usage
 Enlarge videos or images with machine learning on Mac.
@@ -9,11 +9,14 @@ Enlarge videos or images with machine learning on Mac.
 ## Install
 Files and source code could be found in [releases](https://github.com/Vaida12345/waifuExtension/releases/tag/v2.4.2).
 
+## Privacy
+This app works completely offfline and requires no internet connection. Nothing is collected or stored, expect for some temp files stored in the [container](https://developer.apple.com/documentation/foundation/1413045-nshomedirectory/) of the app. These files will be deleted when the app is opened.
+
 ## Models
 The models where obtained from [waifu2x-caffe](https://github.com/lltcggie/waifu2x-caffe), and translated to coreML via [coremltools](https://github.com/apple/coremltools).
 
 ## Note
-This project was based on the work of [waifu2x-ios](https://github.com/imxieyi/waifu2x-ios). Nearly all the files in waifu2x-mac were created by him. However, modifications were done to improve speed.
+This app was based on the work of [waifu2x-ios](https://github.com/imxieyi/waifu2x-ios). Nearly all the files in waifu2x-mac were created by him. However, modifications were done to improve speed.
 
 ## Speed
 When processing a stanard 1080p image (1920 × 1080), Macbook Pro with the M1 Max chip took only 0.7 seconds.
