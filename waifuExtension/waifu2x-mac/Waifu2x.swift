@@ -308,14 +308,12 @@ public class Waifu2x {
             print("postDate: \(postDate1.distance(to: Date()))")
             let postDate2 = Date()
             
-            var arrays: [(index: Int, value: MLMultiArray)] = []
-            DispatchQueue.concurrentPerform(iterations: multis.count) { multiCounter in
+            var multiCounter = 0
+            while multiCounter < multis.count {
                 let array = MLMultiArray(MLShapedArray(scalars: multis[multiCounter], shape: shape))
-                arrays.append((multiCounter, array))
-            }
-            
-            for i in arrays.sorted(by: { $0.index < $1.index }) {
-                self.model_pipeline.appendObject(i.value)
+                
+                self.model_pipeline.appendObject(array)
+                multiCounter += 1
             }
             
             print("post2: \(postDate2.distance(to: Date()))")
