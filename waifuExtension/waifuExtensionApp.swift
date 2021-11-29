@@ -9,7 +9,6 @@ import SwiftUI
 
 @main
 struct waifuExtensionApp: App {
-    @State var isShowingComparisonWindow = false
     
     var body: some Scene {
         WindowGroup {
