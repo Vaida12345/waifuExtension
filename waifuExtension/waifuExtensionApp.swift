@@ -20,6 +20,12 @@ struct waifuExtensionApp: App {
                         try! finderItem.removeFile()
                     }
                 }
+                .onExitCommand {
+                    let finderItem = FinderItem(at: "\(NSHomeDirectory())/tmp")
+                    if finderItem.isExistence {
+                        try! finderItem.removeFile()
+                    }
+                }
         }
         .commands {
             CommandMenu("Compare") {
