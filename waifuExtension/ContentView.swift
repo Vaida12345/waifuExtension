@@ -832,7 +832,7 @@ struct ProcessingView: View {
                             Text("\(statusProgress.progress) / \(statusProgress.total)")
                         }
                         
-                        Text(modelUsed!.class)
+                        Text(modelUsed!.name)
                     }
                     
                     Spacer()
