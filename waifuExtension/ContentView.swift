@@ -493,9 +493,9 @@ struct GridItemView: View {
                     .padding([.top, .leading, .trailing])
                     .popover(isPresented: $isShowingHint) {
                         Text("""
+                        Failed to load image, please transcode into HEVC before converting.
                         name: \(item.finderItem.fileName ?? "???")
                         path: \(item.finderItem.path)
-                        note: failed to load image, please transcode into HEVC before converting.
                         """)
                             .multilineTextAlignment(.center)
                             .padding()
@@ -512,6 +512,7 @@ struct GridItemView: View {
         .frame(width: geometry.size.width / 5, height: geometry.size.width / 5)
         .contextMenu {
             Button("Open") {
+                print(item.finderItem.path)
                 _ = shell(["open \(item.finderItem.path.replacingOccurrences(of: " ", with: "\\ "))"])
             }
             Button("Show in Finder") {
