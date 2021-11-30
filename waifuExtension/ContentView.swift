@@ -198,7 +198,7 @@ extension Array where Element == WorkItem {
                             try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(segmentSequence)").removeFile()
                             onStatusProgressChanged(segmentCompletedCounter,  Int((duration / Double(videoSegmentLength)).rounded(.up)))
                             
-                            guard segmentCompletedCounter == Int((duration / Double(videoSegmentLength)).rounded(.up)) else {
+                            guard segmentCompletedCounter >= Int((duration / Double(videoSegmentLength)).rounded(.up)) else {
                                 return
                             }
                             // completion after all videos are finished.
@@ -256,6 +256,8 @@ extension Array where Element == WorkItem {
                             FinderItem.mergeVideoWithAudio(videoUrl: URL(fileURLWithPath: outputPath), audioUrl: URL(fileURLWithPath: audioPath)) { _ in
                                 status("Completed")
                                 try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp").removeFile()
+                                
+                                didFinishOneItem(videoIndex + 1, videos.count)
                                 
                                 if videos.count - 1 == videoIndex {
                                     completion()
@@ -467,8 +469,9 @@ struct GridItemView: View {
     let geometry: GeometryProxy
     
     var body: some View {
-        if let image = item.finderItem.image ?? item.finderItem.firstFrame {
-            VStack(alignment: .center) {
+        VStack(alignment: .center) {
+            
+            if let image = item.finderItem.image ?? item.finderItem.firstFrame {
                 Image(nsImage: image)
                     .resizable()
                     .cornerRadius(5)
@@ -478,32 +481,45 @@ struct GridItemView: View {
                         Text("""
                         name: \(item.finderItem.fileName ?? "???")
                         path: \(item.finderItem.path)
+                        size: \(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.width) × \(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.height)
+                        length: \(item.finderItem.avAsset?.duration.seconds.expressedAsTime() ?? "0s")
                         """)
                             .multilineTextAlignment(.center)
                             .padding()
                     }
-                
-                Text(((item.finderItem.relativePath ?? item.finderItem.fileName) ?? item.finderItem.path) + "\n" + "\(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.width) × \(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.height)")
-                    .multilineTextAlignment(.center)
-                    .padding([.leading, .bottom, .trailing])
-                    .onHover { bool in
-                        self.isShowingHint = bool
+            } else {
+                Rectangle()
+                    .cornerRadius(5)
+                    .padding([.top, .leading, .trailing])
+                    .popover(isPresented: $isShowingHint) {
+                        Text("""
+                        name: \(item.finderItem.fileName ?? "???")
+                        path: \(item.finderItem.path)
+                        note: failed to load image, please transcode into HEVC before converting.
+                        """)
+                            .multilineTextAlignment(.center)
+                            .padding()
                     }
             }
-            .frame(width: geometry.size.width / 5, height: geometry.size.width / 5)
-            .contextMenu {
-                Button("Open") {
-                    _ = shell(["open \(item.finderItem.path.replacingOccurrences(of: " ", with: "\\ "))"])
+            
+            Text(((item.finderItem.relativePath ?? item.finderItem.fileName) ?? item.finderItem.path))
+                .multilineTextAlignment(.center)
+                .padding([.leading, .bottom, .trailing])
+                .onHover { bool in
+                    self.isShowingHint = bool
                 }
-                Button("Show in Finder") {
-                    _ = shell(["open \(item.finderItem.path.replacingOccurrences(of: " ", with: "\\ ")) -R"])
-                }
-                Button("Delete") {
-                    finderItems.remove(at: finderItems.firstIndex(of: item)!)
-                }
+        }
+        .frame(width: geometry.size.width / 5, height: geometry.size.width / 5)
+        .contextMenu {
+            Button("Open") {
+                _ = shell(["open \(item.finderItem.path.replacingOccurrences(of: " ", with: "\\ "))"])
             }
-        } else {
-            Rectangle()
+            Button("Show in Finder") {
+                _ = shell(["open \(item.finderItem.path.replacingOccurrences(of: " ", with: "\\ ")) -R"])
+            }
+            Button("Delete") {
+                finderItems.remove(at: finderItems.firstIndex(of: item)!)
+            }
         }
     }
 }
