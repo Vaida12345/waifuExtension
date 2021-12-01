@@ -37,7 +37,7 @@ extension Array where Element == WorkItem {
         return self.contains(WorkItem(at: finderItem, type: .image))
     }
     
-    func work(_ chosenScaleLevel: Int, modelUsed: Waifu2xModel, videoSegmentFrames: Int, isUsingGPU: Bool, onStatusChanged status: @escaping ((_ status: String)->()), onStatusProgressChanged: @escaping ((_ progress: Int?, _ total: Int?)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
+    func work(_ chosenScaleLevel: Int, modelUsed: Waifu2xModel, isUsingGPU: Bool, onStatusChanged status: @escaping ((_ status: String)->()), onStatusProgressChanged: @escaping ((_ progress: Int?, _ total: Int?)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
         
         let images = self.filter({ $0.type == .image })
         let videos = self.filter({ $0.type == .video })
@@ -107,109 +107,84 @@ extension Array where Element == WorkItem {
         if !videos.isEmpty {
             //helper functions
             
-            func splitVideo(withIndex segmentIndex: Int, duration: Double, filePath: String, currentVideo: WorkItem, completion: @escaping (()->())) {
-                
-                guard !isProcessingCancelled else { return }
-                let videoSegmentLength = Double(videoSegmentFrames) / Double(currentVideo.finderItem.frameRate!)
-                guard Double(segmentIndex) <= duration / videoSegmentLength else { return }
-                
-                var segmentSequence = String(segmentIndex)
-                while segmentSequence.count <= 5 { segmentSequence.insert("0", at: segmentSequence.startIndex) }
-                
-                let path = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/splitVideo/video \(segmentSequence).mov"
-                FinderItem(at: path).generateDirectory()
-                
-                FinderItem.trimVideo(sourceURL: currentVideo.finderItem.url, outputURL: URL(fileURLWithPath: path), statTime: Float(segmentIndex) * Float(videoSegmentLength), endTime: {()->Float in
-                    if Double(segmentIndex) * videoSegmentLength + videoSegmentLength < duration {
-                        return Float(Double(segmentIndex) * videoSegmentLength + videoSegmentLength)
-                    } else {
-                        return Float(duration)
+            func generateImagesAndMergeToVideo(currentVideo: WorkItem, filePath: String, duration: Double, completion: @escaping (()->())) {
+                autoreleasepool {
+                    
+                    guard !isProcessingCancelled else { return }
+                    
+                    let asset = currentVideo.finderItem.avAsset!
+                    
+                    let vidLength: CMTime = asset.duration
+                    let seconds: Double = CMTimeGetSeconds(vidLength)
+                    let frameRate = currentVideo.finderItem.frameRate!
+                    
+                    var requiredFramesCount = Int(seconds * Double(frameRate))
+                    
+                    if requiredFramesCount == 0 {
+                        requiredFramesCount = 1
                     }
-                }()) { _ in
                     
-                    onStatusProgressChanged(segmentIndex, Int(duration / videoSegmentLength))
+                    let step = Int((vidLength.value / Int64(requiredFramesCount)))
                     
-                    splitVideo(withIndex: segmentIndex + 1, duration: duration, filePath: filePath, currentVideo: currentVideo, completion: completion)
-                    guard segmentIndex == Int(duration / videoSegmentLength) else { return }
-                    completion()
-                }
-            }
-            
-            func generateImagesAndMergeToVideo(segmentsFinderItems: [FinderItem], currentVideo: WorkItem, filePath: String, totalSegmentsCount: Double, duration: Double, completion: @escaping (()->())) {
-                var segmentCompletedCounter = 0
-                var segmentCounter = 0
-                let videoSegmentLength = Double(videoSegmentFrames) / Double(currentVideo.finderItem.frameRate!)
-                
-                while segmentCounter < Int((duration / videoSegmentLength).rounded(.up)) {
-                    autoreleasepool {
-                        
-                        guard !isProcessingCancelled else { return }
-                        guard !segmentsFinderItems.isEmpty else { return }
-                        
-                        let segmentsFinderItem = segmentsFinderItems[segmentCounter]
-                        var asset = segmentsFinderItem.avAsset
-                        let segmentSequence = segmentsFinderItem.fileName!
-                        
-                        var framesToBeProcessed = asset?.frames
-                        
-                        print("frames to process: \(framesToBeProcessed!.count)")
-                        
-                        FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(segmentSequence)").generateDirectory()
-                        DispatchQueue.concurrentPerform(iterations: framesToBeProcessed!.count) { frameIndex in
-                            autoreleasepool {
-                                var currentFrame: NSImage? = framesToBeProcessed![frameIndex]
-                                
-                                let waifu2x = Waifu2x()
-                                
-                                if chosenScaleLevel >= 2 {
-                                    for _ in 1...chosenScaleLevel {
-                                        currentFrame = waifu2x.run(currentFrame!.reload(withIndex: "\(segmentSequence)\(frameIndex)"), model: modelUsed)!
-                                    }
-                                } else {
-                                    currentFrame = waifu2x.run(currentFrame!.reload(withIndex: "\(segmentSequence)\(frameIndex)"), model: modelUsed)!
+                    print("frames to process: \(requiredFramesCount)")
+                    FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames").generateDirectory()
+                    
+                    DispatchQueue.concurrentPerform(iterations: requiredFramesCount) { frameCounter in
+                        autoreleasepool {
+                            
+                            // generate frames
+                            
+                            let imageGenerator = AVAssetImageGenerator(asset: asset)
+                            imageGenerator.requestedTimeToleranceAfter = CMTime.zero
+                            imageGenerator.requestedTimeToleranceBefore = CMTime.zero
+                            let time: CMTime = CMTimeMake(value: Int64(step * frameCounter), timescale: vidLength.timescale)
+                            var imageRef: CGImage?
+                            do {
+                                imageRef = try imageGenerator.copyCGImage(at: time, actualTime: nil)
+                            } catch {
+                                print(error)
+                            }
+                            guard let ref = imageRef else { return }
+                            var thumbnail = NSImage(cgImage: ref, size: NSSize(width: ref.width, height: ref.height))
+                            
+                            // enlarge image
+                            
+                            let waifu2x = Waifu2x()
+                            
+                            if chosenScaleLevel >= 2 {
+                                for _ in 1...chosenScaleLevel {
+                                    thumbnail = waifu2x.run(thumbnail.reload(withIndex: "\(frameCounter)"), model: modelUsed)!
                                 }
-                                
-                                currentVideo.progress += 1 / Double(framesToBeProcessed!.count) / totalSegmentsCount
-                                onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / Double(totalItemCounter))
-                                
-                                var sequence = String(frameIndex)
-                                while sequence.count < 5 { sequence.insert("0", at: sequence.startIndex) }
-                                
-                                currentFrame!.write(to: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(segmentSequence)/\(sequence).png")
-                                
-                                currentFrame = nil
-                            }
-                        }
-                        
-                        framesToBeProcessed = nil
-                        asset = nil
-                        
-                        // status: merge videos
-                        
-                        let mergedVideoSegmentPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo/\(segmentSequence).mov"
-                        FinderItem(at: mergedVideoSegmentPath).generateDirectory()
-                        
-                        let arbitraryFrame = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(segmentSequence)/00000.png")
-                        let arbitraryFrameCGImage = arbitraryFrame.image!.cgImage(forProposedRect: nil, context: nil, hints: nil)!
-                        let enlargedFrames: [FinderItem] = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(segmentSequence)").children!
-                        
-                        FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: mergedVideoSegmentPath, videoSize: CGSize(width: arbitraryFrameCGImage.width, height: arbitraryFrameCGImage.height), videoFPS: Int32(currentVideo.finderItem.frameRate!)) {
-                            segmentCompletedCounter += 1
-                            
-                            try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(segmentSequence)").removeFile()
-                            onStatusProgressChanged(segmentCompletedCounter,  Int((duration / Double(videoSegmentLength)).rounded(.up)))
-                            
-                            guard segmentCompletedCounter >= Int((duration / Double(videoSegmentLength)).rounded(.up)) else {
-                                return
+                            } else {
+                                thumbnail = waifu2x.run(thumbnail.reload(withIndex: "\(frameCounter)"), model: modelUsed)!
                             }
                             
-                            // completion after all videos are finished.
-                            completion()
+                            currentVideo.progress += 1 / Double(requiredFramesCount)
+                            onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / Double(totalItemCounter))
+                            
+                            var sequence = String(frameCounter)
+                            while sequence.count < 6 { sequence.insert("0", at: sequence.startIndex) }
+                            
+                            thumbnail.write(to: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(sequence).png")
                         }
-                        
-                        segmentCounter += 1
                     }
                     
+                    // status: merge videos
+                    
+                    let mergedVideoSegmentPath = "\(NSHomeDirectory())/Downloads/Waifu Output/\(currentVideo.finderItem.fileName!).mov"
+                    FinderItem(at: mergedVideoSegmentPath).generateDirectory()
+                    
+                    let arbitraryFrame = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/000000.png")
+                    let arbitraryFrameCGImage = arbitraryFrame.image!.cgImage(forProposedRect: nil, context: nil, hints: nil)!
+                    let enlargedFrames: [FinderItem] = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames").children!
+                    
+                    FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: mergedVideoSegmentPath, videoSize: CGSize(width: arbitraryFrameCGImage.width, height: arbitraryFrameCGImage.height), videoFPS: Int32(currentVideo.finderItem.frameRate!.rounded())) {
+                        
+                        //                            try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(segmentSequence)").removeFile()
+                        
+                        // completion after all videos are finished.
+                        completion()
+                    }
                 }
             }
             
@@ -218,7 +193,6 @@ extension Array where Element == WorkItem {
                 guard !isProcessingCancelled else { return }
                 
                 let currentVideo = videos[videoIndex]
-                let videoSegmentLength = Double(videoSegmentFrames) / Double(currentVideo.finderItem.frameRate!)
                 
                 let filePath = currentVideo.finderItem.relativePath ?? currentVideo.finderItem.fileName!
                 let tmpPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw"
@@ -229,50 +203,37 @@ extension Array where Element == WorkItem {
                 let audioPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/audio.m4a"
                 try! currentVideo.finderItem.saveAudioTrack(to: audioPath)
                 
-                status("generating video segments for \(filePath)")
-                
                 let duration = currentVideo.finderItem.avAsset!.duration.seconds
-                let totalSegmentsCount = Double(Int(duration / videoSegmentLength + 1))
                 
-                splitVideo(withIndex: 0, duration: duration, filePath: filePath, currentVideo: currentVideo) {
-                    
+                status("generating images for \(filePath)")
+                
+                //status: generating video segment frames
+                
+                generateImagesAndMergeToVideo(currentVideo: currentVideo, filePath: filePath, duration: duration) {
                     guard !isProcessingCancelled else { return }
-                    onStatusProgressChanged(nil, nil)
                     
-                    status("generating images for \(filePath)")
+                    let outputPath = "\(NSHomeDirectory())/Downloads/Waifu Output/\(currentVideo.finderItem.fileName!).mov"
                     
-                    //status: generating video segment frames
-                    onStatusProgressChanged(0, Int((duration / Double(videoSegmentLength)).rounded(.up)))
+                    status("merging video and audio for \(filePath)")
                     
-                    generateImagesAndMergeToVideo(segmentsFinderItems: FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/splitVideo").children!, currentVideo: currentVideo, filePath: filePath, totalSegmentsCount: totalSegmentsCount, duration: duration) {
-                        guard !isProcessingCancelled else { return }
-                        status("merging videos for \(filePath)")
+                    FinderItem.mergeVideoWithAudio(videoUrl: URL(fileURLWithPath: outputPath), audioUrl: URL(fileURLWithPath: audioPath)) { _ in
+                        status("Completed")
+                        //                                try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp").removeFile()
                         
-                        let outputPath = "\(NSHomeDirectory())/Downloads/Waifu Output/\(currentVideo.finderItem.fileName!).mov"
+                        didFinishOneItem(videoIndex + 1, videos.count)
                         
-                        FinderItem.mergeVideos(from: FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo").children!.map({ $0.avAsset! }), toPath: outputPath) { urlGet, errorGet in
-                            
-                            onStatusProgressChanged(nil, nil)
-                            
-                            status("merging video and audio for \(filePath)")
-                            
-                            FinderItem.mergeVideoWithAudio(videoUrl: URL(fileURLWithPath: outputPath), audioUrl: URL(fileURLWithPath: audioPath)) { _ in
-                                status("Completed")
-                                try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp").removeFile()
-                                
-                                didFinishOneItem(videoIndex + 1, videos.count)
-                                
-                                if videos.count - 1 == videoIndex {
-                                    completion()
-                                } else {
-                                    processSingleVideo(withIndex: videoIndex + 1, completion: completion)
-                                }
-                                
-                            } failure: { error in
-                                print(error.debugDescription)
-                            }
-                            
+                        print("Video \(currentVideo.finderItem.fileName ?? "") done")
+                        print("frames before: \(currentVideo.finderItem.avAsset!.duration.seconds * Double(currentVideo.finderItem.frameRate!)), length: \(currentVideo.finderItem.avAsset!.duration.seconds), fps: \(currentVideo.finderItem.frameRate!)")
+                        print("frames after: \(FinderItem(at: outputPath).avAsset!.duration.seconds * Double(FinderItem(at: outputPath).frameRate!)), length: \(FinderItem(at: outputPath).avAsset!.duration.seconds), fps: \(FinderItem(at: outputPath).frameRate!)")
+                        
+                        if videos.count - 1 == videoIndex {
+                            completion()
+                        } else {
+                            processSingleVideo(withIndex: videoIndex + 1, completion: completion)
                         }
+                        
+                    } failure: { error in
+                        print(error.debugDescription)
                     }
                 }
             }
@@ -324,7 +285,6 @@ struct ContentView: View {
     @State var pdfbackground = DispatchQueue(label: "PDF Background")
     @State var chosenScaleLevel: Int = 1
     @State var chosenComputeOption = "GPU"
-    @State var videoSegmentLength = 200
     
     var body: some View {
         VStack {
@@ -395,10 +355,10 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $isSheetShown, onDismiss: nil) {
-            ConfigurationView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel, chosenComputeOption: $chosenComputeOption, videoSegmentLength: $videoSegmentLength)
+            ConfigurationView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel, chosenComputeOption: $chosenComputeOption)
         }
         .sheet(isPresented: $isProcessing, onDismiss: nil) {
-            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF, chosenComputeOption: $chosenComputeOption, videoSegmentLength: $videoSegmentLength)
+            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF, chosenComputeOption: $chosenComputeOption)
         }
         .sheet(isPresented: $isCreatingPDF, onDismiss: nil) {
             ProcessingPDFView(isCreatingPDF: $isCreatingPDF, background: $pdfbackground)
@@ -541,7 +501,6 @@ struct ConfigurationView: View {
         }
     }
     @Binding var chosenComputeOption: String
-    @Binding var videoSegmentLength: Int
     
     let styleNames: [String] = ["anime", "photo"]
     @State var chosenStyle = "anime" {
@@ -563,8 +522,6 @@ struct ConfigurationView: View {
     @State var chosenModelClass: String = ""
     
     let computeOptions = ["CPU", "GPU"]
-    
-    let videoSegmentOptions = [50, 100, 200, 500, 1000]
     
     @State var isShowingStyleHint: Bool = false
     @State var isShowingNoiceHint: Bool = false
@@ -627,16 +584,6 @@ struct ConfigurationView: View {
                             .onHover { bool in
                                 isShowingGPUHint = bool
                             }
-                    }
-                    
-                    if !finderItems.filter({ $0.type == .video }).isEmpty {
-                        HStack {
-                            Spacer()
-                            Text("Video Segment Length:")
-                                .onHover { bool in
-                                    isShowingVideoSegmentHint = bool
-                                }
-                        }
                     }
                 }
                 
@@ -714,21 +661,6 @@ struct ConfigurationView: View {
                             .padding(.all)
                         
                     }
-                    
-                    if !finderItems.filter({ $0.type == .video }).isEmpty {
-                        Menu(videoSegmentLength.description + " frames") {
-                            ForEach(videoSegmentOptions, id: \.self) { item in
-                                Button(item.description + " frames") {
-                                     videoSegmentLength = item
-                                }
-                            }
-                        }
-                        .popover(isPresented: $isShowingVideoSegmentHint) {
-                            Text("Larger the value, more storage required, but faster (maybe)")
-                                .padding(.all)
-                            
-                        }
-                    }
                 }
                 
             }
@@ -780,7 +712,6 @@ struct ProcessingView: View {
     @Binding var chosenScaleLevel: Int
     @Binding var isCreatingPDF: Bool
     @Binding var chosenComputeOption: String
-    @Binding var videoSegmentLength: Int
     
     @State var processedItemsCounter: Int = 0
     @State var currentTimeTaken: Double = 0 // up to 1s
@@ -848,6 +779,7 @@ struct ProcessingView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     VStack(alignment: .leading, spacing: 10) {
                         Text(status)
+                            .lineLimit(1)
                         
                         if let statusProgress = statusProgress {
                             Text("\(statusProgress.progress) / \(statusProgress.total)")
@@ -944,8 +876,8 @@ struct ProcessingView: View {
                     factor = 1
                 }
                 
-                return progress / Double(factor)
-            }())
+                return progress / Double(factor) <= 1 ? progress / Double(factor) : 1
+            }(), total: 1.0)
             .popover(isPresented: $isShowProgressDetail) {
                 Text("\(String(format: "%.2f", progress * 100))%")
                     .padding(.all, 3)
@@ -1001,7 +933,7 @@ struct ProcessingView: View {
             .onAppear {
                 
                 self.workItem = DispatchWorkItem(qos: .utility, flags: .inheritQoS) {
-                    finderItems.work(chosenScaleLevel, modelUsed: modelUsed!, videoSegmentFrames: videoSegmentLength, isUsingGPU: chosenComputeOption == "GPU") { status in
+                    finderItems.work(chosenScaleLevel, modelUsed: modelUsed!, isUsingGPU: chosenComputeOption == "GPU") { status in
                         self.status = status
                     } onStatusProgressChanged: { progress,total in
                         if progress != nil {

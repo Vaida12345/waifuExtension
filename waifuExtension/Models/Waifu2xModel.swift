@@ -92,7 +92,11 @@ struct Waifu2xModel: Equatable {
         self.style = stye
     }
     
-    static let configuration = MLModelConfiguration()
+    static let configuration = { ()-> MLModelConfiguration in
+        let config = MLModelConfiguration()
+        config.computeUnits = .all
+        return config
+    }()
     
     static let allModels: [Waifu2xModel] = [
 //        Waifu2xModel(class: "anime_style_art", name: "anime_style_art_scale2", stye: "anime", scale: 2, noise: nil),

@@ -98,8 +98,6 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         var counter = 0
         var images: [NSImage] = []
         
-        print(requiredFramesCount)
-        
         while counter < requiredFramesCount {
             let imageGenerator = AVAssetImageGenerator(asset: asset)
             imageGenerator.requestedTimeToleranceAfter = CMTime.zero
@@ -839,8 +837,8 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         exportSession.outputURL = outputURL
         exportSession.outputFileType = .mov
         
-        let startTime = CMTime(seconds: Double(start), preferredTimescale: 1000)
-        let endTime = CMTime(seconds: Double(end), preferredTimescale: 1000)
+        let startTime = CMTime(seconds: Double(start), preferredTimescale: 600)
+        let endTime = CMTime(seconds: Double(end), preferredTimescale: 600)
         let timeRange = CMTimeRange(start: startTime, end: endTime)
         
         if FinderItem(at: outputURL).isExistence {
@@ -866,7 +864,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     
     
     /// from https://stackoverflow.com/questions/38972829/swift-merge-avasset-videos-array
-    static func mergeVideos(from arrayVideos: [AVAsset], toPath: String, completion: @escaping (_ urlGet:URL?,_ errorGet:Error?) -> Void) {
+    static func mergeVideos(from arrayVideos: [AVAsset], toPath: String, frameRate: Int32, completion: @escaping (_ urlGet:URL?,_ errorGet:Error?) -> Void) {
         
         func videoCompositionInstruction(_ track: AVCompositionTrack, asset: AVAsset)
         -> AVMutableVideoCompositionLayerInstruction {
@@ -878,7 +876,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         
         var atTimeM: CMTime = CMTimeMake(value: 0, timescale: 600)
         var layerInstructionsArray = [AVVideoCompositionLayerInstruction]()
-        var completeTrackDuration: CMTime = CMTimeMake(value: 0, timescale: 600 )
+        var completeTrackDuration: CMTime = CMTimeMake(value: 0, timescale: 600)
         var videoSize: CGSize = CGSize(width: 0.0, height: 0.0)
         var totalTime : CMTime = CMTimeMake(value: 0, timescale: 600)
         
@@ -911,15 +909,13 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
             layerInstructionsArray.append(firstInstruction)
         }
         
-        let arbitraryVideo = arrayVideos.first!.tracks(withMediaType: .video).first!
-        
         let mainInstruction = AVMutableVideoCompositionInstruction()
         mainInstruction.layerInstructions = layerInstructionsArray
         mainInstruction.timeRange = CMTimeRangeMake(start: CMTime.zero, duration: completeTrackDuration)
         
         let mainComposition = AVMutableVideoComposition()
         mainComposition.instructions = [mainInstruction]
-        mainComposition.frameDuration = CMTimeMake(value: 1, timescale: Int32(arbitraryVideo.nominalFrameRate))
+        mainComposition.frameDuration = CMTimeMake(value: 1, timescale: frameRate)
         mainComposition.renderSize = videoSize
         
         let exporter = AVAssetExportSession(asset: mixComposition, presetName: AVAssetExportPresetHEVCHighestQuality)
