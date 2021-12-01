@@ -107,8 +107,6 @@ extension Array where Element == WorkItem {
         if !videos.isEmpty {
             //helper functions
             
-            var segmentCompletedCounter = 0
-            
             func splitVideo(withIndex segmentIndex: Int, duration: Double, filePath: String, currentVideo: WorkItem, completion: @escaping (()->())) {
                 
                 guard !isProcessingCancelled else { return }
@@ -137,7 +135,7 @@ extension Array where Element == WorkItem {
             }
             
             func generateImagesAndMergeToVideo(segmentsFinderItems: [FinderItem], currentVideo: WorkItem, filePath: String, totalSegmentsCount: Double, duration: Double, completion: @escaping (()->())) {
-                
+                var segmentCompletedCounter = 0
                 var segmentCounter = 0
                 while segmentCounter < Int((duration / Double(videoSegmentLength)).rounded(.up)) {
                     autoreleasepool {
@@ -201,6 +199,7 @@ extension Array where Element == WorkItem {
                             guard segmentCompletedCounter >= Int((duration / Double(videoSegmentLength)).rounded(.up)) else {
                                 return
                             }
+                            
                             // completion after all videos are finished.
                             completion()
                         }
