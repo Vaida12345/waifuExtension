@@ -217,7 +217,9 @@ extension Array where Element == WorkItem {
                     FinderItem.mergeVideoWithAudio(videoUrl: URL(fileURLWithPath: outputPath), audioUrl: URL(fileURLWithPath: audioPath)) { _ in
                         status("Completed")
                         
-                        try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/\(currentVideo.finderItem.fileName!).mov").copy(to: "\(NSHomeDirectory())/Downloads/Waifu Output/\(currentVideo.finderItem.fileName!).mov")
+                        let destinationFinderItem = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/\(currentVideo.finderItem.fileName!).mov")
+                        if destinationFinderItem.isExistence { try! destinationFinderItem.removeFile() }
+                        try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/\(currentVideo.finderItem.fileName!).mov").copy(to: destinationFinderItem.path)
                         //                                try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp").removeFile()
                         
                         didFinishOneItem(videoIndex + 1, videos.count)
