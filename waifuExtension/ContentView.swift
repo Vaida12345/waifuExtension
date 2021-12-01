@@ -37,7 +37,7 @@ extension Array where Element == WorkItem {
         return self.contains(WorkItem(at: finderItem, type: .image))
     }
     
-    func work(_ chosenScaleLevel: Int, modelUsed: Waifu2xModel, videoSegmentLength: Int, isUsingGPU: Bool, onStatusChanged status: @escaping ((_ status: String)->()), onStatusProgressChanged: @escaping ((_ progress: Int?, _ total: Int?)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
+    func work(_ chosenScaleLevel: Int, modelUsed: Waifu2xModel, videoSegmentFrames: Int, isUsingGPU: Bool, onStatusChanged status: @escaping ((_ status: String)->()), onStatusProgressChanged: @escaping ((_ progress: Int?, _ total: Int?)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
         
         let images = self.filter({ $0.type == .image })
         let videos = self.filter({ $0.type == .video })
@@ -110,7 +110,8 @@ extension Array where Element == WorkItem {
             func splitVideo(withIndex segmentIndex: Int, duration: Double, filePath: String, currentVideo: WorkItem, completion: @escaping (()->())) {
                 
                 guard !isProcessingCancelled else { return }
-                guard segmentIndex <= Int(duration) / videoSegmentLength else { return }
+                let videoSegmentLength = Double(videoSegmentFrames) / Double(currentVideo.finderItem.frameRate!)
+                guard Double(segmentIndex) <= duration / videoSegmentLength else { return }
                 
                 var segmentSequence = String(segmentIndex)
                 while segmentSequence.count <= 5 { segmentSequence.insert("0", at: segmentSequence.startIndex) }
@@ -118,18 +119,18 @@ extension Array where Element == WorkItem {
                 let path = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/splitVideo/video \(segmentSequence).mov"
                 FinderItem(at: path).generateDirectory()
                 
-                FinderItem.trimVideo(sourceURL: currentVideo.finderItem.url, outputURL: URL(fileURLWithPath: path), statTime: Float(segmentIndex * videoSegmentLength), endTime: {()->Float in
-                    if Double(segmentIndex * videoSegmentLength + videoSegmentLength) < duration {
-                        return Float(segmentIndex * videoSegmentLength + videoSegmentLength)
+                FinderItem.trimVideo(sourceURL: currentVideo.finderItem.url, outputURL: URL(fileURLWithPath: path), statTime: Float(segmentIndex) * Float(videoSegmentLength), endTime: {()->Float in
+                    if Double(segmentIndex) * videoSegmentLength + videoSegmentLength < duration {
+                        return Float(Double(segmentIndex) * videoSegmentLength + videoSegmentLength)
                     } else {
                         return Float(duration)
                     }
                 }()) { _ in
                     
-                    onStatusProgressChanged(segmentIndex, Int(duration) / videoSegmentLength)
+                    onStatusProgressChanged(segmentIndex, Int(duration / videoSegmentLength))
                     
                     splitVideo(withIndex: segmentIndex + 1, duration: duration, filePath: filePath, currentVideo: currentVideo, completion: completion)
-                    guard segmentIndex == Int(duration) / videoSegmentLength else { return }
+                    guard segmentIndex == Int(duration / videoSegmentLength) else { return }
                     completion()
                 }
             }
@@ -137,7 +138,9 @@ extension Array where Element == WorkItem {
             func generateImagesAndMergeToVideo(segmentsFinderItems: [FinderItem], currentVideo: WorkItem, filePath: String, totalSegmentsCount: Double, duration: Double, completion: @escaping (()->())) {
                 var segmentCompletedCounter = 0
                 var segmentCounter = 0
-                while segmentCounter < Int((duration / Double(videoSegmentLength)).rounded(.up)) {
+                let videoSegmentLength = Double(videoSegmentFrames) / Double(currentVideo.finderItem.frameRate!)
+                
+                while segmentCounter < Int((duration / videoSegmentLength).rounded(.up)) {
                     autoreleasepool {
                         
                         guard !isProcessingCancelled else { return }
@@ -215,6 +218,7 @@ extension Array where Element == WorkItem {
                 guard !isProcessingCancelled else { return }
                 
                 let currentVideo = videos[videoIndex]
+                let videoSegmentLength = Double(videoSegmentFrames) / Double(currentVideo.finderItem.frameRate!)
                 
                 let filePath = currentVideo.finderItem.relativePath ?? currentVideo.finderItem.fileName!
                 let tmpPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw"
@@ -228,7 +232,7 @@ extension Array where Element == WorkItem {
                 status("generating video segments for \(filePath)")
                 
                 let duration = currentVideo.finderItem.avAsset!.duration.seconds
-                let totalSegmentsCount = Double(Int(duration) / videoSegmentLength + 1)
+                let totalSegmentsCount = Double(Int(duration / videoSegmentLength + 1))
                 
                 splitVideo(withIndex: 0, duration: duration, filePath: filePath, currentVideo: currentVideo) {
                     
@@ -320,7 +324,7 @@ struct ContentView: View {
     @State var pdfbackground = DispatchQueue(label: "PDF Background")
     @State var chosenScaleLevel: Int = 1
     @State var chosenComputeOption = "GPU"
-    @State var videoSegmentLength = 10
+    @State var videoSegmentLength = 200
     
     var body: some View {
         VStack {
@@ -559,7 +563,8 @@ struct ConfigurationView: View {
     @State var chosenModelClass: String = ""
     
     let computeOptions = ["CPU", "GPU"]
-    let videoSegmentOptions = [1, 5, 10, 15, 30, 60]
+    
+    let videoSegmentOptions = [50, 100, 200, 500, 1000]
     
     @State var isShowingStyleHint: Bool = false
     @State var isShowingNoiceHint: Bool = false
@@ -711,9 +716,9 @@ struct ConfigurationView: View {
                     }
                     
                     if !finderItems.filter({ $0.type == .video }).isEmpty {
-                        Menu(videoSegmentLength.description + "s") {
+                        Menu(videoSegmentLength.description + " frames") {
                             ForEach(videoSegmentOptions, id: \.self) { item in
-                                Button(item.description + "s") {
+                                Button(item.description + " frames") {
                                      videoSegmentLength = item
                                 }
                             }
@@ -995,8 +1000,8 @@ struct ProcessingView: View {
             .frame(width: 600, height: 350)
             .onAppear {
                 
-                self.workItem = DispatchWorkItem(qos: .background, flags: .inheritQoS) {
-                    finderItems.work(chosenScaleLevel, modelUsed: modelUsed!, videoSegmentLength: videoSegmentLength, isUsingGPU: chosenComputeOption == "GPU") { status in
+                self.workItem = DispatchWorkItem(qos: .utility, flags: .inheritQoS) {
+                    finderItems.work(chosenScaleLevel, modelUsed: modelUsed!, videoSegmentFrames: videoSegmentLength, isUsingGPU: chosenComputeOption == "GPU") { status in
                         self.status = status
                     } onStatusProgressChanged: { progress,total in
                         if progress != nil {
