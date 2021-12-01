@@ -129,14 +129,14 @@ extension Array where Element == WorkItem {
                     print("frames to process: \(requiredFramesCount)")
                     FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames").generateDirectory()
                     
-                    let imageGenerator = AVAssetImageGenerator(asset: asset)
-                    imageGenerator.requestedTimeToleranceAfter = CMTime.zero
-                    imageGenerator.requestedTimeToleranceBefore = CMTime.zero
-                    
                     DispatchQueue.concurrentPerform(iterations: requiredFramesCount) { frameCounter in
                         autoreleasepool {
                             
                             // generate frames
+                            
+                            let imageGenerator = AVAssetImageGenerator(asset: asset)
+                            imageGenerator.requestedTimeToleranceAfter = CMTime.zero
+                            imageGenerator.requestedTimeToleranceBefore = CMTime.zero
                             
                             let time: CMTime = CMTimeMake(value: Int64(step * frameCounter), timescale: vidLength.timescale)
                             var imageRef: CGImage?
@@ -193,10 +193,7 @@ extension Array where Element == WorkItem {
                 guard !isProcessingCancelled else { return }
                 
                 let currentVideo = videos[videoIndex]
-                
                 let filePath = currentVideo.finderItem.relativePath ?? currentVideo.finderItem.fileName!
-                let tmpPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw"
-                FinderItem(at: tmpPath).generateDirectory()
                 
                 status("splitting audio for \(filePath)")
                 
