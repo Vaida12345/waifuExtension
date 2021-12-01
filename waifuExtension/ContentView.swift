@@ -180,8 +180,6 @@ extension Array where Element == WorkItem {
                     
                     FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: mergedVideoPath, videoSize: CGSize(width: arbitraryFrameCGImage.width, height: arbitraryFrameCGImage.height), videoFPS: currentVideo.finderItem.frameRate!.rounded()) {
                         
-                        //                            try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(segmentSequence)").removeFile()
-                        
                         // completion after all videos are finished.
                         completion()
                     }
@@ -220,13 +218,14 @@ extension Array where Element == WorkItem {
                         let destinationFinderItem = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/\(currentVideo.finderItem.fileName!).mov")
                         if destinationFinderItem.isExistence { try! destinationFinderItem.removeFile() }
                         try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/\(currentVideo.finderItem.fileName!).mov").copy(to: destinationFinderItem.path)
-                        //                                try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp").removeFile()
+                        try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp").removeFile()
                         
                         didFinishOneItem(videoIndex + 1, videos.count)
                         
+                        print(">>>>> results: ")
                         print("Video \(currentVideo.finderItem.fileName ?? "") done")
                         print("frames before: \(currentVideo.finderItem.avAsset!.duration.seconds * Double(currentVideo.finderItem.frameRate!)), length: \(currentVideo.finderItem.avAsset!.duration.seconds), fps: \(currentVideo.finderItem.frameRate!)")
-                        print("frames after: \(FinderItem(at: outputPath).avAsset!.duration.seconds * Double(FinderItem(at: outputPath).frameRate!)), length: \(FinderItem(at: outputPath).avAsset!.duration.seconds), fps: \(FinderItem(at: outputPath).frameRate!)")
+                        print("frames after: \(destinationFinderItem.avAsset!.duration.seconds * Double(destinationFinderItem.frameRate!)), length: \(destinationFinderItem.avAsset!.duration.seconds), fps: \(destinationFinderItem.frameRate!)")
                         
                         if videos.count - 1 == videoIndex {
                             completion()

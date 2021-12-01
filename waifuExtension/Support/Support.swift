@@ -563,8 +563,8 @@ extension BinaryFloatingPoint where Self: LosslessStringConvertible {
         if self < 1e-6 { return String(format: "%.3gns", Double(self) * 1e9) }
         if self < 1e-3 { return String(format: "%.3gµs", Double(self) * 1e6) }
         if self < 1 { return String(format: "%.3gms", Double(self) * 1e3) }
-        if self < Self(pow(60.0, 1)) { return String(format: "%.5gs", Double(self)) }
-        if self < Self(pow(60.0, 2)) { return String(format: "%.5gmin", Double(self) / pow(60.0, 1)) }
+        if self < Self(pow(60.0, 1)) { return String(format: "%.3gs", Double(self)) }
+        if self < Self(pow(60.0, 2)) { return String(format: "%.3gmin", Double(self) / pow(60.0, 1)) }
         if self < Self(pow(60.0, 3)) { return String(format: "%.3ghr", Double(self) / pow(60.0, 2)) }
         if self < Self(pow(60.0, 3))*24 { return String(format: "%.3gdays", Double(self) / pow(60.0, 3)) }
         if self < Self(pow(60.0, 3))*24*365 { return String(format: "%.3gyrs", Double(self) / pow(60.0, 3)*24) }
