@@ -589,7 +589,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     ///   - audioUrl: URL to audio file
     ///   - completion: completion of saving: error or url with final video
     ///
-    /// from https://stackoverflow.com/questions/31984474/swift-merge-audio-and-video-files-into-one-video
+    /// from [stackoverflow](https://stackoverflow.com/questions/31984474/swift-merge-audio-and-video-files-into-one-video)
     static func mergeVideoWithAudio(videoUrl: URL, audioUrl: URL, success: @escaping ((URL) -> Void), failure: @escaping ((Error?) -> Void)) {
         
         guard FileManager.default.fileExists(atPath: audioUrl.path) else {
@@ -669,12 +669,12 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     
     /// Convert image sequence to video.
     ///
-    /// from https://stackoverflow.com/questions/3741323/how-do-i-export-uiimage-array-as-a-movie/3742212#36297656
-    static func convertImageSequenceToVideo(_ allImages: [FinderItem], videoPath: String, videoSize: CGSize, videoFPS: Int32, completion: (()->Void)? = nil) {
+    /// from [stackoverflow](https://stackoverflow.com/questions/3741323/how-do-i-export-uiimage-array-as-a-movie/3742212#36297656)
+    static func convertImageSequenceToVideo(_ allImages: [FinderItem], videoPath: String, videoSize: CGSize, videoFPS: Float, completion: (()->Void)? = nil) {
         
         FinderItem(at: videoPath).generateDirectory()
         
-        func writeImagesAsMovie(_ allImages: [FinderItem], videoPath: String, videoSize: CGSize, videoFPS: Int32) {
+        func writeImagesAsMovie(_ allImages: [FinderItem], videoPath: String, videoSize: CGSize, videoFPS: Float) {
             // Create AVAssetWriter to write video
             guard let assetWriter = createAssetWriter(videoPath, size: videoSize) else {
                 print("Error converting images to video: AVAssetWriter not created")
@@ -702,7 +702,8 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
             let mediaQueue = DispatchQueue(label: "mediaInputQueue", attributes: [])
             
             // -- Set video parameters
-            let frameDuration = CMTimeMake(value: 1, timescale: videoFPS)
+            let fraction = Fraction(videoFPS)
+            let frameDuration = CMTimeMake(value: Int64(fraction.denominator), timescale: Int32(fraction.numerator))
             var frameCount = 0
             
             // -- Add images to video
@@ -710,7 +711,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
             writerInput.requestMediaDataWhenReady(on: mediaQueue, using: { () -> Void in
                 // Append unadded images to video but only while input ready
                 while (writerInput.isReadyForMoreMediaData && frameCount < numImages) {
-                    let lastFrameTime = CMTimeMake(value: Int64(frameCount), timescale: videoFPS)
+                    let lastFrameTime = CMTimeMake(value: Int64(frameCount) * Int64(fraction.denominator), timescale: Int32(fraction.numerator))
                     let presentationTime = frameCount == 0 ? lastFrameTime : CMTimeAdd(lastFrameTime, frameDuration)
                     
                     if !appendPixelBufferForImageAtURL(allImages[frameCount], size: videoSize, pixelBufferAdaptor: pixelBufferAdaptor, presentationTime: presentationTime) {
@@ -862,8 +863,9 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         }
     }
     
-    
-    /// from https://stackoverflow.com/questions/38972829/swift-merge-avasset-videos-array
+    /// merge videos from videos
+    ///
+    /// from [stackoverflow](https://stackoverflow.com/questions/38972829/swift-merge-avasset-videos-array)
     static func mergeVideos(from arrayVideos: [AVAsset], toPath: String, frameRate: Int32, completion: @escaping (_ urlGet:URL?,_ errorGet:Error?) -> Void) {
         
         func videoCompositionInstruction(_ track: AVCompositionTrack, asset: AVAsset)

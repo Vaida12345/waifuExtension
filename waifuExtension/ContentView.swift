@@ -171,14 +171,14 @@ extension Array where Element == WorkItem {
                     
                     // status: merge videos
                     
-                    let mergedVideoSegmentPath = "\(NSHomeDirectory())/Downloads/Waifu Output/\(currentVideo.finderItem.fileName!).mov"
-                    FinderItem(at: mergedVideoSegmentPath).generateDirectory()
+                    let mergedVideoPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/\(currentVideo.finderItem.fileName!).mov"
+                    FinderItem(at: mergedVideoPath).generateDirectory()
                     
                     let arbitraryFrame = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/000000.png")
                     let arbitraryFrameCGImage = arbitraryFrame.image!.cgImage(forProposedRect: nil, context: nil, hints: nil)!
                     let enlargedFrames: [FinderItem] = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames").children!
                     
-                    FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: mergedVideoSegmentPath, videoSize: CGSize(width: arbitraryFrameCGImage.width, height: arbitraryFrameCGImage.height), videoFPS: Int32(currentVideo.finderItem.frameRate!.rounded())) {
+                    FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: mergedVideoPath, videoSize: CGSize(width: arbitraryFrameCGImage.width, height: arbitraryFrameCGImage.height), videoFPS: currentVideo.finderItem.frameRate!.rounded()) {
                         
                         //                            try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(segmentSequence)").removeFile()
                         
@@ -197,6 +197,7 @@ extension Array where Element == WorkItem {
                 
                 status("splitting audio for \(filePath)")
                 
+                FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)").generateDirectory()
                 let audioPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/audio.m4a"
                 try! currentVideo.finderItem.saveAudioTrack(to: audioPath)
                 
@@ -209,12 +210,14 @@ extension Array where Element == WorkItem {
                 generateImagesAndMergeToVideo(currentVideo: currentVideo, filePath: filePath, duration: duration) {
                     guard !isProcessingCancelled else { return }
                     
-                    let outputPath = "\(NSHomeDirectory())/Downloads/Waifu Output/\(currentVideo.finderItem.fileName!).mov"
+                    let outputPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/\(currentVideo.finderItem.fileName!).mov"
                     
                     status("merging video and audio for \(filePath)")
                     
                     FinderItem.mergeVideoWithAudio(videoUrl: URL(fileURLWithPath: outputPath), audioUrl: URL(fileURLWithPath: audioPath)) { _ in
                         status("Completed")
+                        
+                        try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/\(currentVideo.finderItem.fileName!).mov").copy(to: "\(NSHomeDirectory())/Downloads/Waifu Output/\(currentVideo.finderItem.fileName!).mov")
                         //                                try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp").removeFile()
                         
                         didFinishOneItem(videoIndex + 1, videos.count)
