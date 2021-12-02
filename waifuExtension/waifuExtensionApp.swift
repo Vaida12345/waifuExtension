@@ -35,6 +35,14 @@ struct waifuExtensionApp: App {
                         .openInWindow(title: "Comparison", sender: self)
                 }
             }
+            CommandGroup(replacing: .appSettings) {
+                Button("Preferences...") {
+                    ConfigurationView()
+                        .frame(width: 600, height: 300)
+                        .openInWindow(title: "Configuration", sender: self)
+                }.keyboardShortcut(",")
+                
+            }
         }
     }
 }

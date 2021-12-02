@@ -59,6 +59,7 @@
 		B437F171275334CB00A1CE41 /* photo_noise0_model.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = B437F158275334CB00A1CE41 /* photo_noise0_model.mlpackage */; };
 		B437F172275334CB00A1CE41 /* upconv_7_anime_style_art_rgb_noise0_scale2.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = B437F159275334CB00A1CE41 /* upconv_7_anime_style_art_rgb_noise0_scale2.mlpackage */; };
 		B437F174275334DB00A1CE41 /* Waifu2xModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B437F173275334DB00A1CE41 /* Waifu2xModel.swift */; };
+		B445F70027585906004BAE04 /* ConfigurationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B445F6FF27585906004BAE04 /* ConfigurationView.swift */; };
 		B47664D62753056300FD78EA /* Calculation.metal in Sources */ = {isa = PBXBuildFile; fileRef = B47664D52753056300FD78EA /* Calculation.metal */; };
 		B49BFD94274B4BC50046FDDF /* BackgroundPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD70274B4BC50046FDDF /* BackgroundPipeline.swift */; };
 		B49BFD96274B4BC50046FDDF /* MLModel+Prediction.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD72274B4BC50046FDDF /* MLModel+Prediction.swift */; };
@@ -133,6 +134,7 @@
 		B437F158275334CB00A1CE41 /* photo_noise0_model.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = photo_noise0_model.mlpackage; sourceTree = "<group>"; };
 		B437F159275334CB00A1CE41 /* upconv_7_anime_style_art_rgb_noise0_scale2.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = upconv_7_anime_style_art_rgb_noise0_scale2.mlpackage; sourceTree = "<group>"; };
 		B437F173275334DB00A1CE41 /* Waifu2xModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Waifu2xModel.swift; sourceTree = "<group>"; };
+		B445F6FF27585906004BAE04 /* ConfigurationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationView.swift; sourceTree = "<group>"; };
 		B47664D52753056300FD78EA /* Calculation.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Calculation.metal; sourceTree = "<group>"; };
 		B49BFD70274B4BC50046FDDF /* BackgroundPipeline.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BackgroundPipeline.swift; sourceTree = "<group>"; };
 		B49BFD72274B4BC50046FDDF /* MLModel+Prediction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "MLModel+Prediction.swift"; sourceTree = "<group>"; };
@@ -188,6 +190,7 @@
 				B41C473B274AA7850024ECB7 /* waifuExtensionApp.swift */,
 				B41C473D274AA7850024ECB7 /* ContentView.swift */,
 				B40B65A72754B95200AB08D2 /* ComparisonView.swift */,
+				B445F6FF27585906004BAE04 /* ConfigurationView.swift */,
 				B437F140275334CB00A1CE41 /* Models */,
 				B41C474A274AAF6A0024ECB7 /* Support */,
 				B49BFD6F274B4BC50046FDDF /* waifu2x-mac */,
@@ -451,6 +454,7 @@
 				B437F169275334CB00A1CE41 /* upconv_7_photo_noise1_scale2.mlpackage in Sources */,
 				B437F162275334CB00A1CE41 /* photo_noise3_model.mlpackage in Sources */,
 				B4B9EFF0274BC50400A8D380 /* UIImage+Reload.swift in Sources */,
+				B445F70027585906004BAE04 /* ConfigurationView.swift in Sources */,
 				B437F171275334CB00A1CE41 /* photo_noise0_model.mlpackage in Sources */,
 				B437F16E275334CB00A1CE41 /* photo_scale2.mlpackage in Sources */,
 				B41C4768274AAF6A0024ECB7 /* CommentCreator.swift in Sources */,

@@ -215,7 +215,7 @@ extension Array where Element == WorkItem {
                     FinderItem.mergeVideoWithAudio(videoUrl: URL(fileURLWithPath: outputPath), audioUrl: URL(fileURLWithPath: audioPath)) { _ in
                         status("Completed")
                         
-                        let destinationFinderItem = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/\(currentVideo.finderItem.fileName!).mov")
+                        let destinationFinderItem = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/\(filePath).mov")
                         if destinationFinderItem.isExistence { try! destinationFinderItem.removeFile() }
                         try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/\(currentVideo.finderItem.fileName!).mov").copy(to: destinationFinderItem.path)
                         try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp").removeFile()
@@ -224,8 +224,8 @@ extension Array where Element == WorkItem {
                         
                         print(">>>>> results: ")
                         print("Video \(currentVideo.finderItem.fileName ?? "") done")
-                        print("frames before: \(currentVideo.finderItem.avAsset!.duration.seconds * Double(currentVideo.finderItem.frameRate!)), length: \(currentVideo.finderItem.avAsset!.duration.seconds), fps: \(currentVideo.finderItem.frameRate!)")
-                        print("frames after: \(destinationFinderItem.avAsset!.duration.seconds * Double(destinationFinderItem.frameRate!)), length: \(destinationFinderItem.avAsset!.duration.seconds), fps: \(destinationFinderItem.frameRate!)")
+                        printMatrix(matrix: [["", "frames", "duration", "fps"], ["before", "\(currentVideo.finderItem.avAsset!.duration.seconds * Double(currentVideo.finderItem.frameRate!))", "\(currentVideo.finderItem.avAsset!.duration.seconds)", "\(currentVideo.finderItem.frameRate!)"], ["after", "\(destinationFinderItem.avAsset!.duration.seconds * Double(destinationFinderItem.frameRate!))", "\(destinationFinderItem.avAsset!.duration.seconds)", "\(destinationFinderItem.frameRate!)"]])
+                        print("")
                         
                         if videos.count - 1 == videoIndex {
                             completion()
@@ -356,7 +356,7 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $isSheetShown, onDismiss: nil) {
-            ConfigurationView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel, chosenComputeOption: $chosenComputeOption)
+            SpecificationsView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel, chosenComputeOption: $chosenComputeOption)
         }
         .sheet(isPresented: $isProcessing, onDismiss: nil) {
             ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF, chosenComputeOption: $chosenComputeOption)
@@ -489,7 +489,7 @@ struct GridItemView: View {
     }
 }
 
-struct ConfigurationView: View {
+struct SpecificationsView: View {
     
     var finderItems: [WorkItem]
     
