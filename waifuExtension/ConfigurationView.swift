@@ -46,7 +46,7 @@ struct ConfigurationView: View {
                     }
                 }
             }
-            .padding()
+            .padding([.leading, .bottom, .trailing])
         }
         .onChange(of: isLogEnabled) { newValue in
             Configuration.main.isLogEnabled = newValue

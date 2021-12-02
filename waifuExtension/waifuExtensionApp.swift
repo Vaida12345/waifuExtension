@@ -38,7 +38,7 @@ struct waifuExtensionApp: App {
             CommandGroup(replacing: .appSettings) {
                 Button("Preferences...") {
                     ConfigurationView()
-                        .frame(width: 600, height: 300)
+                        .frame(width: 600, height: 100)
                         .openInWindow(title: "Configuration", sender: self)
                 }.keyboardShortcut(",")
                 
