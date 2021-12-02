@@ -86,7 +86,7 @@ extension Array where Element == WorkItem {
                         outputFileName = currentImage.finderItem.fileName! + ".png"
                     }
                     
-                    let finderItemAtImageOutputPath = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/\(outputFileName)")
+                    let finderItemAtImageOutputPath = FinderItem(at: "\(Configuration.main.saveFolder)/\(outputFileName)")
                     
                     finderItemAtImageOutputPath.generateDirectory()
                     image.write(to: finderItemAtImageOutputPath.path)
@@ -127,7 +127,7 @@ extension Array where Element == WorkItem {
                     let step = Int((vidLength.value / Int64(requiredFramesCount)))
                     
                     print("frames to process: \(requiredFramesCount)")
-                    FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames").generateDirectory()
+                    FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames").generateDirectory()
                     
                     DispatchQueue.concurrentPerform(iterations: requiredFramesCount) { frameCounter in
                         autoreleasepool {
@@ -165,18 +165,18 @@ extension Array where Element == WorkItem {
                             var sequence = String(frameCounter)
                             while sequence.count < 6 { sequence.insert("0", at: sequence.startIndex) }
                             
-                            thumbnail.write(to: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/\(sequence).png")
+                            thumbnail.write(to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(sequence).png")
                         }
                     }
                     
                     // status: merge videos
                     
-                    let mergedVideoPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/\(currentVideo.finderItem.fileName!).mov"
+                    let mergedVideoPath = "\(Configuration.main.saveFolder)/tmp/\(filePath)/\(currentVideo.finderItem.fileName!).mov"
                     FinderItem(at: mergedVideoPath).generateDirectory()
                     
-                    let arbitraryFrame = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames/000000.png")
+                    let arbitraryFrame = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/000000.png")
                     let arbitraryFrameCGImage = arbitraryFrame.image!.cgImage(forProposedRect: nil, context: nil, hints: nil)!
-                    let enlargedFrames: [FinderItem] = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/processed/splitVideo frames").children!
+                    let enlargedFrames: [FinderItem] = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames").children!
                     
                     FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: mergedVideoPath, videoSize: CGSize(width: arbitraryFrameCGImage.width, height: arbitraryFrameCGImage.height), videoFPS: currentVideo.finderItem.frameRate!.rounded()) {
                         
@@ -195,8 +195,8 @@ extension Array where Element == WorkItem {
                 
                 status("splitting audio for \(filePath)")
                 
-                FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)").generateDirectory()
-                let audioPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/audio.m4a"
+                FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)").generateDirectory()
+                let audioPath = "\(Configuration.main.saveFolder)/tmp/\(filePath)/audio.m4a"
                 try! currentVideo.finderItem.saveAudioTrack(to: audioPath)
                 
                 let duration = currentVideo.finderItem.avAsset!.duration.seconds
@@ -208,17 +208,17 @@ extension Array where Element == WorkItem {
                 generateImagesAndMergeToVideo(currentVideo: currentVideo, filePath: filePath, duration: duration) {
                     guard !isProcessingCancelled else { return }
                     
-                    let outputPath = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/\(currentVideo.finderItem.fileName!).mov"
+                    let outputPath = "\(Configuration.main.saveFolder)/tmp/\(filePath)/\(currentVideo.finderItem.fileName!).mov"
                     
                     status("merging video and audio for \(filePath)")
                     
                     FinderItem.mergeVideoWithAudio(videoUrl: URL(fileURLWithPath: outputPath), audioUrl: URL(fileURLWithPath: audioPath)) { _ in
                         status("Completed")
                         
-                        let destinationFinderItem = FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/\(filePath).mov")
+                        let destinationFinderItem = FinderItem(at: "\(Configuration.main.saveFolder)/\(filePath).mov")
                         if destinationFinderItem.isExistence { try! destinationFinderItem.removeFile() }
-                        try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/\(currentVideo.finderItem.fileName!).mov").copy(to: destinationFinderItem.path)
-                        try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp").removeFile()
+                        try! FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/\(currentVideo.finderItem.fileName!).mov").copy(to: destinationFinderItem.path)
+                        try! FinderItem(at: "\(Configuration.main.saveFolder)/tmp").removeFile()
                         
                         didFinishOneItem(videoIndex + 1, videos.count)
                         
@@ -504,7 +504,7 @@ struct SpecificationsView: View {
     @Binding var chosenComputeOption: String
     
     let styleNames: [String] = ["anime", "photo"]
-    @State var chosenStyle = "anime" {
+    @State var chosenStyle = Configuration.main.modelStyle {
         didSet {
             findModelClass()
         }
@@ -698,6 +698,9 @@ struct SpecificationsView: View {
             .frame(width: 600, height: 350)
             .onAppear {
                 findModelClass()
+            }
+            .onChange(of: chosenStyle) { newValue in
+                Configuration.main.modelStyle = newValue
             }
     }
     
@@ -914,11 +917,11 @@ struct ProcessingView: View {
                         isProcessing = false
                         isCreatingPDF = true
                     }
-                    .disabled((FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output").children?.filter({ $0.isDirectory }).isEmpty ?? false))
+                    .disabled((FinderItem(at: "\(Configuration.main.saveFolder)").children?.filter({ $0.isDirectory }).isEmpty ?? false))
                     .padding(.trailing)
                     
                     Button("Show in Finder") {
-                        _ = shell(["open \(NSHomeDirectory())/Downloads/Waifu\\ Output"])
+                        _ = shell(["open \(Configuration.main.saveFolder.replacingOccurrences(of: " ", with: "\\ "))"])
                     }
                     .padding(.trailing)
                     
@@ -1061,7 +1064,7 @@ struct ProcessingPDFView: View {
             isProcessingCancelled = false
             
             var counter = 0
-            FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output").iteratedOver { child in
+            FinderItem(at: "\(Configuration.main.saveFolder)").iteratedOver { child in
                 guard child.image != nil else { return }
                 counter += 1
             }
@@ -1069,7 +1072,7 @@ struct ProcessingPDFView: View {
             finderItemsCount = counter
             
             background.async {
-                FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output").iteratedOver { child in
+                FinderItem(at: "\(Configuration.main.saveFolder)").iteratedOver { child in
                     guard child.isDirectory else { return }
                     
                     FinderItem.createPDF(fromFolder: child) { item in

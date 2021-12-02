@@ -70,20 +70,7 @@ struct Configuration: Codable {
     
     var saveFolder: String {
         get {
-            guard privateSaveFolder != "/Downloads/Waifu Output" else {
-                return "\(NSHomeDirectory())/Downloads/Waifu Output"
-            }
-            let item = FinderItem(at: privateSaveFolder)
-            guard item.isExistence else {
-                item.generateDirectory()
-                return privateSaveFolder
-            }
-            guard item.children == nil || item.children!.isEmpty else {
-                let path = privateSaveFolder + "/Waifu Output"
-                FinderItem(at: path).generateDirectory()
-                return path
-            }
-            return privateSaveFolder
+            return getFolder
         }
         set {
             self.privateSaveFolder = newValue
@@ -94,13 +81,50 @@ struct Configuration: Codable {
         return privateSaveFolder
     }
     
+    var modelStyle: String = "anime"
+    
     private var privateSaveFolder = "/Downloads/Waifu Output"
+    private var getFolder = ""
     
     static var main: Configuration = { () -> Configuration in
-        if let configuration = try? FinderItem.loadJSON(from: "\(NSHomeDirectory())/configuration.json", type: Configuration.self) {
+        if var configuration = try? FinderItem.loadJSON(from: "\(NSHomeDirectory())/configuration.json", type: Configuration.self) {
+            configuration.getFolder = {()-> String in
+                guard configuration.privateSaveFolder != "/Downloads/Waifu Output" else {
+                    return "\(NSHomeDirectory())/Downloads/Waifu Output"
+                }
+                let item = FinderItem(at: configuration.privateSaveFolder)
+                guard item.isExistence else {
+                    item.generateDirectory()
+                    return configuration.privateSaveFolder
+                }
+                guard item.children == nil || item.children!.isEmpty else {
+                    let path = configuration.privateSaveFolder + "/Waifu Output"
+                    FinderItem(at: path).generateDirectory()
+                    return path
+                }
+                return configuration.privateSaveFolder
+            }()
             return configuration
         } else {
-            return Configuration()
+            var configuration = Configuration()
+            
+            configuration.getFolder = {()-> String in
+                guard configuration.privateSaveFolder != "/Downloads/Waifu Output" else {
+                    return "\(NSHomeDirectory())/Downloads/Waifu Output"
+                }
+                let item = FinderItem(at: configuration.privateSaveFolder)
+                guard item.isExistence else {
+                    item.generateDirectory()
+                    return configuration.privateSaveFolder
+                }
+                guard item.children == nil || item.children!.isEmpty else {
+                    let path = configuration.privateSaveFolder + "/Waifu Output"
+                    FinderItem(at: path).generateDirectory()
+                    return path
+                }
+                return configuration.privateSaveFolder
+            }()
+            return configuration
         }
     }() {
         didSet {
@@ -110,6 +134,17 @@ struct Configuration: Codable {
     
     func write() {
         try! FinderItem.saveJSON(self, to: "\(NSHomeDirectory())/configuration.json")
+    }
+    
+    func saveLog(_ value: String) {
+        let path = self.saveFolder + "/log.txt"
+        var content = ""
+        if let previousLog = try? String(contentsOfFile: path) {
+            content = previousLog
+            try! FinderItem(at: path).removeFile()
+        }
+        content += value
+        try! content.write(to: URL(fileURLWithPath: path), atomically: true, encoding: .utf8)
     }
     
 }
