@@ -137,13 +137,14 @@ struct Configuration: Codable {
     }
     
     func saveLog(_ value: String) {
+        guard self.isLogEnabled else { return }
         let path = self.saveFolder + "/log.txt"
         var content = ""
         if let previousLog = try? String(contentsOfFile: path) {
             content = previousLog
             try! FinderItem(at: path).removeFile()
         }
-        content += value
+        content += value + "\n"
         try! content.write(to: URL(fileURLWithPath: path), atomically: true, encoding: .utf8)
     }
     

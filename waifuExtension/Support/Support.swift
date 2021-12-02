@@ -945,8 +945,8 @@ extension String {
 /// - Parameters:
 ///    - list: The list to be printed.
 ///    - space: Auto generated content.
-func printMatrix<T>(matrix: [[T]], transpose: Bool = false, includeIndex: Bool = false, space: [Int] = []) where T: CustomStringConvertible {
-    guard matrix.count > 1 else { print(matrix.first ?? ""); return }
+@discardableResult func printMatrix<T>(matrix: [[T]], transpose: Bool = false, includeIndex: Bool = false, space: [Int] = []) -> String where T: CustomStringConvertible {
+    guard matrix.count > 1 else { print(matrix.first ?? ""); return matrix.first?.description ?? "" }
     
     if transpose {
         var newMatrix: [[String]] = [[String]](repeating: [String](repeating: "", count: matrix.count), count: matrix.first!.count)
@@ -990,6 +990,8 @@ func printMatrix<T>(matrix: [[T]], transpose: Bool = false, includeIndex: Bool =
         }
     }
     
+    var value = ""
+    
     for item in matrix {
         var content = ""
         
@@ -1000,7 +1002,10 @@ func printMatrix<T>(matrix: [[T]], transpose: Bool = false, includeIndex: Bool =
             currentItem += 1
         }
         print(content)
+        value += content + "\n"
     }
+    
+    return value
 }
 
 /// Asks for user input.
@@ -1186,7 +1191,7 @@ func proximateEqual<T>(lhs: T, rhs: T, threshold: T) -> Bool where T: Numeric, T
 ///   - commands: The commands to run. Put each line of command into an array.
 ///
 /// - Returns: The result of commands.
-func shell(_ commands: [String]) -> String? {
+@discardableResult func shell(_ commands: [String]) -> String? {
     let task = Process()
     let pipe = Pipe()
     let command = commands.reduce("", { $0 + "\n" + $1})
