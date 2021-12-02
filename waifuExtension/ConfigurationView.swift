@@ -66,7 +66,7 @@ struct ConfigurationView_Previews: PreviewProvider {
 
 struct Configuration: Codable {
     
-    var isLogEnabled = true
+    var isLogEnabled = false
     
     var saveFolder: String {
         get {
