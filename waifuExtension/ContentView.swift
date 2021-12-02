@@ -127,7 +127,7 @@ extension Array where Element == WorkItem {
                     let step = Int((vidLength.value / Int64(requiredFramesCount)))
                     
                     print("frames to process: \(requiredFramesCount)")
-                    FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames").generateDirectory()
+                    FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames").generateDirectory(isFolder: true)
                     
                     DispatchQueue.concurrentPerform(iterations: requiredFramesCount) { frameCounter in
                         autoreleasepool {
@@ -191,11 +191,11 @@ extension Array where Element == WorkItem {
                 guard !isProcessingCancelled else { return }
                 
                 let currentVideo = videos[videoIndex]
-                let filePath = currentVideo.finderItem.relativePath ?? currentVideo.finderItem.fileName!
+                let filePath = currentVideo.finderItem.relativePath ?? (currentVideo.finderItem.fileName! + currentVideo.finderItem.extensionName!)
                 
                 status("splitting audio for \(filePath)")
                 
-                FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)").generateDirectory()
+                FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)").generateDirectory(isFolder: true)
                 let audioPath = "\(Configuration.main.saveFolder)/tmp/\(filePath)/audio.m4a"
                 try! currentVideo.finderItem.saveAudioTrack(to: audioPath)
                 
@@ -215,9 +215,9 @@ extension Array where Element == WorkItem {
                     FinderItem.mergeVideoWithAudio(videoUrl: URL(fileURLWithPath: outputPath), audioUrl: URL(fileURLWithPath: audioPath)) { _ in
                         status("Completed")
                         
-                        let destinationFinderItem = FinderItem(at: "\(Configuration.main.saveFolder)/\(filePath).mov")
+                        let destinationFinderItem = FinderItem(at: "\(Configuration.main.saveFolder)/\(filePath)")
                         if destinationFinderItem.isExistence { try! destinationFinderItem.removeFile() }
-                        try! FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/\(currentVideo.finderItem.fileName!).mov").copy(to: destinationFinderItem.path)
+                        try! FinderItem(at: outputPath).copy(to: destinationFinderItem.path)
                         try! FinderItem(at: "\(Configuration.main.saveFolder)/tmp").removeFile()
                         
                         didFinishOneItem(videoIndex + 1, videos.count)

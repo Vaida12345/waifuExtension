@@ -256,9 +256,9 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     /// Generates the desired folders at the path.
     ///
     /// - Note: This function also generates all the folders containing the final folder.
-    func generateDirectory() {
+    func generateDirectory(isFolder: Bool = false) {
         var folders = self.pathArray
-        if folders.last!.contains(".") { folders.removeLast() }
+        if !isFolder && folders.last!.contains(".") { folders.removeLast() }
         
         for i in 1..<folders.count {
             let path = folders[0...i].reduce("", { $0 + "/" + $1 })
