@@ -66,7 +66,7 @@ struct ConfigurationView_Previews: PreviewProvider {
 
 struct Configuration: Codable {
     
-    var isLogEnabled = false
+    var isLogEnabled = true
     
     var saveFolder: String {
         get {
@@ -97,11 +97,6 @@ struct Configuration: Codable {
                     item.generateDirectory()
                     return configuration.privateSaveFolder
                 }
-                guard item.children == nil || item.children!.isEmpty else {
-                    let path = configuration.privateSaveFolder + "/Waifu Output"
-                    FinderItem(at: path).generateDirectory()
-                    return path
-                }
                 return configuration.privateSaveFolder
             }()
             return configuration
@@ -116,11 +111,6 @@ struct Configuration: Codable {
                 guard item.isExistence else {
                     item.generateDirectory()
                     return configuration.privateSaveFolder
-                }
-                guard item.children == nil || item.children!.isEmpty else {
-                    let path = configuration.privateSaveFolder + "/Waifu Output"
-                    FinderItem(at: path).generateDirectory()
-                    return path
                 }
                 return configuration.privateSaveFolder
             }()

@@ -633,7 +633,7 @@
 				CODE_SIGN_ENTITLEMENTS = waifuExtension/waifuExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2.5.7b;
+				CURRENT_PROJECT_VERSION = 2.5.7c;
 				DEVELOPMENT_ASSET_PATHS = "\"waifuExtension/Preview Content\"";
 				DEVELOPMENT_TEAM = 3PH93LN984;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -663,7 +663,7 @@
 				CODE_SIGN_ENTITLEMENTS = waifuExtension/waifuExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2.5.7b;
+				CURRENT_PROJECT_VERSION = 2.5.7c;
 				DEVELOPMENT_ASSET_PATHS = "\"waifuExtension/Preview Content\"";
 				DEVELOPMENT_TEAM = 3PH93LN984;
 				ENABLE_HARDENED_RUNTIME = YES;

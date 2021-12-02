@@ -626,7 +626,8 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         }
         
         let mutableVideoComposition: AVMutableVideoComposition = AVMutableVideoComposition()
-        mutableVideoComposition.frameDuration = CMTimeMake(value: 1, timescale: Int32(aVideoAsset.tracks(withMediaType: .video).first!.nominalFrameRate))
+        let frame = Fraction(aVideoAsset.tracks(withMediaType: .video).first!.nominalFrameRate)
+        mutableVideoComposition.frameDuration = CMTimeMake(value: Int64(frame.denominator), timescale: Int32(frame.numerator))
         mutableVideoComposition.renderSize = aVideoAsset.tracks(withMediaType: .video).first!.naturalSize
         
         let outputURL = videoUrl

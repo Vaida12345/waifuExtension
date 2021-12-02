@@ -13,7 +13,7 @@ struct waifuExtensionApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .frame(minWidth: 600, maxWidth: .infinity, minHeight: 350, maxHeight: .infinity)
                 .onAppear {
                     let finderItem = FinderItem(at: "\(NSHomeDirectory())/tmp")
                     if finderItem.isExistence {
