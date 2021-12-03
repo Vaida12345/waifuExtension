@@ -130,6 +130,7 @@ extension Array where Element == WorkItem {
                     FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames").generateDirectory(isFolder: true)
                     FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames").generateDirectory(isFolder: true)
                     let factor: Double = chosenScaleLevel != nil && frameInterpolation != nil ? 2 : 1
+                    var colorSpace: CGColorSpace? = nil
                     
                     DispatchQueue.concurrentPerform(iterations: requiredFramesCount) { frameCounter in
                         autoreleasepool {
@@ -146,6 +147,9 @@ extension Array where Element == WorkItem {
                                 imageRef = try imageGenerator.copyCGImage(at: time, actualTime: nil)
                             } catch {
                                 print(error)
+                            }
+                            if colorSpace == nil {
+                                colorSpace = imageRef?.colorSpace
                             }
                             var thumbnail = NSImage(cgImage: imageRef!, size: NSSize(width: imageRef!.width, height: imageRef!.height))
                             
@@ -170,15 +174,32 @@ extension Array where Element == WorkItem {
                             while sequence.count < 6 { sequence.insert("0", at: sequence.startIndex) }
                             
                             thumbnail.write(to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(sequence).png")
-                            
-                            // add frames
-                            if frameInterpolation != nil {
-                                guard frameCounter != 0 else {
-                                    var previousSequence = String(frameCounter - 1)
+                        }
+                    }
+                    
+                    if frameInterpolation != nil {
+                        var frameCounter = 0
+                        
+                        while frameCounter < requiredFramesCount {
+                            autoreleasepool {
+                                
+                                var sequence = String(frameCounter)
+                                while sequence.count < 6 { sequence.insert("0", at: sequence.startIndex) }
+                                
+                                // add frames
+                                
+                                if frameCounter == 0 {
+                                    var previousSequence = String(0)
                                     while previousSequence.count < 6 { previousSequence.insert("0", at: previousSequence.startIndex) }
                                     try! FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(sequence).png").copy(to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(previousSequence).png")
+                                    frameCounter += 1
+                                    
+                                    currentVideo.progress += 1 / Double(requiredFramesCount) / factor
+                                    onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / Double(totalItemCounter))
+                                    
                                     return
                                 }
+                                
                                 var previousSequence = String(frameCounter - 1)
                                 while previousSequence.count < 6 { previousSequence.insert("0", at: previousSequence.startIndex) }
                                 
@@ -208,9 +229,14 @@ extension Array where Element == WorkItem {
                                 
                                 currentVideo.progress += 1 / Double(requiredFramesCount) / factor
                                 onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / Double(totalItemCounter))
+                                
+                                
+                                frameCounter += 1
                             }
                         }
                     }
+                    
+                    
                     
                     // status: merge videos
                     
@@ -222,14 +248,14 @@ extension Array where Element == WorkItem {
                     
                     if frameInterpolation == nil {
                         let enlargedFrames: [FinderItem] = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames").children!
-                        FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: mergedVideoPath, videoSize: CGSize(width: arbitraryFrameCGImage.width, height: arbitraryFrameCGImage.height), videoFPS: currentVideo.finderItem.frameRate!) {
+                        FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: mergedVideoPath, videoSize: CGSize(width: arbitraryFrameCGImage.width, height: arbitraryFrameCGImage.height), videoFPS: currentVideo.finderItem.frameRate!, colorSpace: colorSpace) {
                             
                             // completion after all videos are finished.
                             completion()
                         }
                     } else {
                         let enlargedFrames: [FinderItem] = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames").children!
-                        FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: mergedVideoPath, videoSize: CGSize(width: arbitraryFrameCGImage.width, height: arbitraryFrameCGImage.height), videoFPS: currentVideo.finderItem.frameRate! * Float(frameInterpolation!)) {
+                        FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: mergedVideoPath, videoSize: CGSize(width: arbitraryFrameCGImage.width, height: arbitraryFrameCGImage.height), videoFPS: currentVideo.finderItem.frameRate! * Float(frameInterpolation!), colorSpace: colorSpace) {
                             
                             // completion after all videos are finished.
                             completion()

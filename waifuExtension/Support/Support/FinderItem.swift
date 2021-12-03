@@ -671,7 +671,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     /// Convert image sequence to video.
     ///
     /// from [stackoverflow](https://stackoverflow.com/questions/3741323/how-do-i-export-uiimage-array-as-a-movie/3742212#36297656)
-    static func convertImageSequenceToVideo(_ allImages: [FinderItem], videoPath: String, videoSize: CGSize, videoFPS: Float, completion: (()->Void)? = nil) {
+    static func convertImageSequenceToVideo(_ allImages: [FinderItem], videoPath: String, videoSize: CGSize, videoFPS: Float, colorSpace: CGColorSpace? = nil, completion: (()->Void)? = nil) {
         
         FinderItem(at: videoPath).generateDirectory()
         
@@ -820,7 +820,12 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
             // Draw image into context
             let drawCGRect = CGRect(x: 0, y: 0, width: videoSize.width, height: videoSize.height)
             var drawRect = NSRectFromCGRect(drawCGRect);
-            let cgImage = image.image!.cgImage(forProposedRect: &drawRect, context: nil, hints: nil)!
+            var cgImage = image.image!.cgImage(forProposedRect: &drawRect, context: nil, hints: nil)!
+            
+            if colorSpace != nil && colorSpace! != cgImage.colorSpace {
+                cgImage = cgImage.copy(colorSpace: colorSpace!)!
+            }
+            
             context.draw(cgImage, in: CGRect(x: 0.0,y: 0.0, width: size.width,height: size.height))
             
             CVPixelBufferUnlockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: CVOptionFlags(0)))
