@@ -1,12 +1,11 @@
 # waifuExtension
 The waifu2x on Mac.
 
-Use this app to enlarge your images, videos with Machine Learning, interpolate frames for your video.
-
 The new version is capable of taking advantages of CPU, GPU, and [ANE](https://github.com/hollance/neural-engine).
 
 ## Usage
-Enlarge videos or images with machine learning on Mac.
+- Enlarge videos or images with machine learning on Mac.
+- Interpolate frames for videos.
 
 ## Install
 Files and source code could be found in [releases](https://github.com/Vaida12345/waifuExtension/releases).
