@@ -173,33 +173,41 @@ extension Array where Element == WorkItem {
                             
                             // add frames
                             if frameInterpolation != nil {
-                                guard frameCounter < requiredFramesCount else { return }
-                                var nextSequence = String(frameCounter + 1)
-                                while nextSequence.count < 6 { nextSequence.insert("0", at: nextSequence.startIndex) }
+                                guard frameCounter != 0 else {
+                                    var previousSequence = String(frameCounter - 1)
+                                    while previousSequence.count < 6 { previousSequence.insert("0", at: previousSequence.startIndex) }
+                                    try! FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(sequence).png").copy(to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(previousSequence).png")
+                                    return
+                                }
+                                var previousSequence = String(frameCounter - 1)
+                                while previousSequence.count < 6 { previousSequence.insert("0", at: previousSequence.startIndex) }
                                 
                                 var processedSequence = String(frameCounter * frameInterpolation!)
                                 while processedSequence.count < 6 { processedSequence.insert("0", at: processedSequence.startIndex) }
                                 
-                                var intermediateSequence = String(frameCounter * frameInterpolation! + frameInterpolation!)
+                                var intermediateSequence = String(frameCounter * frameInterpolation! - frameInterpolation! / 2)
                                 while intermediateSequence.count < 6 { intermediateSequence.insert("0", at: intermediateSequence.startIndex) }
                                 
-                                // will not save the last frame
+                                // will not save the previous frame
                                 
                                 try! FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(sequence).png").copy(to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(processedSequence).png")
                                 
-                                FinderItem.addFrame(fromFrame1: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(sequence).png", fromFrame2: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(nextSequence).png", to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(intermediateSequence).png")
+                                FinderItem.addFrame(fromFrame1: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(previousSequence).png", fromFrame2: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(sequence).png", to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(intermediateSequence).png")
                                 
                                 if frameInterpolation! == 4 {
-                                    var intermediateSequence1 = String(frameCounter * frameInterpolation! + frameInterpolation!)
+                                    var intermediateSequence1 = String(frameCounter * frameInterpolation! - frameInterpolation! / 2 - 1)
                                     while intermediateSequence1.count < 6 { intermediateSequence1.insert("0", at: intermediateSequence1.startIndex) }
                                     
-                                    var intermediateSequence3 = String(frameCounter * frameInterpolation! + frameInterpolation!)
+                                    var intermediateSequence3 = String(frameCounter * frameInterpolation! - frameInterpolation! / 2 + 1)
                                     while intermediateSequence3.count < 6 { intermediateSequence3.insert("0", at: intermediateSequence3.startIndex) }
                                     
-                                    FinderItem.addFrame(fromFrame1: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(sequence).png", fromFrame2: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(intermediateSequence).png", to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(intermediateSequence1).png")
+                                    FinderItem.addFrame(fromFrame1: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(previousSequence).png", fromFrame2: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(intermediateSequence).png", to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(intermediateSequence1).png")
                                     
-                                    FinderItem.addFrame(fromFrame1: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(intermediateSequence).png", fromFrame2: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(nextSequence).png", to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(intermediateSequence3).png")
+                                    FinderItem.addFrame(fromFrame1: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(intermediateSequence).png", fromFrame2: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(sequence).png", to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(intermediateSequence3).png")
                                 }
+                                
+                                currentVideo.progress += 1 / Double(requiredFramesCount) / factor
+                                onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / Double(totalItemCounter))
                             }
                         }
                     }
@@ -330,9 +338,9 @@ struct ContentView: View {
     @State var isCreatingPDF: Bool = false
     @State var modelUsed: Waifu2xModel? = nil
     @State var pdfbackground = DispatchQueue(label: "PDF Background")
-    @State var chosenScaleLevel: String = "1"
+    @State var chosenScaleLevel: String = "none"
     @State var chosenComputeOption = "GPU"
-    @State var frameInterpolation = "none"
+    @State var frameInterpolation = "2"
     
     var body: some View {
         VStack {

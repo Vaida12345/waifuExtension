@@ -53,6 +53,17 @@ struct ConfigurationView: View {
         }
         .onChange(of: saveFolder) { newValue in
             Configuration.main.saveFolder = saveFolder
+            Configuration.main.getFolder = {()-> String in
+                guard Configuration.main.privateSaveFolder != "/Downloads/Waifu Output" else {
+                    return "\(NSHomeDirectory())/Downloads/Waifu Output"
+                }
+                let item = FinderItem(at: Configuration.main.privateSaveFolder)
+                guard item.isExistence else {
+                    item.generateDirectory()
+                    return Configuration.main.privateSaveFolder
+                }
+                return Configuration.main.privateSaveFolder
+            }()
         }
     }
     
@@ -83,8 +94,8 @@ struct Configuration: Codable {
     
     var modelStyle: String = "anime"
     
-    private var privateSaveFolder = "/Downloads/Waifu Output"
-    private var getFolder = ""
+    var privateSaveFolder = "/Downloads/Waifu Output"
+    var getFolder = ""
     
     static var main: Configuration = { () -> Configuration in
         if var configuration = try? FinderItem.loadJSON(from: "\(NSHomeDirectory())/configuration.json", type: Configuration.self) {

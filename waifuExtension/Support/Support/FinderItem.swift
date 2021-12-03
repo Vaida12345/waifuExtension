@@ -935,6 +935,9 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     
     static func addFrame(fromFrame1: String, fromFrame2: String, to: String) {
         let path = Bundle.main.bundlePath + "/Contents/Resources/dain-ncnn-vulkan-20210210-macos"
+        print(fromFrame1)
+        print(fromFrame2)
+        print(to)
         print(shell(["cd \(path.replacingOccurrences(of: " ", with: "\\ "))", "./dain-ncnn-vulkan  -0 \(fromFrame1.replacingOccurrences(of: " ", with: "\\ ")) -1 \(fromFrame2.replacingOccurrences(of: " ", with: "\\ ")) -o \(to.replacingOccurrences(of: " ", with: "\\ "))"])!)
     }
 }
