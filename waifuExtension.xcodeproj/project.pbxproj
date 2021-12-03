@@ -77,6 +77,7 @@
 		B49BFDB4274B4BC50046FDDF /* NSImage+Bicubic.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD92274B4BC50046FDDF /* NSImage+Bicubic.swift */; };
 		B49BFDB5274B4BC50046FDDF /* MetalBicubic.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD93274B4BC50046FDDF /* MetalBicubic.swift */; };
 		B4B9EFF0274BC50400A8D380 /* UIImage+Reload.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4B9EFEF274BC50400A8D380 /* UIImage+Reload.swift */; };
+		B4BC66A12759BC7700627EAE /* dain-ncnn-vulkan-20210210-macos in Resources */ = {isa = PBXBuildFile; fileRef = B4BC66A02759BC7700627EAE /* dain-ncnn-vulkan-20210210-macos */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -153,6 +154,7 @@
 		B49BFD92274B4BC50046FDDF /* NSImage+Bicubic.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSImage+Bicubic.swift"; sourceTree = "<group>"; };
 		B49BFD93274B4BC50046FDDF /* MetalBicubic.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MetalBicubic.swift; sourceTree = "<group>"; };
 		B4B9EFEF274BC50400A8D380 /* UIImage+Reload.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIImage+Reload.swift"; sourceTree = "<group>"; };
+		B4BC66A02759BC7700627EAE /* dain-ncnn-vulkan-20210210-macos */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "dain-ncnn-vulkan-20210210-macos"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -194,6 +196,7 @@
 				B437F140275334CB00A1CE41 /* Models */,
 				B41C474A274AAF6A0024ECB7 /* Support */,
 				B49BFD6F274B4BC50046FDDF /* waifu2x-mac */,
+				B4BC66A02759BC7700627EAE /* dain-ncnn-vulkan-20210210-macos */,
 				B41C473F274AA7850024ECB7 /* Assets.xcassets */,
 				B41C4744274AA7850024ECB7 /* waifuExtension.entitlements */,
 				B41C4741274AA7850024ECB7 /* Preview Content */,
@@ -423,6 +426,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B4BC66A12759BC7700627EAE /* dain-ncnn-vulkan-20210210-macos in Resources */,
 				B41C4743274AA7850024ECB7 /* Preview Assets.xcassets in Resources */,
 				B41C4740274AA7850024ECB7 /* Assets.xcassets in Resources */,
 				B41527FB27555EC80051CE81 /* README.md in Resources */,

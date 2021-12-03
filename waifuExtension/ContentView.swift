@@ -37,7 +37,7 @@ extension Array where Element == WorkItem {
         return self.contains(WorkItem(at: finderItem, type: .image))
     }
     
-    func work(_ chosenScaleLevel: Int, modelUsed: Waifu2xModel, isUsingGPU: Bool, onStatusChanged status: @escaping ((_ status: String)->()), onStatusProgressChanged: @escaping ((_ progress: Int?, _ total: Int?)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
+    func work(_ chosenScaleLevel: Int?, modelUsed: Waifu2xModel?, isUsingGPU: Bool, frameInterpolation: Int?, onStatusChanged status: @escaping ((_ status: String)->()), onStatusProgressChanged: @escaping ((_ progress: Int?, _ total: Int?)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
         
         let images = self.filter({ $0.type == .image })
         let videos = self.filter({ $0.type == .video })
@@ -71,12 +71,12 @@ extension Array where Element == WorkItem {
                     }
                     waifu2x.isGPUEnabled = isUsingGPU
                     
-                    if chosenScaleLevel >= 2 {
-                        for _ in 1...chosenScaleLevel {
-                            image = waifu2x.run(image, model: modelUsed)!.reload()
+                    if chosenScaleLevel! >= 2 {
+                        for _ in 1...chosenScaleLevel! {
+                            image = waifu2x.run(image, model: modelUsed!)!.reload()
                         }
                     } else {
-                        image = waifu2x.run(image, model: modelUsed)!
+                        image = waifu2x.run(image, model: modelUsed!)!
                     }
                     
                     let outputFileName: String
@@ -128,6 +128,8 @@ extension Array where Element == WorkItem {
                     
                     print("frames to process: \(requiredFramesCount)")
                     FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames").generateDirectory(isFolder: true)
+                    FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames").generateDirectory(isFolder: true)
+                    let factor: Double = chosenScaleLevel != nil && frameInterpolation != nil ? 2 : 1
                     
                     DispatchQueue.concurrentPerform(iterations: requiredFramesCount) { frameCounter in
                         autoreleasepool {
@@ -148,24 +150,57 @@ extension Array where Element == WorkItem {
                             var thumbnail = NSImage(cgImage: imageRef!, size: NSSize(width: imageRef!.width, height: imageRef!.height))
                             
                             // enlarge image
-                            
-                            let waifu2x = Waifu2x()
-                            
-                            if chosenScaleLevel >= 2 {
-                                for _ in 1...chosenScaleLevel {
-                                    thumbnail = waifu2x.run(thumbnail.reload(withIndex: "\(frameCounter)"), model: modelUsed)!
+                            if chosenScaleLevel != nil {
+                                
+                                let waifu2x = Waifu2x()
+                                
+                                if chosenScaleLevel! >= 2 {
+                                    for _ in 1...chosenScaleLevel! {
+                                        thumbnail = waifu2x.run(thumbnail.reload(withIndex: "\(frameCounter)"), model: modelUsed!)!
+                                    }
+                                } else {
+                                    thumbnail = waifu2x.run(thumbnail.reload(withIndex: "\(frameCounter)"), model: modelUsed!)!
                                 }
-                            } else {
-                                thumbnail = waifu2x.run(thumbnail.reload(withIndex: "\(frameCounter)"), model: modelUsed)!
+                                
+                                currentVideo.progress += 1 / Double(requiredFramesCount) / factor
+                                onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / Double(totalItemCounter))
                             }
-                            
-                            currentVideo.progress += 1 / Double(requiredFramesCount)
-                            onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / Double(totalItemCounter))
                             
                             var sequence = String(frameCounter)
                             while sequence.count < 6 { sequence.insert("0", at: sequence.startIndex) }
                             
                             thumbnail.write(to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(sequence).png")
+                            
+                            // add frames
+                            if frameInterpolation != nil {
+                                guard frameCounter < requiredFramesCount else { return }
+                                var nextSequence = String(frameCounter + 1)
+                                while nextSequence.count < 6 { nextSequence.insert("0", at: nextSequence.startIndex) }
+                                
+                                var processedSequence = String(frameCounter * frameInterpolation!)
+                                while processedSequence.count < 6 { processedSequence.insert("0", at: processedSequence.startIndex) }
+                                
+                                var intermediateSequence = String(frameCounter * frameInterpolation! + frameInterpolation!)
+                                while intermediateSequence.count < 6 { intermediateSequence.insert("0", at: intermediateSequence.startIndex) }
+                                
+                                // will not save the last frame
+                                
+                                try! FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(sequence).png").copy(to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(processedSequence).png")
+                                
+                                FinderItem.addFrame(fromFrame1: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(sequence).png", fromFrame2: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(nextSequence).png", to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(intermediateSequence).png")
+                                
+                                if frameInterpolation! == 4 {
+                                    var intermediateSequence1 = String(frameCounter * frameInterpolation! + frameInterpolation!)
+                                    while intermediateSequence1.count < 6 { intermediateSequence1.insert("0", at: intermediateSequence1.startIndex) }
+                                    
+                                    var intermediateSequence3 = String(frameCounter * frameInterpolation! + frameInterpolation!)
+                                    while intermediateSequence3.count < 6 { intermediateSequence3.insert("0", at: intermediateSequence3.startIndex) }
+                                    
+                                    FinderItem.addFrame(fromFrame1: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(sequence).png", fromFrame2: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(intermediateSequence).png", to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(intermediateSequence1).png")
+                                    
+                                    FinderItem.addFrame(fromFrame1: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(intermediateSequence).png", fromFrame2: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(nextSequence).png", to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(intermediateSequence3).png")
+                                }
+                            }
                         }
                     }
                     
@@ -176,12 +211,21 @@ extension Array where Element == WorkItem {
                     
                     let arbitraryFrame = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/000000.png")
                     let arbitraryFrameCGImage = arbitraryFrame.image!.cgImage(forProposedRect: nil, context: nil, hints: nil)!
-                    let enlargedFrames: [FinderItem] = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames").children!
                     
-                    FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: mergedVideoPath, videoSize: CGSize(width: arbitraryFrameCGImage.width, height: arbitraryFrameCGImage.height), videoFPS: currentVideo.finderItem.frameRate!) {
-                        
-                        // completion after all videos are finished.
-                        completion()
+                    if frameInterpolation == nil {
+                        let enlargedFrames: [FinderItem] = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames").children!
+                        FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: mergedVideoPath, videoSize: CGSize(width: arbitraryFrameCGImage.width, height: arbitraryFrameCGImage.height), videoFPS: currentVideo.finderItem.frameRate!) {
+                            
+                            // completion after all videos are finished.
+                            completion()
+                        }
+                    } else {
+                        let enlargedFrames: [FinderItem] = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames").children!
+                        FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: mergedVideoPath, videoSize: CGSize(width: arbitraryFrameCGImage.width, height: arbitraryFrameCGImage.height), videoFPS: currentVideo.finderItem.frameRate! * Float(frameInterpolation!)) {
+                            
+                            // completion after all videos are finished.
+                            completion()
+                        }
                     }
                 }
             }
@@ -286,8 +330,9 @@ struct ContentView: View {
     @State var isCreatingPDF: Bool = false
     @State var modelUsed: Waifu2xModel? = nil
     @State var pdfbackground = DispatchQueue(label: "PDF Background")
-    @State var chosenScaleLevel: Int = 1
+    @State var chosenScaleLevel: String = "1"
     @State var chosenComputeOption = "GPU"
+    @State var frameInterpolation = "none"
     
     var body: some View {
         VStack {
@@ -358,10 +403,10 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $isSheetShown, onDismiss: nil) {
-            SpecificationsView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel, chosenComputeOption: $chosenComputeOption)
+            SpecificationsView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel, chosenComputeOption: $chosenComputeOption, frameInterpolation: $frameInterpolation)
         }
         .sheet(isPresented: $isProcessing, onDismiss: nil) {
-            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF, chosenComputeOption: $chosenComputeOption)
+            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF, chosenComputeOption: $chosenComputeOption, frameInterpolation: $frameInterpolation)
         }
         .sheet(isPresented: $isCreatingPDF, onDismiss: nil) {
             ProcessingPDFView(isCreatingPDF: $isCreatingPDF, background: $pdfbackground)
@@ -498,12 +543,13 @@ struct SpecificationsView: View {
     @Binding var isShown: Bool
     @Binding var isProcessing: Bool
     @Binding var modelUsed: Waifu2xModel?
-    @Binding var chosenScaleLevel: Int {
+    @Binding var chosenScaleLevel: String {
         didSet {
             findModelClass()
         }
     }
     @Binding var chosenComputeOption: String
+    @Binding var frameInterpolation: String
     
     let styleNames: [String] = ["anime", "photo"]
     @State var chosenStyle = Configuration.main.modelStyle {
@@ -519,12 +565,13 @@ struct SpecificationsView: View {
         }
     }
     
-    let scaleLevels: [Int] = [Int](0...5)
+    let scaleLevels: [String] = ["none", "0", "1", "2", "3", "4", "5"]
     
     @State var modelClass: [String] = []
     @State var chosenModelClass: String = ""
     
     let computeOptions = ["CPU", "GPU"]
+    let frameInterpolationOptions = ["none", "2", "4"]
     
     @State var isShowingStyleHint: Bool = false
     @State var isShowingNoiceHint: Bool = false
@@ -532,8 +579,14 @@ struct SpecificationsView: View {
     @State var isShowingModelClassHint: Bool = false
     @State var isShowingGPUHint: Bool = false
     @State var isShowingVideoSegmentHint: Bool = false
+    @State var isShowingFrameInterpolationHint: Bool = false
     
     func findModelClass() {
+        guard let chosenScaleLevel = Int(chosenScaleLevel) else {
+            self.modelClass = []
+            self.chosenModelClass = ""
+            return
+        }
         self.modelClass = Array(Set(Waifu2xModel.allModels.filter({ ($0.style == chosenStyle || $0.style == nil) && $0.noise == Int(chosenNoiseLevel) && $0.scale == ( chosenScaleLevel == 0 ? 1 : 2 ) }).map({ $0.class })))
         self.chosenModelClass = modelClass[0]
     }
@@ -545,21 +598,15 @@ struct SpecificationsView: View {
             
             HStack(spacing: 10) {
                 VStack(spacing: 19) {
-                    HStack {
-                        Spacer()
-                        Text("Style:")
-                            .padding(.bottom)
-                            .onHover { bool in
-                                isShowingStyleHint = bool
-                            }
-                    }
-                    
-                    HStack {
-                        Spacer()
-                        Text("Denoise Level:")
-                            .onHover { bool in
-                                isShowingNoiceHint = bool
-                            }
+                    if Int(chosenScaleLevel) != nil {
+                        HStack {
+                            Spacer()
+                            Text("Style:")
+                                .padding(.bottom)
+                                .onHover { bool in
+                                    isShowingStyleHint = bool
+                                }
+                        }
                     }
                     
                     HStack {
@@ -568,6 +615,16 @@ struct SpecificationsView: View {
                             .onHover { bool in
                                 isShowingScaleHint = bool
                             }
+                    }
+                    
+                    if Int(chosenScaleLevel) != nil {
+                        HStack {
+                            Spacer()
+                            Text("Denoise Level:")
+                                .onHover { bool in
+                                    isShowingNoiceHint = bool
+                                }
+                        }
                     }
                     
                     if !modelClass.isEmpty {
@@ -588,44 +645,44 @@ struct SpecificationsView: View {
                                 isShowingGPUHint = bool
                             }
                     }
+                    
+                    if !finderItems.allSatisfy({ $0.finderItem.avAsset == nil }) {
+                        HStack {
+                            Spacer()
+                            Text("Frame Interpolation:")
+                                .onHover { bool in
+                                    isShowingFrameInterpolationHint = bool
+                                }
+                        }
+                        .padding(.top)
+                    }
                 }
                 
                 VStack(spacing: 15) {
                     
-                    Menu(chosenStyle) {
-                        ForEach(styleNames, id: \.self) { item in
-                            Button(item) {
-                                chosenStyle = item
+                    if Int(chosenScaleLevel) != nil {
+                        Menu(chosenStyle) {
+                            ForEach(styleNames, id: \.self) { item in
+                                Button(item) {
+                                    chosenStyle = item
+                                }
                             }
                         }
-                    }
-                    .padding(.bottom)
-                    .popover(isPresented: $isShowingStyleHint) {
-                        Text("anime: for illustrations or 2D images or CG")
-                            .padding([.top, .leading, .trailing])
-                            .padding(.bottom, 3)
+                        .padding(.bottom)
+                        .popover(isPresented: $isShowingStyleHint) {
+                            Text("anime: for illustrations or 2D images or CG")
+                                .padding([.top, .leading, .trailing])
+                                .padding(.bottom, 3)
                             
-                        Text("photo: for photos of real world or 3D images")
-                            .padding([.leading, .bottom, .trailing])
-                        
-                    }
-                    
-                    Menu(chosenNoiseLevel.description) {
-                        ForEach(noiseLevels, id: \.self) { item in
-                            Button(item.description) {
-                                chosenNoiseLevel = item
-                            }
+                            Text("photo: for photos of real world or 3D images")
+                                .padding([.leading, .bottom, .trailing])
+                            
                         }
                     }
-                    .popover(isPresented: $isShowingNoiceHint) {
-                        Text("denoise level 3 recommended.\nHint: Don't know which to choose? go to Compare > Compare Models and try by yourself!")
-                            .padding(.all)
-                        
-                    }
                     
-                    Menu(pow(2, chosenScaleLevel).description) {
+                    Menu(Int(chosenScaleLevel) != nil ? pow(2, Int(chosenScaleLevel)!).description : chosenScaleLevel) {
                         ForEach(scaleLevels, id: \.self) { item in
-                            Button(pow(2, item).description) {
+                            Button(Int(item) != nil ? pow(2, Int(item)!).description : item) {
                                 chosenScaleLevel = item
                             }
                         }
@@ -634,6 +691,20 @@ struct SpecificationsView: View {
                         Text("Choose how much you want to scale.")
                             .padding(.all)
                         
+                    }
+                    
+                    if Int(chosenScaleLevel) != nil {
+                        Menu(chosenNoiseLevel.description) {
+                            ForEach(noiseLevels, id: \.self) { item in
+                                Button(item.description) {
+                                    chosenNoiseLevel = item
+                                }
+                            }
+                        }
+                        .popover(isPresented: $isShowingNoiceHint) {
+                            Text("denoise level 3 recommended.\nHint: Don't know which to choose? go to Compare > Compare Models and try by yourself!")
+                                .padding(.all)
+                        }
                     }
                     
                     if !modelClass.isEmpty {
@@ -664,6 +735,22 @@ struct SpecificationsView: View {
                             .padding(.all)
                         
                     }
+                    
+                    if !finderItems.allSatisfy({ $0.finderItem.avAsset == nil }) {
+                        Menu(Int(frameInterpolation) != nil ? frameInterpolation + "x" : frameInterpolation) {
+                            ForEach(frameInterpolationOptions, id: \.self) { item in
+                                Button(Int(item) != nil ? item + "x" : item) {
+                                    frameInterpolation = item
+                                }
+                            }
+                        }
+                        .padding(.top)
+                        .popover(isPresented: $isShowingFrameInterpolationHint) {
+                            Text("Enable frame interpolation will make video smoother")
+                                .padding(.all)
+                            
+                        }
+                    }
                 }
                 
             }
@@ -687,12 +774,16 @@ struct SpecificationsView: View {
                     isProcessing = true
                     isShown = false
                     
-                    self.modelUsed = Waifu2xModel.allModels.filter({ ($0.style == chosenStyle || $0.style == nil) && $0.noise == Int(chosenNoiseLevel) && $0.scale == ( chosenScaleLevel == 0 ? 1 : 2 ) && $0.class == self.chosenModelClass }).first!
+                    if chosenScaleLevel == "none" {
+                        self.modelUsed = nil
+                    } else {
+                        self.modelUsed = Waifu2xModel.allModels.filter({ ($0.style == chosenStyle || $0.style == nil) && $0.noise == Int(chosenNoiseLevel) && $0.scale == ( Int(chosenScaleLevel)! == 0 ? 1 : 2 ) && $0.class == self.chosenModelClass }).first!
+                    }
                     
                 } label: {
                     Text("OK")
                         .frame(width: 80)
-                }.disabled(modelClass.isEmpty)
+                }.disabled(frameInterpolation == "none" && chosenScaleLevel == "none")
             }
                 .padding(.all)
         }
@@ -715,9 +806,10 @@ struct ProcessingView: View {
     @Binding var finderItems: [WorkItem]
     @Binding var modelUsed: Waifu2xModel?
     @Binding var isSheetShown: Bool
-    @Binding var chosenScaleLevel: Int
+    @Binding var chosenScaleLevel: String
     @Binding var isCreatingPDF: Bool
     @Binding var chosenComputeOption: String
+    @Binding var frameInterpolation: String
     
     @State var processedItemsCounter: Int = 0
     @State var currentTimeTaken: Double = 0 // up to 1s
@@ -767,7 +859,9 @@ struct ProcessingView: View {
                             Text("progress:")
                         }
                         
-                        Text("ML Model:")
+                        if modelUsed != nil {
+                            Text("ML Model:")
+                        }
                     }
                     
                     Spacer()
@@ -791,7 +885,9 @@ struct ProcessingView: View {
                             Text("\(statusProgress.progress) / \(statusProgress.total)")
                         }
                         
-                        Text(modelUsed!.name)
+                        if modelUsed != nil {
+                            Text(modelUsed!.name)
+                        }
                     }
                     
                     Spacer()
@@ -818,8 +914,8 @@ struct ProcessingView: View {
                         guard progress != 0 else { return "calculating..." }
                         
                         let factor: Int
-                        if chosenScaleLevel > 1 {
-                            factor = chosenScaleLevel
+                        if Int(chosenScaleLevel) != nil && Int(chosenScaleLevel)! > 1 {
+                            factor = Int(chosenScaleLevel)!
                         } else {
                             factor = 1
                         }
@@ -840,8 +936,8 @@ struct ProcessingView: View {
                         guard progress != 0 else { return "calculating..." }
                         
                         let factor: Int
-                        if chosenScaleLevel > 1 {
-                            factor = chosenScaleLevel
+                        if Int(chosenScaleLevel) != nil && Int(chosenScaleLevel)! > 1 {
+                            factor = Int(chosenScaleLevel)!
                         } else {
                             factor = 1
                         }
@@ -876,8 +972,8 @@ struct ProcessingView: View {
                 guard !isCreatingImageSequence else { return 0 }
                 guard !finderItems.isEmpty else { return 1 }
                 let factor: Int
-                if chosenScaleLevel > 1 {
-                    factor = chosenScaleLevel
+                if Int(chosenScaleLevel) != nil && Int(chosenScaleLevel)! > 1 {
+                    factor = Int(chosenScaleLevel)!
                 } else {
                     factor = 1
                 }
@@ -939,7 +1035,7 @@ struct ProcessingView: View {
             .onAppear {
                 
                 self.workItem = DispatchWorkItem(qos: .utility, flags: .inheritQoS) {
-                    finderItems.work(chosenScaleLevel, modelUsed: modelUsed!, isUsingGPU: chosenComputeOption == "GPU") { status in
+                    finderItems.work(Int(chosenScaleLevel), modelUsed: modelUsed, isUsingGPU: chosenComputeOption == "GPU", frameInterpolation: Int(frameInterpolation)) { status in
                         self.status = status
                     } onStatusProgressChanged: { progress,total in
                         if progress != nil {
