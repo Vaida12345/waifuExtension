@@ -19,6 +19,8 @@ The models where obtained from [waifu2x-caffe](https://github.com/lltcggie/waifu
 ## Note
 This app was based on the work of [waifu2x-ios](https://github.com/imxieyi/waifu2x-ios). Nearly all the files in the folder "waifu2x-mac" were created by him. However, modifications were done to improve speed.
 
+The files inside the folder of dain-ncnn-vulkan-20210210-macos can be downloaded [here](https://github.com/nihui/dain-ncnn-vulkan/releases/tag/20210210).
+
 ## Speed
 When processing a standard 1080p image (1920 × 1080), MacBook Pro with the M1 Max chip took only 0.7 seconds.
 
