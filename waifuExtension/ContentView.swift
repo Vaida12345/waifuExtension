@@ -222,9 +222,9 @@ extension Array where Element == WorkItem {
                                     var intermediateSequence3 = String(frameCounter * frameInterpolation! - frameInterpolation! / 2 + 1)
                                     while intermediateSequence3.count < 6 { intermediateSequence3.insert("0", at: intermediateSequence3.startIndex) }
                                     
-                                    FinderItem.addFrame(fromFrame1: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(previousSequence).png", fromFrame2: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(intermediateSequence).png", to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(intermediateSequence1).png")
+                                    FinderItem.addFrame(fromFrame1: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(previousSequence).png", fromFrame2: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(intermediateSequence).png", to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(intermediateSequence1).png")
                                     
-                                    FinderItem.addFrame(fromFrame1: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(intermediateSequence).png", fromFrame2: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(sequence).png", to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(intermediateSequence3).png")
+                                    FinderItem.addFrame(fromFrame1: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(intermediateSequence).png", fromFrame2: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(processedSequence).png", to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(intermediateSequence3).png")
                                 }
                                 
                                 currentVideo.progress += 1 / Double(requiredFramesCount) / factor
@@ -364,9 +364,9 @@ struct ContentView: View {
     @State var isCreatingPDF: Bool = false
     @State var modelUsed: Waifu2xModel? = nil
     @State var pdfbackground = DispatchQueue(label: "PDF Background")
-    @State var chosenScaleLevel: String = "none"
+    @State var chosenScaleLevel: String = "1"
     @State var chosenComputeOption = "GPU"
-    @State var frameInterpolation = "2"
+    @State var frameInterpolation = "none"
     
     var body: some View {
         VStack {
