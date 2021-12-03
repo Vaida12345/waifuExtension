@@ -1,6 +1,8 @@
 # waifuExtension
 The waifu2x on Mac.
 
+Use this app to enlarge your images, videos with Machine Learning, interpolate frames for your video.
+
 The new version is capable of taking advantages of CPU, GPU, and [ANE](https://github.com/hollance/neural-engine).
 
 ## Usage
@@ -36,3 +38,4 @@ You can compare results from different model by choosing Compare > Compare Model
  - [waifu2x-ios](https://github.com/imxieyi/waifu2x-ios) for nearly all the algorithms used to enlarge images.
  - [waifu2x-caffe](https://github.com/lltcggie/waifu2x-caffe) for all the models.
  - [stack overflow](https://stackoverflow.com) for all the solutions.
+ - [dain-ncnn-vulkan](https://github.com/nihui/dain-ncnn-vulkan) for frame implemented AI.
