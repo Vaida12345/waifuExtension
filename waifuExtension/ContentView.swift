@@ -435,7 +435,7 @@ struct ContentView: View {
     @State var pdfbackground = DispatchQueue(label: "PDF Background")
     @State var chosenScaleLevel: String = "1"
     @State var chosenComputeOption = "GPU"
-    @State var videoSegmentLength = 200
+    @State var videoSegmentLength = 3
     @State var frameInterpolation = "none"
     
     var body: some View {

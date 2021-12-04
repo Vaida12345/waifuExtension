@@ -904,7 +904,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     /// merge videos from videos
     ///
     /// from [stackoverflow](https://stackoverflow.com/questions/38972829/swift-merge-avasset-videos-array)
-    static func mergeVideos(from arrayVideos: [AVAsset], toPath: String, frameRate: Float, completion: @escaping (_ urlGet:URL?,_ errorGet:Error?) -> Void) {
+    static func mergeVideos(from arrayVideos: [AVAsset], frameCountArray: [Int] = [], toPath: String, frameRate: Float, completion: @escaping (_ urlGet:URL?,_ errorGet:Error?) -> Void) {
         
         func videoCompositionInstruction(_ track: AVCompositionTrack, asset: AVAsset)
         -> AVMutableVideoCompositionLayerInstruction {
@@ -920,7 +920,9 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         var videoSize: CGSize = CGSize(width: 0.0, height: 0.0)
         
         let mixComposition = AVMutableComposition()
-        for videoAsset in arrayVideos {
+        var index = 0
+        while index < arrayVideos.count {
+            let videoAsset = arrayVideos[index]
             
             let videoTrack = mixComposition.addMutableTrack(withMediaType: AVMediaType.video, preferredTrackID: kCMPersistentTrackID_Invalid)
             do {
@@ -948,6 +950,8 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
             firstInstruction.setOpacity(0.0, at: atTimeM) // hide the video after its duration.
             
             layerInstructionsArray.append(firstInstruction)
+            
+            index += 1
         }
         
         let mainInstruction = AVMutableVideoCompositionInstruction()
