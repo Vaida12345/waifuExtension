@@ -987,19 +987,19 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         let threshold: Double = 50
         while index < Int((Double(arrayVideos.count) / threshold).rounded(.up)) {
             autoreleasepool {
-                
+
                 var sequence = String(index)
                 while sequence.count < 6 { sequence.insert("0", at: sequence.startIndex) }
                 let upperBound = ((index + 1) * Int(threshold)) > arrayVideos.count ? arrayVideos.count : ((index + 1) * Int(threshold))
-                
+
                 mergingVideos(from: Array(arrayVideos[(index * Int(threshold))..<upperBound]), toPath: tempFolder + "/" + sequence + ".m4v") { urlGet, errorGet in
                     finishedCounter += 1
                     guard finishedCounter == Int((Double(arrayVideos.count) / threshold).rounded(.up)) else { return }
                     mergingVideos(from: FinderItem(at: tempFolder).children!, toPath: toPath, completion: completion)
                 }
-                
+
                 index += 1
-                
+
             }
         }
     }
