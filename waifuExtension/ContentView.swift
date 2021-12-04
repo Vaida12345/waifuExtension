@@ -18,17 +18,15 @@ struct orderedImages {
 func addItemIfPossible(of item: FinderItem, to finderItems: inout [WorkItem]) {
     guard !finderItems.contains(item) else { return }
     
-    withAnimation {
-        if item.isFile {
-            guard item.image != nil || item.avAsset != nil else { return }
-            finderItems.append(WorkItem(at: item, type: item.image != nil ? .image : .video))
-        } else {
-            item.iteratedOver { child in
-                guard !finderItems.contains(child) else { return }
-                guard child.image != nil || child.avAsset != nil else { return }
-                child.relativePath = item.fileName! + "/" + child.relativePath(to: item)!
-                finderItems.append(WorkItem(at: child, type: child.image != nil ? .image : .video))
-            }
+    if item.isFile {
+        guard item.image != nil || item.avAsset != nil else { return }
+        finderItems.append(WorkItem(at: item, type: item.image != nil ? .image : .video))
+    } else {
+        item.iteratedOver { child in
+            guard !finderItems.contains(child) else { return }
+            guard child.image != nil || child.avAsset != nil else { return }
+            child.relativePath = item.fileName! + "/" + child.relativePath(to: item)!
+            finderItems.append(WorkItem(at: child, type: child.image != nil ? .image : .video))
         }
     }
 }
