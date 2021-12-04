@@ -129,7 +129,7 @@ extension Array where Element == WorkItem {
                     var segmentSequence = String(segmentIndex)
                     while segmentSequence.count <= 5 { segmentSequence.insert("0", at: segmentSequence.startIndex) }
                     
-                    let path = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/splitVideo/video \(segmentSequence).mov"
+                    let path = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/splitVideo/video \(segmentSequence).m4v"
                     FinderItem(at: path).generateDirectory()
                     paths.append(path)
                     
@@ -144,7 +144,7 @@ extension Array where Element == WorkItem {
                         onStatusProgressChanged(segmentIndex, Int(duration / videoSegmentLength))
                         
                         splitVideo(withIndex: segmentIndex + 1, duration: duration, filePath: filePath, currentVideo: currentVideo, completion: completion)
-                        guard finishedCounter >= Int(duration / videoSegmentLength) else { return }
+                        guard finishedCounter == Int((duration / videoSegmentLength).rounded(.up)) else { return }
                         onStatusProgressChanged(nil, nil)
                         completion()
                     }
@@ -294,17 +294,13 @@ extension Array where Element == WorkItem {
                     
                     // status: merge videos
                     
-                    let mergedVideoPath = "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/videos/\(indexSequence).mov"
+                    let mergedVideoPath = "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/videos/\(indexSequence).m4v"
                     FinderItem(at: mergedVideoPath).generateDirectory()
                     
                     let arbitraryFrame = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/000000.png")
                     let arbitraryFrameCGImage = arbitraryFrame.image!.cgImage(forProposedRect: nil, context: nil, hints: nil)!
                     
-                    do {
-                        try FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/splitVideo/video \(indexSequence).mov").removeFile()
-                    } catch {
-                        
-                    }
+                    try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/splitVideo/video \(indexSequence).m4v").removeFile()
                     
                     if frameInterpolation == nil {
                         let enlargedFrames: [FinderItem] = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames").children!
@@ -355,7 +351,7 @@ extension Array where Element == WorkItem {
                             guard finished == paths.count else { return }
                             guard !isProcessingCancelled else { return }
                             
-                            let outputPath = "\(Configuration.main.saveFolder)/tmp/\(filePath)/\(currentVideo.finderItem.fileName!).mov"
+                            let outputPath = "\(Configuration.main.saveFolder)/tmp/\(filePath)/\(currentVideo.finderItem.fileName!).m4v"
                             
                             FinderItem.mergeVideos(from: FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/videos").children!.map({ $0.avAsset! }), toPath: outputPath, frameRate: currentVideo.finderItem.frameRate! * Float((frameInterpolation == nil ? 1 : frameInterpolation!))) { urlGet, errorGet in
                                 
@@ -443,7 +439,7 @@ struct ContentView: View {
     @State var pdfbackground = DispatchQueue(label: "PDF Background")
     @State var chosenScaleLevel: String = "1"
     @State var chosenComputeOption = "GPU"
-    @State var videoSegmentLength = 200
+    @State var videoSegmentLength = 8
     @State var frameInterpolation = "none"
     
     var body: some View {

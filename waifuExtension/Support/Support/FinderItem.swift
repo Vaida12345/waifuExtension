@@ -674,7 +674,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         
         if let exportSession = AVAssetExportSession(asset: mixComposition, presetName: AVAssetExportPresetHEVCHighestQuality) {
             exportSession.outputURL = outputURL
-            exportSession.outputFileType = AVFileType.mov
+            exportSession.outputFileType = AVFileType.m4v
             exportSession.shouldOptimizeForNetworkUse = true
             
             /// try to export the file and handle the status cases
@@ -706,6 +706,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     /// from [stackoverflow](https://stackoverflow.com/questions/3741323/how-do-i-export-uiimage-array-as-a-movie/3742212#36297656)
     static func convertImageSequenceToVideo(_ allImages: [FinderItem], videoPath: String, videoSize: CGSize, videoFPS: Float, colorSpace: CGColorSpace? = nil, completion: (()->Void)? = nil) {
         
+        print("Generate Video to \(videoPath) from images at fps of \(videoFPS)")
         FinderItem(at: videoPath).generateDirectory()
         
         func writeImagesAsMovie(_ allImages: [FinderItem], videoPath: String, videoSize: CGSize, videoFPS: Float) {
@@ -764,6 +765,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
                             print("Error converting images to video: \(assetWriter.error.debugDescription)")
                         } else {
                             print("Converted images to movie @ \(videoPath)")
+                            print("The fps is \(FinderItem(at: videoPath).frameRate!)")
                         }
                         
                         if let completion = completion {
@@ -782,7 +784,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
             // Return new asset writer or nil
             do {
                 // Create asset writer
-                let newWriter = try AVAssetWriter(outputURL: pathURL, fileType: AVFileType.mov)
+                let newWriter = try AVAssetWriter(outputURL: pathURL, fileType: AVFileType.m4v)
                 
                 // Define settings for video input
                 let videoSettings: [String : AnyObject] = [
@@ -872,7 +874,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         
         guard let exportSession = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHEVCHighestQuality) else { return }
         exportSession.outputURL = outputURL
-        exportSession.outputFileType = .mov
+        exportSession.outputFileType = .m4v
         
         let startTime = CMTimeMake(value: Int64(startTime.numerator), timescale: Int32(startTime.denominator))
         let endTime = CMTimeMake(value: Int64(endTime.numerator), timescale: Int32(endTime.denominator))
@@ -912,23 +914,16 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         }
 
         
-        var atTimeM: CMTime = CMTimeMake(value: 0, timescale: 600)
+        var atTimeM: CMTime = CMTime.zero
         var layerInstructionsArray = [AVVideoCompositionLayerInstruction]()
         var completeTrackDuration: CMTime = CMTimeMake(value: 0, timescale: 600)
         var videoSize: CGSize = CGSize(width: 0.0, height: 0.0)
-        var totalTime : CMTime = CMTimeMake(value: 0, timescale: 600)
         
-        let mixComposition = AVMutableComposition.init()
+        let mixComposition = AVMutableComposition()
         for videoAsset in arrayVideos {
-            print(videoAsset.duration.seconds, completeTrackDuration.seconds)
             
             let videoTrack = mixComposition.addMutableTrack(withMediaType: AVMediaType.video, preferredTrackID: kCMPersistentTrackID_Invalid)
             do {
-                if videoAsset == arrayVideos.first {
-                    atTimeM = CMTime.zero
-                } else {
-                    atTimeM = totalTime // <-- Use the total time for all the videos seen so far.
-                }
                 try videoTrack!.insertTimeRange(CMTimeRangeMake(start: CMTime.zero, duration: videoAsset.duration),
                                                 of: videoAsset.tracks(withMediaType: AVMediaType.video).first!,
                                                 at: atTimeM)
@@ -938,11 +933,19 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
                 print("error: \(error)")
             }
             
-            totalTime = CMTimeAdd(totalTime, videoAsset.duration)
-            completeTrackDuration = CMTimeAdd(completeTrackDuration, videoAsset.duration)
+            let realDuration = { ()-> CMTime in
+                let framesCount = Double(videoAsset.frameRate!) * videoAsset.duration.seconds
+                let fraction = (framesCount / Double(frameRate)).fraction(forceApproximate: true, approximateTo: 6)
+                return CMTimeMake(value: Int64(fraction.numerator), timescale: Int32(fraction.denominator))
+            }()
+            
+            videoTrack!.scaleTimeRange(CMTimeRangeMake(start: CMTime.zero, duration: videoAsset.duration), toDuration: realDuration)
+            
+            atTimeM = CMTimeAdd(atTimeM, realDuration)
+            completeTrackDuration = CMTimeAdd(completeTrackDuration, realDuration)
             
             let firstInstruction = videoCompositionInstruction(videoTrack!, asset: videoAsset)
-            firstInstruction.setOpacity(0.0, at: totalTime) // hide the video after its duration.
+            firstInstruction.setOpacity(0.0, at: atTimeM) // hide the video after its duration.
             
             layerInstructionsArray.append(firstInstruction)
         }
@@ -959,7 +962,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         
         let exporter = AVAssetExportSession(asset: mixComposition, presetName: AVAssetExportPresetHEVCHighestQuality)
         exporter!.outputURL = URL(fileURLWithPath: toPath)
-        exporter!.outputFileType = AVFileType.mov
+        exporter!.outputFileType = AVFileType.m4v
         exporter!.shouldOptimizeForNetworkUse = false
         exporter!.videoComposition = mainComposition
         exporter!.exportAsynchronously {
