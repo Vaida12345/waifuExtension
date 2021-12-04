@@ -109,6 +109,9 @@ extension Array where Element == WorkItem {
             
             func splitVideo(duration: Double, filePath: String, currentVideo: WorkItem, completion: @escaping ((_ paths: [String])->())) {
                 
+                completion([currentVideo.finderItem.path])
+                return
+                
                 guard !isProcessingCancelled else { return }
                 
                 FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/splitVideo").generateDirectory(isFolder: true)
@@ -141,7 +144,7 @@ extension Array where Element == WorkItem {
                         onStatusProgressChanged(segmentIndex, Int(duration / videoSegmentLength))
                         
                         splitVideo(withIndex: segmentIndex + 1, duration: duration, filePath: filePath, currentVideo: currentVideo, completion: completion)
-                        guard finishedCounter == Int(duration / videoSegmentLength) else { return }
+                        guard finishedCounter >= Int(duration / videoSegmentLength) else { return }
                         onStatusProgressChanged(nil, nil)
                         completion()
                     }
@@ -174,7 +177,7 @@ extension Array where Element == WorkItem {
                     let step = Int((vidLength.value / Int64(requiredFramesCount)))
                     
                     var indexSequence = String(index)
-                    while indexSequence.count < 5 { indexSequence.insert("0", at: indexSequence.startIndex) }
+                    while indexSequence.count < 6 { indexSequence.insert("0", at: indexSequence.startIndex) }
                     
                     print("frames to process: \(requiredFramesCount)")
                     FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames").generateDirectory(isFolder: true)
@@ -184,6 +187,8 @@ extension Array where Element == WorkItem {
                     
                     DispatchQueue.concurrentPerform(iterations: requiredFramesCount) { frameCounter in
                         autoreleasepool {
+                            
+                            onStatusProgressChanged(frameCounter, requiredFramesCount)
                             
                             // generate frames
                             
@@ -295,6 +300,12 @@ extension Array where Element == WorkItem {
                     let arbitraryFrame = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/000000.png")
                     let arbitraryFrameCGImage = arbitraryFrame.image!.cgImage(forProposedRect: nil, context: nil, hints: nil)!
                     
+                    do {
+                        try FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/splitVideo/video \(indexSequence).mov").removeFile()
+                    } catch {
+                        
+                    }
+                    
                     if frameInterpolation == nil {
                         let enlargedFrames: [FinderItem] = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames").children!
                         FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: mergedVideoPath, videoSize: CGSize(width: arbitraryFrameCGImage.width, height: arbitraryFrameCGImage.height), videoFPS: currentVideo.finderItem.frameRate!, colorSpace: colorSpace) {
@@ -329,15 +340,15 @@ extension Array where Element == WorkItem {
                 let duration = currentVideo.finderItem.avAsset!.duration.seconds
 //                let videoSegmentLength = Double(videoSegmentFrames) / Double(currentVideo.finderItem.frameRate!)
                 
-                status("generating images for \(filePath)")
-                
                 //status: generating video segment frames
                 
                 splitVideo(duration: duration, filePath: filePath, currentVideo: currentVideo) { paths in
+                    status("generating images for \(filePath)")
                     var index = 0
                     var finished = 0
                     while index < paths.count {
-                        onStatusProgressChanged(index, paths.count)
+                        
+                        onStatusProgressChanged(index, paths.count - 1)
                         generateImagesAndMergeToVideoForSegment(segmentsFinderItem: FinderItem(at: paths[index]), index: index, currentVideo: currentVideo, filePath: filePath, totalSegmentsCount: Double(paths.count)) {
                             finished += 1
                             
@@ -674,7 +685,7 @@ struct SpecificationsView: View {
     
     let computeOptions = ["CPU", "GPU"]
     
-    let videoSegmentOptions = [10, 50, 100, 200, 500, 1000, 5000]
+    let videoSegmentOptions = [10, 50, 100, 200, 500, 1000, 5000, 10000, 50000]
     let frameInterpolationOptions = ["none", "2", "4"]
     
     @State var isShowingStyleHint: Bool = false
@@ -857,6 +868,7 @@ struct SpecificationsView: View {
                             }
                         }
                         .padding(.top)
+                        .disabled(true)
                         .popover(isPresented: $isShowingVideoSegmentHint) {
                             Text("Lager the value, less the storage used. But the process would be slower.")
                                 .padding(.all)
