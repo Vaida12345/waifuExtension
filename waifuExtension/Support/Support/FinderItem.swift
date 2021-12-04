@@ -924,37 +924,39 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
             let mixComposition = AVMutableComposition()
             var index = 0
             while index < arrayVideos.count {
-                let videoAsset = arrayVideos[index].avAsset!
-                
-                let videoTrack = mixComposition.addMutableTrack(withMediaType: AVMediaType.video, preferredTrackID: kCMPersistentTrackID_Invalid)
-                do {
-                    try videoTrack!.insertTimeRange(CMTimeRangeMake(start: CMTime.zero, duration: videoAsset.duration),
-                                                    of: videoAsset.tracks(withMediaType: AVMediaType.video).first!,
-                                                    at: atTimeM)
-                    videoSize = (videoTrack!.naturalSize)
+                autoreleasepool {
+                    let videoAsset = arrayVideos[index].avAsset!
                     
-                } catch let error as NSError {
-                    print("error: \(error)")
+                    let videoTrack = mixComposition.addMutableTrack(withMediaType: AVMediaType.video, preferredTrackID: kCMPersistentTrackID_Invalid)
+                    do {
+                        try videoTrack!.insertTimeRange(CMTimeRangeMake(start: CMTime.zero, duration: videoAsset.duration),
+                                                        of: videoAsset.tracks(withMediaType: AVMediaType.video).first!,
+                                                        at: atTimeM)
+                        videoSize = (videoTrack!.naturalSize)
+                        
+                    } catch let error as NSError {
+                        print("error: \(error)")
+                    }
+                    
+                    let realDuration = { ()-> CMTime in
+                        let framesCount = Double(videoAsset.frameRate!) * videoAsset.duration.seconds
+                        print(framesCount)
+                        let fraction = (framesCount / Double(frameRate)).fraction()
+                        return CMTime(fraction)
+                    }()
+                    
+                    videoTrack!.scaleTimeRange(CMTimeRangeMake(start: atTimeM, duration: videoAsset.duration), toDuration: realDuration)
+                    
+                    atTimeM = CMTimeAdd(atTimeM, realDuration)
+                    completeTrackDuration = CMTimeAdd(completeTrackDuration, realDuration)
+                    
+                    let firstInstruction = videoCompositionInstruction(videoTrack!, asset: videoAsset)
+                    firstInstruction.setOpacity(0.0, at: atTimeM) // hide the video after its duration.
+                    
+                    layerInstructionsArray.append(firstInstruction)
+                    
+                    index += 1
                 }
-                
-                let realDuration = { ()-> CMTime in
-                    let framesCount = Double(videoAsset.frameRate!) * videoAsset.duration.seconds
-                    print(framesCount)
-                    let fraction = (framesCount / Double(frameRate)).fraction()
-                    return CMTime(fraction)
-                }()
-                
-                videoTrack!.scaleTimeRange(CMTimeRangeMake(start: atTimeM, duration: videoAsset.duration), toDuration: realDuration)
-                
-                atTimeM = CMTimeAdd(atTimeM, realDuration)
-                completeTrackDuration = CMTimeAdd(completeTrackDuration, realDuration)
-                
-                let firstInstruction = videoCompositionInstruction(videoTrack!, asset: videoAsset)
-                firstInstruction.setOpacity(0.0, at: atTimeM) // hide the video after its duration.
-                
-                layerInstructionsArray.append(firstInstruction)
-                
-                index += 1
             }
             
             print("add videos finished")
