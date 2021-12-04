@@ -46,6 +46,7 @@ public class Waifu2x {
         }
         
         let fullDate = Date()
+        var logger = Logger(path: "\(Configuration.main.saveFolder)/logs/log.txt")
         
         self.interrupt = false
         self.block_size = model.block_size
@@ -185,6 +186,10 @@ public class Waifu2x {
             }
         }
         
+        logger.addItem(["initial date:", fullDate.distance(to: Date()).description])
+        print("initial date:", fullDate.distance(to: Date()))
+        let preparePipeDate = Date()
+        
         // Output, takes no time
         self.out_pipeline = BackgroundPipeline<MLMultiArray>("out_pipeline", count: rects.count, waifu2x: self) { (index, array) in
             let rect = rects[index]
@@ -222,15 +227,18 @@ public class Waifu2x {
             }
         }
         
+        logger.addItem(["prepare:", preparePipeDate.distance(to: Date()).description])
+        print("prepare:", preparePipeDate.distance(to: Date()))
         var mlArray: [MLMultiArray] = []
         
         // Start running model
+        let expendImageDate = Date()
         var expwidth = fullWidth + 2 * self.shrink_size
         var expheight = fullHeight + 2 * self.shrink_size
         let expanded = fullCG.expand(withAlpha: hasalpha, in: self)
         callback("processing")
-        
-        // this would take most of time
+        print("expendImage", expendImageDate.distance(to: Date()))
+        logger.addItem(["expendImage:", expendImageDate.distance(to: Date()).description])
         
         let in_pipeDate = Date()
         
@@ -331,26 +339,34 @@ public class Waifu2x {
         }
         
         print("In Pipe: \(in_pipeDate.distance(to: Date()))")
+        logger.addItem(["In Pipe:", in_pipeDate.distance(to: Date()).description])
         
         let model_pipelineDate = Date()
         
         // Prepare for model pipeline
         // Run prediction on each block
         let mlmodel = model.model
-        DispatchQueue.concurrentPerform(iterations: rects.count) { index in
+        var index = 0
+        while index < rects.count {
             let array = mlArray[index]
             
             self.out_pipeline.appendObject(try! mlmodel.prediction(input: array))
             if let didFinishedOneBlock = self.didFinishedOneBlock {
                 didFinishedOneBlock(2 * rects.count)
             }
+            
+            index += 1
         }
         
         print("ML: \(model_pipelineDate.distance(to: Date()))")
+        logger.addItem("ML:", model_pipelineDate.distance(to: Date()).description)
         
+        let out_pipelineDate = Date()
         callback("wait_alpha")
         alpha_task?.wait()
         self.out_pipeline.wait()
+        print("outpipe: \(out_pipelineDate.distance(to: Date()))")
+        logger.addItem("outpipe:", out_pipelineDate.distance(to: Date()).description)
         
         self.model_pipeline = nil
         self.out_pipeline = nil
@@ -359,6 +375,7 @@ public class Waifu2x {
         }
         
         callback("generate_output")
+        let generateImageDate = Date()
         let cfbuffer = CFDataCreate(nil, imgData, out_width * out_height * channels)!
         let dataProvider = CGDataProvider(data: cfbuffer)!
         let colorSpace = CGColorSpaceCreateDeviceRGB()
@@ -369,11 +386,38 @@ public class Waifu2x {
         let cgImage = CGImage(width: out_width, height: out_height, bitsPerComponent: 8, bitsPerPixel: 8 * channels, bytesPerRow: out_width * channels, space: colorSpace, bitmapInfo: CGBitmapInfo.init(rawValue: bitmapInfo), provider: dataProvider, decode: nil, shouldInterpolate: true, intent: CGColorRenderingIntent.defaultIntent)
         let outImage = NSImage(cgImage: cgImage!, size: CGSize(width: out_width, height: out_height))
         callback("finished")
+        print("generateImage: \(generateImageDate.distance(to: Date()))")
+        logger.addItem("generateImage:", generateImageDate.distance(to: Date()).description)
         
         print("waifu2x finished with time:", fullDate.distance(to: Date()))
+        logger.addItem("waifu2x finished with time:", fullDate.distance(to: Date()).description)
+        logger.log()
         
         return outImage
     }
     
 }
 
+struct Logger {
+    
+    let path: String
+    
+    var items: [[String]] = []
+    
+    init(path: String) {
+        self.path = FinderItem(at: path).generateOutputPath()
+    }
+    
+    mutating func addItem<T>(_ item: [T]) where T: CustomStringConvertible {
+        items.append(item.map({ $0.description }))
+    }
+    
+    mutating func addItem<T>(_ item: T...) where T: CustomStringConvertible {
+        items.append(item.map({ $0.description }))
+    }
+    
+    func log() {
+        let value = printMatrix(matrix: items)
+        try! value.write(toFile: path, atomically: true, encoding: .utf8)
+    }
+}
