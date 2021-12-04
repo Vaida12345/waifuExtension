@@ -137,6 +137,8 @@ extension Array where Element == WorkItem {
                             
                             // generate frames
                             
+                            onStatusProgressChanged(frameCounter, requiredFramesCount)
+                            
                             let imageGenerator = AVAssetImageGenerator(asset: asset)
                             imageGenerator.requestedTimeToleranceAfter = CMTime.zero
                             imageGenerator.requestedTimeToleranceBefore = CMTime.zero
@@ -178,6 +180,7 @@ extension Array where Element == WorkItem {
                     }
                     
                     if frameInterpolation != nil {
+                        onStatusProgressChanged(nil, nil)
                         var frameCounter = 0
                         
                         while frameCounter < requiredFramesCount {
@@ -235,8 +238,6 @@ extension Array where Element == WorkItem {
                             }
                         }
                     }
-                    
-                    
                     
                     // status: merge videos
                     

@@ -222,15 +222,8 @@ public class Waifu2x {
             }
         }
         
-        // Prepare for model pipeline
-        // Run prediction on each block
-        let mlmodel = model.model
-        self.model_pipeline = BackgroundPipeline<MLMultiArray>("model_pipeline", count: rects.count, waifu2x: self) { (index, array) in
-            self.out_pipeline.appendObject(try! mlmodel.prediction(input: array))
-            if let didFinishedOneBlock = self.didFinishedOneBlock {
-                didFinishedOneBlock(2 * rects.count)
-            }
-        }
+        var mlArray: [MLMultiArray] = []
+        
         // Start running model
         var expwidth = fullWidth + 2 * self.shrink_size
         var expheight = fullHeight + 2 * self.shrink_size
@@ -292,12 +285,7 @@ public class Waifu2x {
             let shape = [rects.count, 3, Int(self.block_size + 2 * self.shrink_size), Int(self.block_size + 2 * self.shrink_size)]
             let shapedArray = MLShapedArray<Float>(bytesNoCopy: rawPointer, shape: shape, deallocator: .none)
             
-            var multiCounter = 0
-            while multiCounter < rects.count {
-                let array = MLMultiArray(shapedArray[multiCounter])
-                self.model_pipeline.appendObject(array)
-                multiCounter += 1
-            }
+            mlArray = shapedArray.map({ MLMultiArray($0) })
             
             if let didFinishedOneBlock = self.didFinishedOneBlock {
                 didFinishedOneBlock(2)
@@ -339,15 +327,25 @@ public class Waifu2x {
                 }
             }
             
-            for i in in_pipeResults.sorted(by: { $0.index < $1.index }) {
-                model_pipeline.appendObject(i.value)
-            }
+            mlArray = in_pipeResults.sorted(by: { $0.index < $1.index }).map({ $0.value })
         }
         
         print("In Pipe: \(in_pipeDate.distance(to: Date()))")
         
         let model_pipelineDate = Date()
-        self.model_pipeline.wait()
+        
+        // Prepare for model pipeline
+        // Run prediction on each block
+        let mlmodel = model.model
+        DispatchQueue.concurrentPerform(iterations: rects.count) { index in
+            let array = mlArray[index]
+            
+            self.out_pipeline.appendObject(try! mlmodel.prediction(input: array))
+            if let didFinishedOneBlock = self.didFinishedOneBlock {
+                didFinishedOneBlock(2 * rects.count)
+            }
+        }
+        
         print("ML: \(model_pipelineDate.distance(to: Date()))")
         
         callback("wait_alpha")

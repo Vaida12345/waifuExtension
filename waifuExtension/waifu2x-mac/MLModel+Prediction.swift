@@ -39,7 +39,9 @@ extension MLModel {
     
     public func prediction(input: MLMultiArray) throws -> MLMultiArray {
         let input_ = Waifu2xInput(input)
+        let date = Date()
         let outFeatures = try self.prediction(from: input_)
+        print("ML prediction finished with \(date.distance(to: date).rounded(toDigit: 2))s")
         let result = outFeatures.featureValue(for: "conv7")!.multiArrayValue!
         return result
     }
