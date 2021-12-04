@@ -109,16 +109,13 @@ extension Array where Element == WorkItem {
             
             func splitVideo(duration: Double, filePath: String, currentVideo: WorkItem, completion: @escaping ((_ paths: [String])->())) {
                 
-//                completion([currentVideo.finderItem.path])
-//                return
-                
                 guard !isProcessingCancelled else { return }
+                
+                status("splitting videos")
                 
                 FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/splitVideo").generateDirectory(isFolder: true)
                 var finishedCounter = 0
                 var paths: [String] = []
-                
-                status("splitting video")
                 
                 func splitVideo(withIndex segmentIndex: Int, duration: Double, filePath: String, currentVideo: WorkItem, completion: @escaping (()->())) {
                     
@@ -141,7 +138,7 @@ extension Array where Element == WorkItem {
                         }
                     }()) { _ in
                         finishedCounter += 1
-                        onStatusProgressChanged(segmentIndex, Int(duration / videoSegmentLength))
+                        onStatusProgressChanged(segmentIndex + 1, Int((duration / videoSegmentLength).rounded(.up)))
                         
                         splitVideo(withIndex: segmentIndex + 1, duration: duration, filePath: filePath, currentVideo: currentVideo, completion: completion)
                         guard finishedCounter == Int((duration / videoSegmentLength).rounded(.up)) else { return }
@@ -159,7 +156,6 @@ extension Array where Element == WorkItem {
             func generateImagesAndMergeToVideoForSegment(segmentsFinderItem: FinderItem, index: Int, currentVideo: WorkItem, filePath: String, totalSegmentsCount: Double, completion: @escaping (()->())) {
                 autoreleasepool {
                     
-                    status("generating images")
                     guard !isProcessingCancelled else { return }
                     
                     let asset = segmentsFinderItem.avAsset!
@@ -187,8 +183,6 @@ extension Array where Element == WorkItem {
                     
                     DispatchQueue.concurrentPerform(iterations: requiredFramesCount) { frameCounter in
                         autoreleasepool {
-                            
-                            onStatusProgressChanged(frameCounter, requiredFramesCount)
                             
                             // generate frames
                             
@@ -327,24 +321,25 @@ extension Array where Element == WorkItem {
                 let currentVideo = videos[videoIndex]
                 let filePath = currentVideo.finderItem.relativePath ?? (currentVideo.finderItem.fileName! + currentVideo.finderItem.extensionName!)
                 
-                status("splitting audio for \(filePath)")
+                status("generating audio for \(filePath)")
                 
                 FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)").generateDirectory(isFolder: true)
                 let audioPath = "\(Configuration.main.saveFolder)/tmp/\(filePath)/audio.m4a"
                 try! currentVideo.finderItem.saveAudioTrack(to: audioPath)
                 
                 let duration = currentVideo.finderItem.avAsset!.duration.seconds
-//                let videoSegmentLength = Double(videoSegmentFrames) / Double(currentVideo.finderItem.frameRate!)
                 
                 //status: generating video segment frames
                 
                 splitVideo(duration: duration, filePath: filePath, currentVideo: currentVideo) { paths in
                     status("generating images for \(filePath)")
+                    onStatusProgressChanged(nil, nil)
+                    
                     var index = 0
                     var finished = 0
                     while index < paths.count {
                         
-                        onStatusProgressChanged(index, paths.count - 1)
+                        onStatusProgressChanged(index + 1, paths.count)
                         generateImagesAndMergeToVideoForSegment(segmentsFinderItem: FinderItem(at: paths[index]), index: index, currentVideo: currentVideo, filePath: filePath, totalSegmentsCount: Double(paths.count)) {
                             finished += 1
                             
@@ -356,6 +351,7 @@ extension Array where Element == WorkItem {
                             FinderItem.mergeVideos(from: FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/videos").children!.map({ $0.avAsset! }), toPath: outputPath, frameRate: currentVideo.finderItem.frameRate! * Float((frameInterpolation == nil ? 1 : frameInterpolation!))) { urlGet, errorGet in
                                 
                                 status("merging video and audio for \(filePath)")
+                                onStatusProgressChanged(nil, nil)
                                 
                                 FinderItem.mergeVideoWithAudio(videoUrl: URL(fileURLWithPath: outputPath), audioUrl: URL(fileURLWithPath: audioPath)) { _ in
                                     status("Completed")
@@ -439,7 +435,7 @@ struct ContentView: View {
     @State var pdfbackground = DispatchQueue(label: "PDF Background")
     @State var chosenScaleLevel: String = "1"
     @State var chosenComputeOption = "GPU"
-    @State var videoSegmentLength = 3
+    @State var videoSegmentLength = 200
     @State var frameInterpolation = "none"
     
     var body: some View {
