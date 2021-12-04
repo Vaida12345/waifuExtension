@@ -109,8 +109,8 @@ extension Array where Element == WorkItem {
             
             func splitVideo(duration: Double, filePath: String, currentVideo: WorkItem, completion: @escaping ((_ paths: [String])->())) {
                 
-                completion([currentVideo.finderItem.path])
-                return
+//                completion([currentVideo.finderItem.path])
+//                return
                 
                 guard !isProcessingCancelled else { return }
                 
@@ -124,7 +124,7 @@ extension Array where Element == WorkItem {
                     
                     guard !isProcessingCancelled else { return }
                     let videoSegmentLength = Double(videoSegmentFrames) / Double(currentVideo.finderItem.frameRate!)
-                    guard Double(segmentIndex) <= duration / videoSegmentLength else { return }
+                    guard Double(segmentIndex) < (duration / videoSegmentLength).rounded(.up) else { return }
                     
                     var segmentSequence = String(segmentIndex)
                     while segmentSequence.count <= 5 { segmentSequence.insert("0", at: segmentSequence.startIndex) }
@@ -134,7 +134,7 @@ extension Array where Element == WorkItem {
                     paths.append(path)
                     
                     FinderItem.trimVideo(sourceURL: currentVideo.finderItem.url, outputURL: URL(fileURLWithPath: path), startTime: (Double(segmentIndex) * Double(videoSegmentLength)).fraction(forceApproximate: true, approximateTo: 5), endTime: {()->Fraction in
-                        if Double(segmentIndex) * videoSegmentLength + videoSegmentLength < duration {
+                        if Double(segmentIndex) * videoSegmentLength + videoSegmentLength <= duration {
                             return Double(Double(segmentIndex) * videoSegmentLength + videoSegmentLength).fraction(forceApproximate: true, approximateTo: 5)
                         } else {
                             return Double(duration).fraction(forceApproximate: true, approximateTo: 5)
@@ -868,7 +868,6 @@ struct SpecificationsView: View {
                             }
                         }
                         .padding(.top)
-                        .disabled(true)
                         .popover(isPresented: $isShowingVideoSegmentHint) {
                             Text("Lager the value, less the storage used. But the process would be slower.")
                                 .padding(.all)
