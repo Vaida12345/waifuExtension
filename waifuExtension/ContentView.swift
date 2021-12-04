@@ -437,7 +437,7 @@ struct ContentView: View {
     @State var pdfbackground = DispatchQueue(label: "PDF Background")
     @State var chosenScaleLevel: String = "1"
     @State var chosenComputeOption = "GPU"
-    @State var videoSegmentLength = 3
+    @State var videoSegmentLength = 2000
     @State var frameInterpolation = "none"
     
     var body: some View {
@@ -685,7 +685,7 @@ struct SpecificationsView: View {
     
     let computeOptions = ["CPU", "GPU"]
     
-    let videoSegmentOptions = [10, 50, 100, 200, 500, 1000, 5000, 10000, 50000]
+    let videoSegmentOptions = [10, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000]
     let frameInterpolationOptions = ["none", "2", "4"]
     
     @State var isShowingStyleHint: Bool = false
