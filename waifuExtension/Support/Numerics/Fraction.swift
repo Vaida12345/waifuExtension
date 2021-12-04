@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import CoreMedia
 
 
 /// The fraction in the form of `a / b` where `a`, `b` in `R`.
@@ -803,6 +804,14 @@ extension SignedInteger where Self: LosslessStringConvertible {
     }
 }
 
+extension CMTime {
+    
+    init(_ value: Fraction) {
+        let value = Double(value).fraction(forceApproximate: true, approximateTo: 6)
+        self = CMTimeMake(value: Int64(value.numerator), timescale: Int32(value.denominator))
+    }
+    
+}
 
 //MARK: - Supporting Functions
 

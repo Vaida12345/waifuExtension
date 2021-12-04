@@ -251,7 +251,7 @@ struct UInt10: Arithmetical {
         
         
         // Use `UInt` to accelerate results.
-        guard lhs > Self(UInt.max) && rhs > Self(UInt.max) else {
+        guard lhs > Self(UInt.max) || rhs > Self(UInt.max) else {
             let result = UInt(lhs).quotientAndRemainder(dividingBy: UInt(rhs))
             return (Self(result.quotient), Self(result.remainder))
         }

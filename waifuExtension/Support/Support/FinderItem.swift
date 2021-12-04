@@ -876,8 +876,8 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         exportSession.outputURL = outputURL
         exportSession.outputFileType = .m4v
         
-        let startTime = CMTimeMake(value: Int64(startTime.numerator), timescale: Int32(startTime.denominator))
-        let endTime = CMTimeMake(value: Int64(endTime.numerator), timescale: Int32(endTime.denominator))
+        let startTime = CMTime(startTime)
+        let endTime = CMTime(endTime)
         let timeRange = CMTimeRange(start: startTime, end: endTime)
         
         if FinderItem(at: outputURL).isExistence {
@@ -904,7 +904,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     /// merge videos from videos
     ///
     /// from [stackoverflow](https://stackoverflow.com/questions/38972829/swift-merge-avasset-videos-array)
-    static func mergeVideos(from arrayVideos: [AVAsset], frameCountArray: [Int] = [], toPath: String, frameRate: Float, completion: @escaping (_ urlGet:URL?,_ errorGet:Error?) -> Void) {
+    static func mergeVideos(from arrayVideos: [AVAsset], toPath: String, frameRate: Float, completion: @escaping (_ urlGet:URL?,_ errorGet:Error?) -> Void) {
         
         func videoCompositionInstruction(_ track: AVCompositionTrack, asset: AVAsset)
         -> AVMutableVideoCompositionLayerInstruction {
@@ -937,11 +937,12 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
             
             let realDuration = { ()-> CMTime in
                 let framesCount = Double(videoAsset.frameRate!) * videoAsset.duration.seconds
-                let fraction = (framesCount / Double(frameRate)).fraction(forceApproximate: true, approximateTo: 6)
-                return CMTimeMake(value: Int64(fraction.numerator), timescale: Int32(fraction.denominator))
+                print(framesCount)
+                let fraction = (framesCount / Double(frameRate)).fraction()
+                return CMTime(fraction)
             }()
             
-            videoTrack!.scaleTimeRange(CMTimeRangeMake(start: CMTime.zero, duration: videoAsset.duration), toDuration: realDuration)
+            videoTrack!.scaleTimeRange(CMTimeRangeMake(start: atTimeM, duration: videoAsset.duration), toDuration: realDuration)
             
             atTimeM = CMTimeAdd(atTimeM, realDuration)
             completeTrackDuration = CMTimeAdd(completeTrackDuration, realDuration)
@@ -970,6 +971,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         exporter!.shouldOptimizeForNetworkUse = false
         exporter!.videoComposition = mainComposition
         exporter!.exportAsynchronously {
+            print("merge videos: \(exporter!.status.rawValue)", exporter!.error ?? "")
             completion(exporter?.outputURL, nil)
             
         }

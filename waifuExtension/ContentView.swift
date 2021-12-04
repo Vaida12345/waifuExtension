@@ -130,11 +130,11 @@ extension Array where Element == WorkItem {
                     FinderItem(at: path).generateDirectory()
                     paths.append(path)
                     
-                    FinderItem.trimVideo(sourceURL: currentVideo.finderItem.url, outputURL: URL(fileURLWithPath: path), startTime: (Double(segmentIndex) * Double(videoSegmentLength)).fraction(forceApproximate: true, approximateTo: 5), endTime: {()->Fraction in
+                    FinderItem.trimVideo(sourceURL: currentVideo.finderItem.url, outputURL: URL(fileURLWithPath: path), startTime: (Double(segmentIndex) * Double(videoSegmentLength)).fraction(), endTime: {()->Fraction in
                         if Double(segmentIndex) * videoSegmentLength + videoSegmentLength <= duration {
-                            return Double(Double(segmentIndex) * videoSegmentLength + videoSegmentLength).fraction(forceApproximate: true, approximateTo: 5)
+                            return Double(Double(segmentIndex) * videoSegmentLength + videoSegmentLength).fraction()
                         } else {
-                            return Double(duration).fraction(forceApproximate: true, approximateTo: 5)
+                            return Double(duration).fraction()
                         }
                     }()) { _ in
                         finishedCounter += 1
@@ -343,6 +343,7 @@ extension Array where Element == WorkItem {
                         generateImagesAndMergeToVideoForSegment(segmentsFinderItem: FinderItem(at: paths[index]), index: index, currentVideo: currentVideo, filePath: filePath, totalSegmentsCount: Double(paths.count)) {
                             finished += 1
                             
+                            print(finished, paths.count)
                             guard finished == paths.count else { return }
                             guard !isProcessingCancelled else { return }
                             
@@ -350,6 +351,7 @@ extension Array where Element == WorkItem {
                             
                             FinderItem.mergeVideos(from: FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/videos").children!.map({ $0.avAsset! }), toPath: outputPath, frameRate: currentVideo.finderItem.frameRate! * Float((frameInterpolation == nil ? 1 : frameInterpolation!))) { urlGet, errorGet in
                                 
+                                print("videos merged")
                                 status("merging video and audio for \(filePath)")
                                 onStatusProgressChanged(nil, nil)
                                 
