@@ -956,6 +956,8 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
             index += 1
         }
         
+        print("add videos finished")
+        
         let mainInstruction = AVMutableVideoCompositionInstruction()
         mainInstruction.layerInstructions = layerInstructionsArray
         mainInstruction.timeRange = CMTimeRangeMake(start: CMTime.zero, duration: completeTrackDuration)
@@ -966,9 +968,9 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         mainComposition.frameDuration = CMTimeMake(value: Int64(fraction.denominator), timescale: Int32(fraction.numerator))
         mainComposition.renderSize = videoSize
         
-        let exporter = AVAssetExportSession(asset: mixComposition, presetName: AVAssetExportPresetHEVCHighestQuality)
+        let exporter = AVAssetExportSession(asset: mixComposition, presetName: AVAssetExportPresetAppleProRes422LPCM)
         exporter!.outputURL = URL(fileURLWithPath: toPath)
-        exporter!.outputFileType = AVFileType.m4v
+        exporter!.outputFileType = AVFileType.mov
         exporter!.shouldOptimizeForNetworkUse = false
         exporter!.videoComposition = mainComposition
         exporter!.exportAsynchronously {

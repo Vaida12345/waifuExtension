@@ -164,7 +164,7 @@ extension Array where Element == WorkItem {
                     let seconds: Double = CMTimeGetSeconds(vidLength)
                     let frameRate = currentVideo.finderItem.frameRate!
                     
-                    var requiredFramesCount = Int(seconds * Double(frameRate))
+                    var requiredFramesCount = Int((seconds * Double(frameRate)).rounded())
                     
                     if requiredFramesCount == 0 {
                         requiredFramesCount = 1
