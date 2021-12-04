@@ -906,17 +906,18 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     /// from [stackoverflow](https://stackoverflow.com/questions/38972829/swift-merge-avasset-videos-array)
     static func mergeVideos(from arrayVideos: [AVAsset], toPath: String, frameRate: Float, completion: @escaping (_ urlGet:URL?,_ errorGet:Error?) -> Void) {
         
+        print("Merging videos...")
+        
         func videoCompositionInstruction(_ track: AVCompositionTrack, asset: AVAsset)
         -> AVMutableVideoCompositionLayerInstruction {
             let instruction = AVMutableVideoCompositionLayerInstruction(assetTrack: track)
             
             return instruction
         }
-
         
-        var atTimeM: CMTime = CMTime.zero
+        var atTimeM = CMTime.zero
         var layerInstructionsArray = [AVVideoCompositionLayerInstruction]()
-        var completeTrackDuration: CMTime = CMTimeMake(value: 0, timescale: 600)
+        var completeTrackDuration = CMTime.zero
         var videoSize: CGSize = CGSize(width: 0.0, height: 0.0)
         
         let mixComposition = AVMutableComposition()
@@ -973,7 +974,6 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         exporter!.exportAsynchronously {
             print("merge videos: \(exporter!.status.rawValue)", exporter!.error ?? "")
             completion(exporter?.outputURL, nil)
-            
         }
         
     }

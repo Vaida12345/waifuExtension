@@ -18,15 +18,17 @@ struct orderedImages {
 func addItemIfPossible(of item: FinderItem, to finderItems: inout [WorkItem]) {
     guard !finderItems.contains(item) else { return }
     
-    if item.isFile {
-        guard item.image != nil || item.avAsset != nil else { return }
-        finderItems.append(WorkItem(at: item, type: item.image != nil ? .image : .video))
-    } else {
-        item.iteratedOver { child in
-            guard !finderItems.contains(child) else { return }
-            guard child.image != nil || child.avAsset != nil else { return }
-            child.relativePath = item.fileName! + "/" + child.relativePath(to: item)!
-            finderItems.append(WorkItem(at: child, type: child.image != nil ? .image : .video))
+    withAnimation {
+        if item.isFile {
+            guard item.image != nil || item.avAsset != nil else { return }
+            finderItems.append(WorkItem(at: item, type: item.image != nil ? .image : .video))
+        } else {
+            item.iteratedOver { child in
+                guard !finderItems.contains(child) else { return }
+                guard child.image != nil || child.avAsset != nil else { return }
+                child.relativePath = item.fileName! + "/" + child.relativePath(to: item)!
+                finderItems.append(WorkItem(at: child, type: child.image != nil ? .image : .video))
+            }
         }
     }
 }
@@ -445,7 +447,9 @@ struct ContentView: View {
             HStack {
                 if !finderItems.isEmpty {
                     Button("Remove All") {
-                        finderItems = []
+                        withAnimation {
+                            finderItems = []
+                        }
                     }
                     .padding(.all)
                 }
@@ -482,7 +486,6 @@ struct ContentView: View {
                         LazyVGrid(columns: Array(repeating: .init(.flexible()), count: 5)) {
                             ForEach(finderItems) { item in
                                 GridItemView(finderItems: $finderItems, item: item, geometry: geometry)
-                                
                             }
                         }
                         
@@ -509,7 +512,7 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $isSheetShown, onDismiss: nil) {
-            SpecificationsView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel, chosenComputeOption: $chosenComputeOption, videoSegmentLength: $videoSegmentLength, frameInterpolation: $frameInterpolation)
+            SpecificationsView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel, chosenComputeOption: $chosenComputeOption, videoSegmentLength: $videoSegmentLength, frameInterpolation: $frameInterpolation, frameHeight: !finderItems.allSatisfy({ $0.finderItem.avAsset == nil }) ? 400 : 300)
         }
         .sheet(isPresented: $isProcessing, onDismiss: nil) {
             ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF, chosenComputeOption: $chosenComputeOption, videoSegmentLength: $videoSegmentLength, frameInterpolation: $frameInterpolation)
@@ -581,6 +584,7 @@ struct GridItemView: View {
     @Binding var finderItems: [WorkItem]
     
     @State var isShowingHint: Bool = false
+    @State var image: NSImage = NSImage(named: "placeholder")!
     
     let item: WorkItem
     let geometry: GeometryProxy
@@ -588,40 +592,35 @@ struct GridItemView: View {
     var body: some View {
         VStack(alignment: .center) {
             
-            if let image = item.finderItem.image ?? item.finderItem.firstFrame {
-                Image(nsImage: image)
-                    .resizable()
-                    .cornerRadius(5)
-                    .aspectRatio(contentMode: .fit)
-                    .padding([.top, .leading, .trailing])
-                    .popover(isPresented: $isShowingHint) {
-                        Text("""
+            Image(nsImage: image)
+                .resizable()
+                .cornerRadius(5)
+                .aspectRatio(contentMode: .fit)
+                .padding([.top, .leading, .trailing])
+                .transition(.scale(scale: 10))
+                .popover(isPresented: $isShowingHint) {
+                    Text(image != NSImage(named: "placeholder")! ?
+                        """
                         name: \(item.finderItem.fileName ?? "???")
                         path: \(item.finderItem.path)
                         size: \(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.width) × \(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.height)
                         length: \(item.finderItem.avAsset?.duration.seconds.expressedAsTime() ?? "0s")
-                        """)
-                            .multilineTextAlignment(.center)
-                            .padding()
-                    }
-            } else {
-                Rectangle()
-                    .cornerRadius(5)
-                    .padding([.top, .leading, .trailing])
-                    .popover(isPresented: $isShowingHint) {
-                        Text("""
-                        Failed to load image, please transcode into HEVC before converting.
+                        """
+                         :
+                        """
+                        Loading...
                         name: \(item.finderItem.fileName ?? "???")
                         path: \(item.finderItem.path)
+                        (If this continuous, please transcode your video into HEVC and retry)
                         """)
-                            .multilineTextAlignment(.center)
-                            .padding()
-                    }
-            }
+                        .multilineTextAlignment(.center)
+                        .padding()
+                }
             
             Text(((item.finderItem.relativePath ?? item.finderItem.fileName) ?? item.finderItem.path))
                 .multilineTextAlignment(.center)
                 .padding([.leading, .bottom, .trailing])
+                .transition(.slide)
                 .onHover { bool in
                     self.isShowingHint = bool
                 }
@@ -636,7 +635,16 @@ struct GridItemView: View {
                 _ = shell(["open \(item.finderItem.shellPath) -R"])
             }
             Button("Delete") {
-                finderItems.remove(at: finderItems.firstIndex(of: item)!)
+                withAnimation {
+                    _ = finderItems.remove(at: finderItems.firstIndex(of: item)!)
+                }
+            }
+        }
+        .onAppear {
+            DispatchQueue(label: "background").async {
+                withAnimation {
+                    image = (item.finderItem.image ?? item.finderItem.firstFrame) ?? NSImage(named: "placeholder")!
+                }
             }
         }
     }
@@ -689,6 +697,8 @@ struct SpecificationsView: View {
     @State var isShowingGPUHint: Bool = false
     @State var isShowingVideoSegmentHint: Bool = false
     @State var isShowingFrameInterpolationHint: Bool = false
+    
+    @State var frameHeight: CGFloat
     
     func findModelClass() {
         guard let chosenScaleLevel = Int(chosenScaleLevel) else {
@@ -918,12 +928,23 @@ struct SpecificationsView: View {
                 .padding(.all)
         }
             .padding(.all)
-            .frame(width: 600, height: 400)
+            .frame(width: 600, height: frameHeight)
             .onAppear {
                 findModelClass()
             }
             .onChange(of: chosenStyle) { newValue in
                 Configuration.main.modelStyle = newValue
+            }
+            .onChange(of: chosenScaleLevel) { newValue in
+                if newValue == "none" {
+                    withAnimation {
+                        frameHeight = 300
+                    }
+                } else {
+                    withAnimation {
+                        frameHeight = 400
+                    }
+                }
             }
     }
     
@@ -1181,9 +1202,7 @@ struct ProcessingView: View {
                     } completion: {
                         isFinished = true
                     }
-                }
-                
-                background.async {
+                    
                     workItem!.perform()
                 }
             }
