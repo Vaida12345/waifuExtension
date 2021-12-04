@@ -727,7 +727,7 @@ extension BinaryFloatingPoint where Self: LosslessStringConvertible {
     ///     - forceApproximate: Determine whether approximation was forced to be used.
     ///
     /// - Returns: `Fraction`
-    func fraction(forceApproximate: Bool = false) -> Fraction where Self: LosslessStringConvertible {
+    func fraction(forceApproximate: Bool = false, approximateTo precision: Int = 20) -> Fraction where Self: LosslessStringConvertible {
         guard self.isFinite else {
             guard !self.isNaN else { fatalError() }
             if self.sign == .plus {
@@ -766,7 +766,7 @@ extension BinaryFloatingPoint where Self: LosslessStringConvertible {
         var content = Fraction.FloatingPoint(self)
         var dList: [Fraction.Integer] = []
         
-        while content != 0 && content.isFinite && dList.count <= 20 {
+        while content != 0 && content.isFinite && dList.count <= precision {
             dList.append(Fraction.Integer(content))
             content = (1 / (content - Fraction.FloatingPoint(dList.last!)))
             

@@ -110,33 +110,45 @@ extension Array where Element == WorkItem {
             func splitVideo(duration: Double, filePath: String, currentVideo: WorkItem, completion: @escaping ((_ paths: [String])->())) {
                 
                 guard !isProcessingCancelled else { return }
-                let videoSegmentLength = Double(videoSegmentFrames) / Double(currentVideo.finderItem.frameRate!)
                 
                 FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/splitVideo").generateDirectory(isFolder: true)
                 var finishedCounter = 0
                 var paths: [String] = []
                 
-                var segmentIndex = 0
-                while Double(segmentIndex) <= duration / videoSegmentLength {
+                status("splitting video")
+                
+                func splitVideo(withIndex segmentIndex: Int, duration: Double, filePath: String, currentVideo: WorkItem, completion: @escaping (()->())) {
+                    
+                    guard !isProcessingCancelled else { return }
+                    let videoSegmentLength = Double(videoSegmentFrames) / Double(currentVideo.finderItem.frameRate!)
+                    guard Double(segmentIndex) <= duration / videoSegmentLength else { return }
+                    
                     var segmentSequence = String(segmentIndex)
                     while segmentSequence.count <= 5 { segmentSequence.insert("0", at: segmentSequence.startIndex) }
                     
                     let path = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/splitVideo/video \(segmentSequence).mov"
+                    FinderItem(at: path).generateDirectory()
                     paths.append(path)
                     
-                    FinderItem.trimVideo(sourceURL: currentVideo.finderItem.url, outputURL: URL(fileURLWithPath: path), startTime: Fraction(segmentIndex) * Fraction(videoSegmentLength), endTime: {()->Fraction in
+                    FinderItem.trimVideo(sourceURL: currentVideo.finderItem.url, outputURL: URL(fileURLWithPath: path), startTime: (Double(segmentIndex) * Double(videoSegmentLength)).fraction(forceApproximate: true, approximateTo: 5), endTime: {()->Fraction in
                         if Double(segmentIndex) * videoSegmentLength + videoSegmentLength < duration {
-                            return Fraction(Double(segmentIndex) * videoSegmentLength + videoSegmentLength)
+                            return Double(Double(segmentIndex) * videoSegmentLength + videoSegmentLength).fraction(forceApproximate: true, approximateTo: 5)
                         } else {
-                            return Fraction(duration)
+                            return Double(duration).fraction(forceApproximate: true, approximateTo: 5)
                         }
                     }()) { _ in
                         finishedCounter += 1
+                        onStatusProgressChanged(segmentIndex, Int(duration / videoSegmentLength))
+                        
+                        splitVideo(withIndex: segmentIndex + 1, duration: duration, filePath: filePath, currentVideo: currentVideo, completion: completion)
                         guard finishedCounter == Int(duration / videoSegmentLength) else { return }
-                        completion(paths)
+                        onStatusProgressChanged(nil, nil)
+                        completion()
                     }
-                    
-                    segmentIndex += 1
+                }
+                
+                splitVideo(withIndex: 0, duration: duration, filePath: filePath, currentVideo: currentVideo) {
+                    completion(paths)
                 }
             }
             
@@ -144,6 +156,7 @@ extension Array where Element == WorkItem {
             func generateImagesAndMergeToVideoForSegment(segmentsFinderItem: FinderItem, index: Int, currentVideo: WorkItem, filePath: String, totalSegmentsCount: Double, completion: @escaping (()->())) {
                 autoreleasepool {
                     
+                    status("generating images")
                     guard !isProcessingCancelled else { return }
                     
                     let asset = segmentsFinderItem.avAsset!
@@ -333,7 +346,7 @@ extension Array where Element == WorkItem {
                             
                             let outputPath = "\(Configuration.main.saveFolder)/tmp/\(filePath)/\(currentVideo.finderItem.fileName!).mov"
                             
-                            FinderItem.mergeVideos(from: FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/videos").children!.map({ $0.avAsset! }), toPath: outputPath, frameRate: currentVideo.finderItem.frameRate!) { urlGet, errorGet in
+                            FinderItem.mergeVideos(from: FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/videos").children!.map({ $0.avAsset! }), toPath: outputPath, frameRate: currentVideo.finderItem.frameRate! * Float((frameInterpolation == nil ? 1 : frameInterpolation!))) { urlGet, errorGet in
                                 
                                 status("merging video and audio for \(filePath)")
                                 
@@ -419,6 +432,7 @@ struct ContentView: View {
     @State var pdfbackground = DispatchQueue(label: "PDF Background")
     @State var chosenScaleLevel: String = "1"
     @State var chosenComputeOption = "GPU"
+    @State var videoSegmentLength = 200
     @State var frameInterpolation = "none"
     
     var body: some View {
@@ -490,10 +504,10 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $isSheetShown, onDismiss: nil) {
-            SpecificationsView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel, chosenComputeOption: $chosenComputeOption, frameInterpolation: $frameInterpolation)
+            SpecificationsView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel, chosenComputeOption: $chosenComputeOption, videoSegmentLength: $videoSegmentLength, frameInterpolation: $frameInterpolation)
         }
         .sheet(isPresented: $isProcessing, onDismiss: nil) {
-            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF, chosenComputeOption: $chosenComputeOption, frameInterpolation: $frameInterpolation)
+            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF, chosenComputeOption: $chosenComputeOption, videoSegmentLength: $videoSegmentLength, frameInterpolation: $frameInterpolation)
         }
         .sheet(isPresented: $isCreatingPDF, onDismiss: nil) {
             ProcessingPDFView(isCreatingPDF: $isCreatingPDF, background: $pdfbackground)
@@ -611,10 +625,10 @@ struct GridItemView: View {
         .contextMenu {
             Button("Open") {
                 print(item.finderItem.path)
-                _ = shell(["open \(item.finderItem.path.replacingOccurrences(of: " ", with: "\\ "))"])
+                _ = shell(["open \(item.finderItem.shellPath)"])
             }
             Button("Show in Finder") {
-                _ = shell(["open \(item.finderItem.path.replacingOccurrences(of: " ", with: "\\ ")) -R"])
+                _ = shell(["open \(item.finderItem.shellPath) -R"])
             }
             Button("Delete") {
                 finderItems.remove(at: finderItems.firstIndex(of: item)!)
@@ -636,6 +650,7 @@ struct SpecificationsView: View {
         }
     }
     @Binding var chosenComputeOption: String
+    @Binding var videoSegmentLength: Int
     @Binding var frameInterpolation: String
     
     let styleNames: [String] = ["anime", "photo"]
@@ -658,6 +673,8 @@ struct SpecificationsView: View {
     @State var chosenModelClass: String = ""
     
     let computeOptions = ["CPU", "GPU"]
+    
+    let videoSegmentOptions = [10, 50, 100, 200, 500, 1000, 5000]
     let frameInterpolationOptions = ["none", "2", "4"]
     
     @State var isShowingStyleHint: Bool = false
@@ -736,12 +753,20 @@ struct SpecificationsView: View {
                     if !finderItems.allSatisfy({ $0.finderItem.avAsset == nil }) {
                         HStack {
                             Spacer()
+                            Text("Video segmentation:")
+                                .onHover { bool in
+                                    isShowingVideoSegmentHint = bool
+                                }
+                        }
+                        .padding(.top)
+                        
+                        HStack {
+                            Spacer()
                             Text("Frame Interpolation:")
                                 .onHover { bool in
                                     isShowingFrameInterpolationHint = bool
                                 }
                         }
-                        .padding(.top)
                     }
                 }
                 
@@ -824,6 +849,20 @@ struct SpecificationsView: View {
                     }
                     
                     if !finderItems.allSatisfy({ $0.finderItem.avAsset == nil }) {
+                        Menu(videoSegmentLength.description) {
+                            ForEach(videoSegmentOptions, id: \.self) { item in
+                                Button(item.description + " frames") {
+                                    videoSegmentLength = item
+                                }
+                            }
+                        }
+                        .padding(.top)
+                        .popover(isPresented: $isShowingVideoSegmentHint) {
+                            Text("Lager the value, less the storage used. But the process would be slower.")
+                                .padding(.all)
+                            
+                        }
+                        
                         Menu(Int(frameInterpolation) != nil ? frameInterpolation + "x" : frameInterpolation) {
                             ForEach(frameInterpolationOptions, id: \.self) { item in
                                 Button(Int(item) != nil ? item + "x" : item) {
@@ -831,7 +870,6 @@ struct SpecificationsView: View {
                                 }
                             }
                         }
-                        .padding(.top)
                         .popover(isPresented: $isShowingFrameInterpolationHint) {
                             Text("Enable frame interpolation will make video smoother")
                                 .padding(.all)
@@ -875,7 +913,7 @@ struct SpecificationsView: View {
                 .padding(.all)
         }
             .padding(.all)
-            .frame(width: 600, height: 350)
+            .frame(width: 600, height: 400)
             .onAppear {
                 findModelClass()
             }
@@ -896,6 +934,7 @@ struct ProcessingView: View {
     @Binding var chosenScaleLevel: String
     @Binding var isCreatingPDF: Bool
     @Binding var chosenComputeOption: String
+    @Binding var videoSegmentLength: Int
     @Binding var frameInterpolation: String
     
     @State var processedItemsCounter: Int = 0
@@ -1106,7 +1145,7 @@ struct ProcessingView: View {
                     .padding(.trailing)
                     
                     Button("Show in Finder") {
-                        _ = shell(["open \(Configuration.main.saveFolder.replacingOccurrences(of: " ", with: "\\ "))"])
+                        _ = shell(["open \(FinderItem(at: Configuration.main.saveFolder).shellPath)"])
                     }
                     .padding(.trailing)
                     
@@ -1122,7 +1161,7 @@ struct ProcessingView: View {
             .onAppear {
                 
                 self.workItem = DispatchWorkItem(qos: .utility, flags: .inheritQoS) {
-                    finderItems.work(Int(chosenScaleLevel), modelUsed: modelUsed, isUsingGPU: chosenComputeOption == "GPU", frameInterpolation: Int(frameInterpolation)) { status in
+                    finderItems.work(Int(chosenScaleLevel), modelUsed: modelUsed, isUsingGPU: chosenComputeOption == "GPU", videoSegmentFrames: videoSegmentLength, frameInterpolation: Int(frameInterpolation)) { status in
                         self.status = status
                     } onStatusProgressChanged: { progress,total in
                         if progress != nil {

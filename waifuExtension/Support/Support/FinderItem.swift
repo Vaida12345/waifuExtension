@@ -208,6 +208,39 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         })
     }
     
+    /// The path to run in shell.
+    var shellPath: String {
+        var path = self.path
+        path = path.replacingOccurrences(of: "\\", with: "\\\\")
+        path = path.replacingOccurrences(of: " ", with: "\\ ")
+        path = path.replacingOccurrences(of: "(", with: "\\(")
+        path = path.replacingOccurrences(of: ")", with: "\\)")
+        path = path.replacingOccurrences(of: "[", with: "\\[")
+        path = path.replacingOccurrences(of: "]", with: "\\]")
+        path = path.replacingOccurrences(of: "{", with: "\\{")
+        path = path.replacingOccurrences(of: "}", with: "\\}")
+        path = path.replacingOccurrences(of: "`", with: "\\`")
+        path = path.replacingOccurrences(of: "~", with: "\\~")
+        path = path.replacingOccurrences(of: "!", with: "\\!")
+        path = path.replacingOccurrences(of: "@", with: "\\@")
+        path = path.replacingOccurrences(of: "#", with: "\\#")
+        path = path.replacingOccurrences(of: "$", with: "\\$")
+        path = path.replacingOccurrences(of: "%", with: "\\%")
+        path = path.replacingOccurrences(of: "&", with: "\\&")
+        path = path.replacingOccurrences(of: "*", with: "\\*")
+        path = path.replacingOccurrences(of: "=", with: "\\=")
+        path = path.replacingOccurrences(of: "|", with: "\\|")
+        path = path.replacingOccurrences(of: ";", with: "\\;")
+        path = path.replacingOccurrences(of: "\"", with: "\\\"")
+        path = path.replacingOccurrences(of: "\'", with: "\\\'")
+        path = path.replacingOccurrences(of: "<", with: "\\<")
+        path = path.replacingOccurrences(of: ">", with: "\\>")
+        path = path.replacingOccurrences(of: ",", with: "\\,")
+        path = path.replacingOccurrences(of: "?", with: "\\?")
+        
+        return path
+    }
+    
     /// The url of the path.
     var url: URL {
         return URL(fileURLWithPath: self.path)
@@ -937,11 +970,11 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     }
     
     static func addFrame(fromFrame1: String, fromFrame2: String, to: String) {
-        let path = Bundle.main.bundlePath + "/Contents/Resources/dain-ncnn-vulkan-20210210-macos"
-        print(fromFrame1)
-        print(fromFrame2)
-        print(to)
-        print(shell(["cd \(path.replacingOccurrences(of: " ", with: "\\ "))", "./dain-ncnn-vulkan  -0 \(fromFrame1.replacingOccurrences(of: " ", with: "\\ ")) -1 \(fromFrame2.replacingOccurrences(of: " ", with: "\\ ")) -o \(to.replacingOccurrences(of: " ", with: "\\ "))"])!)
+        let fromFrame1 = FinderItem(at: fromFrame1)
+        let fromFrame2 = FinderItem(at: fromFrame2)
+        let to = FinderItem(at: to)
+        let path = FinderItem(at: Bundle.main.bundlePath + "/Contents/Resources/dain-ncnn-vulkan-20210210-macos")
+        print(shell(["cd \(path.shellPath)", "./dain-ncnn-vulkan  -0 \(fromFrame1.shellPath) -1 \(fromFrame2.shellPath) -o \(to.shellPath)"])!)
     }
 }
 
