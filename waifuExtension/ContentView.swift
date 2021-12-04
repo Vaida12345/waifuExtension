@@ -862,7 +862,7 @@ struct SpecificationsView: View {
                     }
                     
                     if !finderItems.allSatisfy({ $0.finderItem.avAsset == nil }) {
-                        Menu(videoSegmentLength.description) {
+                        Menu(videoSegmentLength.description + " frames") {
                             ForEach(videoSegmentOptions, id: \.self) { item in
                                 Button(item.description + " frames") {
                                     videoSegmentLength = item
@@ -1200,7 +1200,9 @@ struct ProcessingView: View {
                     } completion: {
                         isFinished = true
                     }
-                    
+                }
+                
+                background.async {
                     workItem!.perform()
                 }
             }
