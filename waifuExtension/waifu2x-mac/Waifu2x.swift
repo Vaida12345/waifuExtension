@@ -391,7 +391,7 @@ public class Waifu2x {
         
         print("waifu2x finished with time:", fullDate.distance(to: Date()))
         logger.addItem("waifu2x finished with time:", fullDate.distance(to: Date()).description)
-        logger.log()
+        if Configuration.main.isLogEnabled { logger.log() }
         
         return outImage
     }

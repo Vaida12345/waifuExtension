@@ -834,18 +834,15 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         writeImagesAsMovie(allImages, videoPath: videoPath, videoSize: videoSize, videoFPS: videoFPS)
     }
     
-    static func trimVideo(sourceURL: URL, outputURL: URL, statTime:Float, endTime:Float, completion: @escaping ((_ asset: AVAsset)->())) {
+    static func trimVideo(sourceURL: URL, outputURL: URL, startTime: Fraction, endTime: Fraction, completion: @escaping ((_ asset: AVAsset)->())) {
         let asset = AVAsset(url: sourceURL as URL)
-        
-        let start = statTime
-        let end = endTime
         
         guard let exportSession = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHEVCHighestQuality) else { return }
         exportSession.outputURL = outputURL
         exportSession.outputFileType = .mov
         
-        let startTime = CMTime(seconds: Double(start), preferredTimescale: 600)
-        let endTime = CMTime(seconds: Double(end), preferredTimescale: 600)
+        let startTime = CMTimeMake(value: Int64(startTime.numerator), timescale: Int32(startTime.denominator))
+        let endTime = CMTimeMake(value: Int64(endTime.numerator), timescale: Int32(endTime.denominator))
         let timeRange = CMTimeRange(start: startTime, end: endTime)
         
         if FinderItem(at: outputURL).isExistence {
@@ -872,7 +869,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     /// merge videos from videos
     ///
     /// from [stackoverflow](https://stackoverflow.com/questions/38972829/swift-merge-avasset-videos-array)
-    static func mergeVideos(from arrayVideos: [AVAsset], toPath: String, frameRate: Int32, completion: @escaping (_ urlGet:URL?,_ errorGet:Error?) -> Void) {
+    static func mergeVideos(from arrayVideos: [AVAsset], toPath: String, frameRate: Float, completion: @escaping (_ urlGet:URL?,_ errorGet:Error?) -> Void) {
         
         func videoCompositionInstruction(_ track: AVCompositionTrack, asset: AVAsset)
         -> AVMutableVideoCompositionLayerInstruction {
@@ -923,7 +920,8 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         
         let mainComposition = AVMutableVideoComposition()
         mainComposition.instructions = [mainInstruction]
-        mainComposition.frameDuration = CMTimeMake(value: 1, timescale: frameRate)
+        let fraction = Fraction(frameRate)
+        mainComposition.frameDuration = CMTimeMake(value: Int64(fraction.denominator), timescale: Int32(fraction.numerator))
         mainComposition.renderSize = videoSize
         
         let exporter = AVAssetExportSession(asset: mixComposition, presetName: AVAssetExportPresetHEVCHighestQuality)

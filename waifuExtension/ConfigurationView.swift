@@ -11,6 +11,7 @@ struct ConfigurationView: View {
     
     @State var isLogEnabled = Configuration.main.isLogEnabled
     @State var saveFolder = Configuration.main.saveFolderText
+    @State var isDevEnabled = Configuration.main.isDevEnabled
     
     var body: some View {
         
@@ -18,6 +19,11 @@ struct ConfigurationView: View {
             HStack {
                 Toggle(isOn: $isLogEnabled) {
                     Text("Enable Log")
+                }
+                .padding(.trailing)
+                
+                Toggle(isOn: $isDevEnabled) {
+                    Text("Enable Dev")
                 }
                 
                 Spacer()
@@ -51,6 +57,9 @@ struct ConfigurationView: View {
         .onChange(of: isLogEnabled) { newValue in
             Configuration.main.isLogEnabled = newValue
         }
+        .onChange(of: isDevEnabled, perform: { newValue in
+            Configuration.main.isDevEnabled = newValue
+        })
         .onChange(of: saveFolder) { newValue in
             Configuration.main.saveFolder = saveFolder
             Configuration.main.getFolder = {()-> String in
@@ -78,6 +87,7 @@ struct ConfigurationView_Previews: PreviewProvider {
 struct Configuration: Codable {
     
     var isLogEnabled = false
+    var isDevEnabled = false
     
     var saveFolder: String {
         get {

@@ -37,7 +37,7 @@ extension Array where Element == WorkItem {
         return self.contains(WorkItem(at: finderItem, type: .image))
     }
     
-    func work(_ chosenScaleLevel: Int?, modelUsed: Waifu2xModel?, isUsingGPU: Bool, frameInterpolation: Int?, onStatusChanged status: @escaping ((_ status: String)->()), onStatusProgressChanged: @escaping ((_ progress: Int?, _ total: Int?)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
+    func work(_ chosenScaleLevel: Int?, modelUsed: Waifu2xModel?, isUsingGPU: Bool, videoSegmentFrames: Int = 10, frameInterpolation: Int?, onStatusChanged status: @escaping ((_ status: String)->()), onStatusProgressChanged: @escaping ((_ progress: Int?, _ total: Int?)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
         
         let images = self.filter({ $0.type == .image })
         let videos = self.filter({ $0.type == .video })
@@ -107,12 +107,46 @@ extension Array where Element == WorkItem {
         if !videos.isEmpty {
             //helper functions
             
-            func generateImagesAndMergeToVideo(currentVideo: WorkItem, filePath: String, duration: Double, completion: @escaping (()->())) {
+            func splitVideo(duration: Double, filePath: String, currentVideo: WorkItem, completion: @escaping ((_ paths: [String])->())) {
+                
+                guard !isProcessingCancelled else { return }
+                let videoSegmentLength = Double(videoSegmentFrames) / Double(currentVideo.finderItem.frameRate!)
+                
+                FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/splitVideo").generateDirectory(isFolder: true)
+                var finishedCounter = 0
+                var paths: [String] = []
+                
+                var segmentIndex = 0
+                while Double(segmentIndex) <= duration / videoSegmentLength {
+                    var segmentSequence = String(segmentIndex)
+                    while segmentSequence.count <= 5 { segmentSequence.insert("0", at: segmentSequence.startIndex) }
+                    
+                    let path = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/splitVideo/video \(segmentSequence).mov"
+                    paths.append(path)
+                    
+                    FinderItem.trimVideo(sourceURL: currentVideo.finderItem.url, outputURL: URL(fileURLWithPath: path), startTime: Fraction(segmentIndex) * Fraction(videoSegmentLength), endTime: {()->Fraction in
+                        if Double(segmentIndex) * videoSegmentLength + videoSegmentLength < duration {
+                            return Fraction(Double(segmentIndex) * videoSegmentLength + videoSegmentLength)
+                        } else {
+                            return Fraction(duration)
+                        }
+                    }()) { _ in
+                        finishedCounter += 1
+                        guard finishedCounter == Int(duration / videoSegmentLength) else { return }
+                        completion(paths)
+                    }
+                    
+                    segmentIndex += 1
+                }
+            }
+            
+            
+            func generateImagesAndMergeToVideoForSegment(segmentsFinderItem: FinderItem, index: Int, currentVideo: WorkItem, filePath: String, totalSegmentsCount: Double, completion: @escaping (()->())) {
                 autoreleasepool {
                     
                     guard !isProcessingCancelled else { return }
                     
-                    let asset = currentVideo.finderItem.avAsset!
+                    let asset = segmentsFinderItem.avAsset!
                     
                     let vidLength: CMTime = asset.duration
                     let seconds: Double = CMTimeGetSeconds(vidLength)
@@ -126,9 +160,12 @@ extension Array where Element == WorkItem {
                     
                     let step = Int((vidLength.value / Int64(requiredFramesCount)))
                     
+                    var indexSequence = String(index)
+                    while indexSequence.count < 5 { indexSequence.insert("0", at: indexSequence.startIndex) }
+                    
                     print("frames to process: \(requiredFramesCount)")
-                    FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames").generateDirectory(isFolder: true)
-                    FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames").generateDirectory(isFolder: true)
+                    FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames").generateDirectory(isFolder: true)
+                    FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames").generateDirectory(isFolder: true)
                     let factor: Double = chosenScaleLevel != nil && frameInterpolation != nil ? 2 : 1
                     var colorSpace: CGColorSpace? = nil
                     
@@ -136,8 +173,6 @@ extension Array where Element == WorkItem {
                         autoreleasepool {
                             
                             // generate frames
-                            
-                            onStatusProgressChanged(frameCounter, requiredFramesCount)
                             
                             let imageGenerator = AVAssetImageGenerator(asset: asset)
                             imageGenerator.requestedTimeToleranceAfter = CMTime.zero
@@ -168,14 +203,14 @@ extension Array where Element == WorkItem {
                                     thumbnail = waifu2x.run(thumbnail.reload(withIndex: "\(frameCounter)"), model: modelUsed!)!
                                 }
                                 
-                                currentVideo.progress += 1 / Double(requiredFramesCount) / factor
+                                currentVideo.progress += 1 / Double(requiredFramesCount) / factor / totalSegmentsCount
                                 onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / Double(totalItemCounter))
                             }
                             
                             var sequence = String(frameCounter)
                             while sequence.count < 6 { sequence.insert("0", at: sequence.startIndex) }
                             
-                            thumbnail.write(to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(sequence).png")
+                            thumbnail.write(to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/\(sequence).png")
                         }
                     }
                     
@@ -194,10 +229,10 @@ extension Array where Element == WorkItem {
                                 if frameCounter == 0 {
                                     var previousSequence = String(0)
                                     while previousSequence.count < 6 { previousSequence.insert("0", at: previousSequence.startIndex) }
-                                    try! FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(sequence).png").copy(to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(previousSequence).png")
+                                    try! FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/\(sequence).png").copy(to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(previousSequence).png")
                                     frameCounter += 1
                                     
-                                    currentVideo.progress += 1 / Double(requiredFramesCount) / factor
+                                    currentVideo.progress += 1 / Double(requiredFramesCount) / factor / totalSegmentsCount
                                     onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / Double(totalItemCounter))
                                     
                                     return
@@ -214,9 +249,9 @@ extension Array where Element == WorkItem {
                                 
                                 // will not save the previous frame
                                 
-                                try! FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(sequence).png").copy(to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(processedSequence).png")
+                                try! FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/\(sequence).png").copy(to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(processedSequence).png")
                                 
-                                FinderItem.addFrame(fromFrame1: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(previousSequence).png", fromFrame2: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(sequence).png", to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(intermediateSequence).png")
+                                FinderItem.addFrame(fromFrame1: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/\(previousSequence).png", fromFrame2: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/\(sequence).png", to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(intermediateSequence).png")
                                 
                                 if frameInterpolation! == 4 {
                                     var intermediateSequence1 = String(frameCounter * frameInterpolation! - frameInterpolation! / 2 - 1)
@@ -225,12 +260,12 @@ extension Array where Element == WorkItem {
                                     var intermediateSequence3 = String(frameCounter * frameInterpolation! - frameInterpolation! / 2 + 1)
                                     while intermediateSequence3.count < 6 { intermediateSequence3.insert("0", at: intermediateSequence3.startIndex) }
                                     
-                                    FinderItem.addFrame(fromFrame1: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/\(previousSequence).png", fromFrame2: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(intermediateSequence).png", to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(intermediateSequence1).png")
+                                    FinderItem.addFrame(fromFrame1: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/\(previousSequence).png", fromFrame2: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(intermediateSequence).png", to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(intermediateSequence1).png")
                                     
-                                    FinderItem.addFrame(fromFrame1: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(intermediateSequence).png", fromFrame2: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(processedSequence).png", to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames/\(intermediateSequence3).png")
+                                    FinderItem.addFrame(fromFrame1: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(intermediateSequence).png", fromFrame2: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(processedSequence).png", to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(intermediateSequence3).png")
                                 }
                                 
-                                currentVideo.progress += 1 / Double(requiredFramesCount) / factor
+                                currentVideo.progress += 1 / Double(requiredFramesCount) / factor / totalSegmentsCount
                                 onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / Double(totalItemCounter))
                                 
                                 
@@ -241,23 +276,23 @@ extension Array where Element == WorkItem {
                     
                     // status: merge videos
                     
-                    let mergedVideoPath = "\(Configuration.main.saveFolder)/tmp/\(filePath)/\(currentVideo.finderItem.fileName!).mov"
+                    let mergedVideoPath = "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/videos/\(indexSequence).mov"
                     FinderItem(at: mergedVideoPath).generateDirectory()
                     
-                    let arbitraryFrame = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames/000000.png")
+                    let arbitraryFrame = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/000000.png")
                     let arbitraryFrameCGImage = arbitraryFrame.image!.cgImage(forProposedRect: nil, context: nil, hints: nil)!
                     
                     if frameInterpolation == nil {
-                        let enlargedFrames: [FinderItem] = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/splitVideo frames").children!
+                        let enlargedFrames: [FinderItem] = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames").children!
                         FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: mergedVideoPath, videoSize: CGSize(width: arbitraryFrameCGImage.width, height: arbitraryFrameCGImage.height), videoFPS: currentVideo.finderItem.frameRate!, colorSpace: colorSpace) {
-                            
+                            if !Configuration.main.isDevEnabled { try! FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)").removeFile() }
                             // completion after all videos are finished.
                             completion()
                         }
                     } else {
-                        let enlargedFrames: [FinderItem] = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/interpolated frames").children!
+                        let enlargedFrames: [FinderItem] = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames").children!
                         FinderItem.convertImageSequenceToVideo(enlargedFrames, videoPath: mergedVideoPath, videoSize: CGSize(width: arbitraryFrameCGImage.width, height: arbitraryFrameCGImage.height), videoFPS: currentVideo.finderItem.frameRate! * Float(frameInterpolation!), colorSpace: colorSpace) {
-                            
+                            if !Configuration.main.isDevEnabled { try! FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)").removeFile() }
                             // completion after all videos are finished.
                             completion()
                         }
@@ -279,43 +314,60 @@ extension Array where Element == WorkItem {
                 try! currentVideo.finderItem.saveAudioTrack(to: audioPath)
                 
                 let duration = currentVideo.finderItem.avAsset!.duration.seconds
+//                let videoSegmentLength = Double(videoSegmentFrames) / Double(currentVideo.finderItem.frameRate!)
                 
                 status("generating images for \(filePath)")
                 
                 //status: generating video segment frames
                 
-                generateImagesAndMergeToVideo(currentVideo: currentVideo, filePath: filePath, duration: duration) {
-                    guard !isProcessingCancelled else { return }
-                    
-                    let outputPath = "\(Configuration.main.saveFolder)/tmp/\(filePath)/\(currentVideo.finderItem.fileName!).mov"
-                    
-                    status("merging video and audio for \(filePath)")
-                    
-                    FinderItem.mergeVideoWithAudio(videoUrl: URL(fileURLWithPath: outputPath), audioUrl: URL(fileURLWithPath: audioPath)) { _ in
-                        status("Completed")
-                        
-                        let destinationFinderItem = FinderItem(at: "\(Configuration.main.saveFolder)/\(filePath)")
-                        if destinationFinderItem.isExistence { try! destinationFinderItem.removeFile() }
-                        try! FinderItem(at: outputPath).copy(to: destinationFinderItem.path)
-                        try! FinderItem(at: "\(Configuration.main.saveFolder)/tmp").removeFile()
-                        
-                        didFinishOneItem(videoIndex + 1, videos.count)
-                        
-                        print(">>>>> results: ")
-                        print("Video \(currentVideo.finderItem.fileName ?? "") done")
-                        Configuration.main.saveLog("Video \(currentVideo.finderItem.fileName ?? "") done")
-                        Configuration.main.saveLog(printMatrix(matrix: [["", "frames", "duration", "fps"], ["before", "\(currentVideo.finderItem.avAsset!.duration.seconds * Double(currentVideo.finderItem.frameRate!))", "\(currentVideo.finderItem.avAsset!.duration.seconds)", "\(currentVideo.finderItem.frameRate!)"], ["after", "\(destinationFinderItem.avAsset!.duration.seconds * Double(destinationFinderItem.frameRate!))", "\(destinationFinderItem.avAsset!.duration.seconds)", "\(destinationFinderItem.frameRate!)"]]))
-                        Configuration.main.saveLog("")
-                        print("")
-                        
-                        if videos.count - 1 == videoIndex {
-                            completion()
-                        } else {
-                            processSingleVideo(withIndex: videoIndex + 1, completion: completion)
+                splitVideo(duration: duration, filePath: filePath, currentVideo: currentVideo) { paths in
+                    var index = 0
+                    var finished = 0
+                    while index < paths.count {
+                        onStatusProgressChanged(index, paths.count)
+                        generateImagesAndMergeToVideoForSegment(segmentsFinderItem: FinderItem(at: paths[index]), index: index, currentVideo: currentVideo, filePath: filePath, totalSegmentsCount: Double(paths.count)) {
+                            finished += 1
+                            
+                            guard finished == paths.count else { return }
+                            guard !isProcessingCancelled else { return }
+                            
+                            let outputPath = "\(Configuration.main.saveFolder)/tmp/\(filePath)/\(currentVideo.finderItem.fileName!).mov"
+                            
+                            FinderItem.mergeVideos(from: FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/videos").children!.map({ $0.avAsset! }), toPath: outputPath, frameRate: currentVideo.finderItem.frameRate!) { urlGet, errorGet in
+                                
+                                status("merging video and audio for \(filePath)")
+                                
+                                FinderItem.mergeVideoWithAudio(videoUrl: URL(fileURLWithPath: outputPath), audioUrl: URL(fileURLWithPath: audioPath)) { _ in
+                                    status("Completed")
+                                    
+                                    let destinationFinderItem = FinderItem(at: "\(Configuration.main.saveFolder)/\(filePath)")
+                                    if destinationFinderItem.isExistence { try! destinationFinderItem.removeFile() }
+                                    try! FinderItem(at: outputPath).copy(to: destinationFinderItem.path)
+                                    if !Configuration.main.isDevEnabled { try! FinderItem(at: "\(Configuration.main.saveFolder)/tmp").removeFile() }
+                                    
+                                    didFinishOneItem(videoIndex + 1, videos.count)
+                                    
+                                    print(">>>>> results: ")
+                                    print("Video \(currentVideo.finderItem.fileName ?? "") done")
+                                    Configuration.main.saveLog("Video \(currentVideo.finderItem.fileName ?? "") done")
+                                    Configuration.main.saveLog(printMatrix(matrix: [["", "frames", "duration", "fps"], ["before", "\(currentVideo.finderItem.avAsset!.duration.seconds * Double(currentVideo.finderItem.frameRate!))", "\(currentVideo.finderItem.avAsset!.duration.seconds)", "\(currentVideo.finderItem.frameRate!)"], ["after", "\(destinationFinderItem.avAsset!.duration.seconds * Double(destinationFinderItem.frameRate!))", "\(destinationFinderItem.avAsset!.duration.seconds)", "\(destinationFinderItem.frameRate!)"]]))
+                                    Configuration.main.saveLog("")
+                                    print("")
+                                    
+                                    if videos.count - 1 == videoIndex {
+                                        completion()
+                                    } else {
+                                        processSingleVideo(withIndex: videoIndex + 1, completion: completion)
+                                    }
+                                    
+                                } failure: { error in
+                                    print(error.debugDescription)
+                                }
+                            }
+                            
                         }
                         
-                    } failure: { error in
-                        print(error.debugDescription)
+                        index += 1
                     }
                 }
             }
@@ -890,7 +942,7 @@ struct ProcessingView: View {
                     VStack(alignment: .trailing, spacing: 10) {
                         Text("Status:")
                         
-                        if statusProgress != nil {
+                        if statusProgress != nil, !isFinished {
                             Text("progress:")
                         }
                         
@@ -916,7 +968,7 @@ struct ProcessingView: View {
                         Text(status)
                             .lineLimit(1)
                         
-                        if let statusProgress = statusProgress {
+                        if let statusProgress = statusProgress, !isFinished {
                             Text("\(statusProgress.progress) / \(statusProgress.total)")
                         }
                         
