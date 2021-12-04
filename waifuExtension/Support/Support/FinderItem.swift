@@ -904,7 +904,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     /// merge videos from videos
     ///
     /// from [stackoverflow](https://stackoverflow.com/questions/38972829/swift-merge-avasset-videos-array)
-    static func mergeVideos(from arrayVideos: [AVAsset], toPath: String, frameRate: Float, completion: @escaping (_ urlGet:URL?,_ errorGet:Error?) -> Void) {
+    static func mergeVideos(from arrayVideos: [FinderItem], toPath: String, tempFolder: String, frameRate: Float, completion: @escaping (_ urlGet:URL?,_ errorGet:Error?) -> Void) {
         
         print("Merging videos...")
         
@@ -915,69 +915,93 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
             return instruction
         }
         
-        var atTimeM = CMTime.zero
-        var layerInstructionsArray = [AVVideoCompositionLayerInstruction]()
-        var completeTrackDuration = CMTime.zero
-        var videoSize: CGSize = CGSize(width: 0.0, height: 0.0)
-        
-        let mixComposition = AVMutableComposition()
-        var index = 0
-        while index < arrayVideos.count {
-            let videoAsset = arrayVideos[index]
+        func mergingVideos(from arrayVideos: [FinderItem], toPath: String, completion: @escaping (_ urlGet:URL?,_ errorGet:Error?) -> Void) {
+            var atTimeM = CMTime.zero
+            var layerInstructionsArray = [AVVideoCompositionLayerInstruction]()
+            var completeTrackDuration = CMTime.zero
+            var videoSize: CGSize = CGSize(width: 0.0, height: 0.0)
             
-            let videoTrack = mixComposition.addMutableTrack(withMediaType: AVMediaType.video, preferredTrackID: kCMPersistentTrackID_Invalid)
-            do {
-                try videoTrack!.insertTimeRange(CMTimeRangeMake(start: CMTime.zero, duration: videoAsset.duration),
-                                                of: videoAsset.tracks(withMediaType: AVMediaType.video).first!,
-                                                at: atTimeM)
-                videoSize = (videoTrack!.naturalSize)
-
-            } catch let error as NSError {
-                print("error: \(error)")
+            let mixComposition = AVMutableComposition()
+            var index = 0
+            while index < arrayVideos.count {
+                let videoAsset = arrayVideos[index].avAsset!
+                
+                let videoTrack = mixComposition.addMutableTrack(withMediaType: AVMediaType.video, preferredTrackID: kCMPersistentTrackID_Invalid)
+                do {
+                    try videoTrack!.insertTimeRange(CMTimeRangeMake(start: CMTime.zero, duration: videoAsset.duration),
+                                                    of: videoAsset.tracks(withMediaType: AVMediaType.video).first!,
+                                                    at: atTimeM)
+                    videoSize = (videoTrack!.naturalSize)
+                    
+                } catch let error as NSError {
+                    print("error: \(error)")
+                }
+                
+                let realDuration = { ()-> CMTime in
+                    let framesCount = Double(videoAsset.frameRate!) * videoAsset.duration.seconds
+                    print(framesCount)
+                    let fraction = (framesCount / Double(frameRate)).fraction()
+                    return CMTime(fraction)
+                }()
+                
+                videoTrack!.scaleTimeRange(CMTimeRangeMake(start: atTimeM, duration: videoAsset.duration), toDuration: realDuration)
+                
+                atTimeM = CMTimeAdd(atTimeM, realDuration)
+                completeTrackDuration = CMTimeAdd(completeTrackDuration, realDuration)
+                
+                let firstInstruction = videoCompositionInstruction(videoTrack!, asset: videoAsset)
+                firstInstruction.setOpacity(0.0, at: atTimeM) // hide the video after its duration.
+                
+                layerInstructionsArray.append(firstInstruction)
+                
+                index += 1
             }
             
-            let realDuration = { ()-> CMTime in
-                let framesCount = Double(videoAsset.frameRate!) * videoAsset.duration.seconds
-                print(framesCount)
-                let fraction = (framesCount / Double(frameRate)).fraction()
-                return CMTime(fraction)
-            }()
+            print("add videos finished")
             
-            videoTrack!.scaleTimeRange(CMTimeRangeMake(start: atTimeM, duration: videoAsset.duration), toDuration: realDuration)
+            let mainInstruction = AVMutableVideoCompositionInstruction()
+            mainInstruction.layerInstructions = layerInstructionsArray
+            mainInstruction.timeRange = CMTimeRangeMake(start: CMTime.zero, duration: completeTrackDuration)
             
-            atTimeM = CMTimeAdd(atTimeM, realDuration)
-            completeTrackDuration = CMTimeAdd(completeTrackDuration, realDuration)
+            let mainComposition = AVMutableVideoComposition()
+            mainComposition.instructions = [mainInstruction]
+            let fraction = Fraction(frameRate)
+            mainComposition.frameDuration = CMTimeMake(value: Int64(fraction.denominator), timescale: Int32(fraction.numerator))
+            mainComposition.renderSize = videoSize
             
-            let firstInstruction = videoCompositionInstruction(videoTrack!, asset: videoAsset)
-            firstInstruction.setOpacity(0.0, at: atTimeM) // hide the video after its duration.
-            
-            layerInstructionsArray.append(firstInstruction)
-            
-            index += 1
+            let exporter = AVAssetExportSession(asset: mixComposition, presetName: AVAssetExportPresetHEVCHighestQuality)
+            exporter!.outputURL = URL(fileURLWithPath: toPath)
+            exporter!.outputFileType = AVFileType.mov
+            exporter!.shouldOptimizeForNetworkUse = false
+            exporter!.videoComposition = mainComposition
+            exporter!.exportAsynchronously {
+                print("merge videos: \(exporter!.status.rawValue)", exporter!.error ?? "")
+                completion(exporter?.outputURL, nil)
+            }
         }
         
-        print("add videos finished")
+        FinderItem(at: tempFolder).generateDirectory(isFolder: true)
         
-        let mainInstruction = AVMutableVideoCompositionInstruction()
-        mainInstruction.layerInstructions = layerInstructionsArray
-        mainInstruction.timeRange = CMTimeRangeMake(start: CMTime.zero, duration: completeTrackDuration)
-        
-        let mainComposition = AVMutableVideoComposition()
-        mainComposition.instructions = [mainInstruction]
-        let fraction = Fraction(frameRate)
-        mainComposition.frameDuration = CMTimeMake(value: Int64(fraction.denominator), timescale: Int32(fraction.numerator))
-        mainComposition.renderSize = videoSize
-        
-        let exporter = AVAssetExportSession(asset: mixComposition, presetName: AVAssetExportPresetAppleProRes422LPCM)
-        exporter!.outputURL = URL(fileURLWithPath: toPath)
-        exporter!.outputFileType = AVFileType.mov
-        exporter!.shouldOptimizeForNetworkUse = false
-        exporter!.videoComposition = mainComposition
-        exporter!.exportAsynchronously {
-            print("merge videos: \(exporter!.status.rawValue)", exporter!.error ?? "")
-            completion(exporter?.outputURL, nil)
+        var index = 0
+        var finishedCounter = 0
+        let threshold: Double = 50
+        while index < Int((Double(arrayVideos.count) / threshold).rounded(.up)) {
+            autoreleasepool {
+                
+                var sequence = String(index)
+                while sequence.count < 6 { sequence.insert("0", at: sequence.startIndex) }
+                let upperBound = ((index + 1) * Int(threshold)) > arrayVideos.count ? arrayVideos.count : ((index + 1) * Int(threshold))
+                
+                mergingVideos(from: Array(arrayVideos[(index * Int(threshold))..<upperBound]), toPath: tempFolder + "/" + sequence + ".m4v") { urlGet, errorGet in
+                    finishedCounter += 1
+                    guard finishedCounter == Int((Double(arrayVideos.count) / threshold).rounded(.up)) else { return }
+                    mergingVideos(from: FinderItem(at: tempFolder).children!, toPath: toPath, completion: completion)
+                }
+                
+                index += 1
+                
+            }
         }
-        
     }
     
     static func addFrame(fromFrame1: String, fromFrame2: String, to: String) {
