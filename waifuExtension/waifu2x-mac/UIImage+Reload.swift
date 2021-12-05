@@ -19,7 +19,9 @@ extension NSImage {
         let tempfile = "\(NSHomeDirectory())/tmp/\(withIndex ?? "file").png"
         FinderItem(at: tempfile).generateDirectory()
         self.write(to: tempfile)
-        return NSImage(contentsOf: URL(fileURLWithPath: tempfile))!
+        let image = NSImage(contentsOf: URL(fileURLWithPath: tempfile))!
+        try! FinderItem(at: tempfile).removeFile()
+        return image
     }
     
 }

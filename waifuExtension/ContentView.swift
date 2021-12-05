@@ -52,6 +52,14 @@ extension Array where Element == WorkItem {
             return content
         }()
         var finishedItemsCounter = 0
+        let scaleFactor = {()-> Double in
+            if let chosenScaleLevel = chosenScaleLevel {
+                if chosenScaleLevel > 1 {
+                    return Double(chosenScaleLevel)
+                }
+            }
+            return 1
+        }()
         
         if !images.isEmpty {
             status("processing images")
@@ -74,7 +82,7 @@ extension Array where Element == WorkItem {
                         
                         let waifu2x = Waifu2x()
                         waifu2x.didFinishedOneBlock = { total in
-                            currentImage.progress += 1 / Double(total) / Double(chosenScaleLevel!)
+                            currentImage.progress += 1 / Double(total) / scaleFactor
                             onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / totalFrames)
                         }
                         waifu2x.isGPUEnabled = isUsingGPU
@@ -126,7 +134,7 @@ extension Array where Element == WorkItem {
                         
                         let waifu2x = Waifu2x()
                         waifu2x.didFinishedOneBlock = { total in
-                            currentImage.progress += 1 / Double(total) / Double(chosenScaleLevel!)
+                            currentImage.progress += 1 / Double(total) / scaleFactor
                             onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / totalFrames)
                         }
                         waifu2x.isGPUEnabled = isUsingGPU
