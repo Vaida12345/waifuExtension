@@ -15,20 +15,36 @@ struct orderedImages {
     var index: Int
 }
 
-func addItemIfPossible(of item: FinderItem, to finderItems: inout [WorkItem]) {
-    guard !finderItems.contains(item) else { return }
-    
+func addItems(of items: [FinderItem], to finderItems: [WorkItem]) -> [WorkItem] {
+    var finderItems = finderItems
+    var counter = 0
+    while counter < items.count {
+        autoreleasepool {
+            finderItems = addItemIfPossible(of: items[counter], to: finderItems)
+            
+            counter += 1
+        }
+    }
+    return finderItems
+}
+
+func addItemIfPossible(of item: FinderItem, to finderItems: [WorkItem]) -> [WorkItem] {
+    guard !finderItems.contains(item) else { return finderItems }
+    var finderItems = finderItems
     if item.isFile {
-        guard item.image != nil || item.avAsset != nil else { return }
+        guard item.image != nil || item.avAsset != nil else { return finderItems }
         finderItems.append(WorkItem(at: item, type: item.image != nil ? .image : .video))
     } else {
         item.iteratedOver { child in
-            guard !finderItems.contains(child) else { return }
-            guard child.image != nil || child.avAsset != nil else { return }
-            child.relativePath = item.fileName! + "/" + child.relativePath(to: item)!
-            finderItems.append(WorkItem(at: child, type: child.image != nil ? .image : .video))
+            autoreleasepool {
+                guard !finderItems.contains(child) else { return }
+                guard child.image != nil || child.avAsset != nil else { return }
+                child.relativePath = item.fileName! + "/" + child.relativePath(to: item)!
+                finderItems.append(WorkItem(at: child, type: child.image != nil ? .image : .video))
+            }
         }
     }
+    return finderItems
 }
 
 extension Array where Element == WorkItem {
@@ -512,6 +528,9 @@ struct ContentView: View {
     @State var frameInterpolation = "none"
     @State var enableConcurrent = true
     
+    @State var isShowingLoadingView = false
+    @State var rawFinderItems: [FinderItem] = []
+    
     var body: some View {
         VStack {
             HStack {
@@ -531,10 +550,9 @@ struct ContentView: View {
                     panel.allowsMultipleSelection = true
                     panel.canChooseDirectories = true
                     if panel.runModal() == .OK {
+                        isShowingLoadingView = true
                         for i in panel.urls {
-                            let item = FinderItem(at: i)
-                            
-                            addItemIfPossible(of: item, to: &finderItems)
+                            rawFinderItems.append(FinderItem(at: i))
                         }
                     }
                 }
@@ -548,7 +566,7 @@ struct ContentView: View {
             }
             
             if finderItems.isEmpty {
-                welcomeView(finderItems: $finderItems)
+                welcomeView(finderItems: $finderItems, rawFinderItems: $rawFinderItems, isShowingLoadingView: $isShowingLoadingView)
             } else {
                 GeometryReader { geometry in
                     
@@ -562,6 +580,7 @@ struct ContentView: View {
                     }
                     .frame(width: geometry.size.width, height: geometry.size.height)
                     .onDrop(of: [.fileURL], isTargeted: nil) { providers in
+                        isShowingLoadingView = true
                         for i in providers {
                             i.loadItem(forTypeIdentifier: "public.file-url", options: nil) { urlData, error in
                                 print(finderItems)
@@ -571,8 +590,7 @@ struct ContentView: View {
                                 guard let url = URL(dataRepresentation: urlData, relativeTo: nil) else { return }
                                 
                                 let item = FinderItem(at: url)
-                                
-                                addItemIfPossible(of: item, to: &finderItems)
+                                rawFinderItems.append(item)
                             }
                         }
                         
@@ -590,12 +608,18 @@ struct ContentView: View {
         .sheet(isPresented: $isCreatingPDF, onDismiss: nil) {
             ProcessingPDFView(isCreatingPDF: $isCreatingPDF, background: $pdfbackground)
         }
-        .onAppear {
+        .sheet(isPresented: $isShowingLoadingView, onDismiss: nil, content: {
+            LoadingView(text: "Loading files...")
+                .frame(width: 400, height: 75)
+        })
+        .onChange(of: isShowingLoadingView) { newValue in
+            guard newValue == true else { return }
             DispatchQueue(label: "background").async {
-                let finderItem = FinderItem(at: "\(NSHomeDirectory())/temp")
-                if finderItem.isExistence {
-                    try! finderItem.removeFile()
-                }
+                self.finderItems = addItems(of: rawFinderItems, to: finderItems)
+                
+                rawFinderItems.removeAll()
+                
+                isShowingLoadingView = false
             }
         }
     }
@@ -604,6 +628,8 @@ struct ContentView: View {
 struct welcomeView: View {
     
     @Binding var finderItems: [WorkItem]
+    @Binding var rawFinderItems: [FinderItem]
+    @Binding var isShowingLoadingView: Bool
     
     var body: some View {
         VStack {
@@ -621,14 +647,14 @@ struct welcomeView: View {
         .padding(.all, 0.0)
         .onDrop(of: [.fileURL], isTargeted: nil) { providers in
             for i in providers {
+                isShowingLoadingView = true
                 i.loadItem(forTypeIdentifier: "public.file-url", options: nil) { urlData, error in
                     guard error == nil else { return }
                     guard let urlData = urlData as? Data else { return }
                     guard let url = URL(dataRepresentation: urlData, relativeTo: nil) else { return }
                     
                     let item = FinderItem(at: url)
-                    
-                    addItemIfPossible(of: item, to: &finderItems)
+                    rawFinderItems.append(item)
                 }
             }
             
@@ -639,10 +665,12 @@ struct welcomeView: View {
             panel.allowsMultipleSelection = true
             panel.canChooseDirectories = true
             if panel.runModal() == .OK {
+                isShowingLoadingView = true
                 for i in panel.urls {
                     let item = FinderItem(at: i)
-                    addItemIfPossible(of: item, to: &finderItems)
+                    rawFinderItems.append(item)
                 }
+                
             }
         }
     }
@@ -667,7 +695,6 @@ struct GridItemView: View {
                 .cornerRadius(5)
                 .aspectRatio(contentMode: .fit)
                 .padding([.top, .leading, .trailing])
-                .transition(.scale(scale: 10))
                 .popover(isPresented: $isShowingHint) {
                     Text(image != NSImage(named: "placeholder")! ?
                         """
@@ -690,7 +717,6 @@ struct GridItemView: View {
             Text(((item.finderItem.relativePath ?? item.finderItem.fileName) ?? item.finderItem.path))
                 .multilineTextAlignment(.center)
                 .padding([.leading, .bottom, .trailing])
-                .transition(.slide)
                 .onHover { bool in
                     self.isShowingHint = bool
                 }
@@ -712,9 +738,7 @@ struct GridItemView: View {
         }
         .onAppear {
             DispatchQueue(label: "background").async {
-                withAnimation {
-                    image = (item.finderItem.image ?? item.finderItem.firstFrame) ?? NSImage(named: "placeholder")!
-                }
+                image = (item.finderItem.image ?? item.finderItem.firstFrame) ?? NSImage(named: "placeholder")!
             }
         }
     }
@@ -1449,9 +1473,33 @@ struct ProcessingPDFView: View {
     }
 }
 
+struct LoadingView: View {
+    
+    @State var text: String
+    
+    var body: some View {
+        
+        VStack {
+            HStack {
+                Text(text)
+                    .multilineTextAlignment(.leading)
+                    .padding([.horizontal, .top])
+                
+                Spacer()
+            }
+            
+            ProgressView()
+                .progressViewStyle(.linear)
+                .padding([.horizontal, .bottom])
+        }
+        
+    }
+    
+}
+
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        LoadingView(text: "123")
     }
 }
