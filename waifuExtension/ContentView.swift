@@ -363,7 +363,8 @@ extension Array where Element == WorkItem {
                                     try! FinderItem(at: outputPath).copy(to: destinationFinderItem.path)
                                     if !Configuration.main.isDevEnabled { try! FinderItem(at: "\(Configuration.main.saveFolder)/tmp").removeFile() }
                                     
-                                    didFinishOneItem(videoIndex + 1, videos.count)
+                                    finishedItemsCounter += 1
+                                    didFinishOneItem(finishedItemsCounter, totalItemCounter)
                                     
                                     print(">>>>> results: ")
                                     print("Video \(currentVideo.finderItem.fileName ?? "") done")
@@ -685,7 +686,7 @@ struct SpecificationsView: View {
     
     let computeOptions = ["CPU", "GPU"]
     
-    let videoSegmentOptions = [10, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000]
+    let videoSegmentOptions = [500, 1000, 2000, 5000, 10000, 20000]
     let frameInterpolationOptions = ["none", "2", "4"]
     
     @State var isShowingStyleHint: Bool = false
