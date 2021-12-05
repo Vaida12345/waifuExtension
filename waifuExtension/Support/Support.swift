@@ -572,6 +572,20 @@ extension BinaryFloatingPoint where Self: LosslessStringConvertible {
         return String(format: "%.1fs", Double(self))
     }
     
+    /// Returns the expression of file size.
+    ///
+    /// **Example**
+    ///
+    ///     print(1902662.expressAsFileSize())
+    ///     // prints "1.9MB"
+    func expressAsFileSize() -> String {
+        if self < 1e3 { return String(format: "%.3gB", Double(self)) }
+        if self < 1e6 { return String(format: "%.3gKB", Double(self) / 1e3) }
+        if self < 1e9 { return String(format: "%.3gMB", Double(self) / 1e6) }
+        if self < 1e12 { return String(format: "%.3gGB", Double(self) / 1e9) }
+        return String(format: "%.3gTB", Double(self) / 1e12)
+    }
+    
     /// Returns the rounded value.
     ///
     ///  **Example**

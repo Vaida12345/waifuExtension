@@ -1,0 +1,10 @@
+{
+  "MLModelDescriptionKey" : "A regressor trained to calculate the disk storage required to keep a png image.",
+  "MLModelCreatorDefinedKey" : {
+    "com.apple.createml.version" : "12.0.1",
+    "com.apple.createml.app.tag" : "78.6",
+    "com.apple.createml.app.version" : "3.0",
+    "com.apple.coreml.model.preview.type" : "tabularRegressor"
+  },
+  "MLModelAuthorKey" : "Vaida"
+}

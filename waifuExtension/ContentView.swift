@@ -37,67 +37,127 @@ extension Array where Element == WorkItem {
         return self.contains(WorkItem(at: finderItem, type: .image))
     }
     
-    func work(_ chosenScaleLevel: Int?, modelUsed: Waifu2xModel?, isUsingGPU: Bool, videoSegmentFrames: Int = 10, frameInterpolation: Int?, onStatusChanged status: @escaping ((_ status: String)->()), onStatusProgressChanged: @escaping ((_ progress: Int?, _ total: Int?)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
+    func work(_ chosenScaleLevel: Int?, modelUsed: Waifu2xModel?, isUsingGPU: Bool, videoSegmentFrames: Int = 10, frameInterpolation: Int?, enableConcurrent: Bool, onStatusChanged status: @escaping ((_ status: String)->()), onStatusProgressChanged: @escaping ((_ progress: Int?, _ total: Int?)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
         
         let images = self.filter({ $0.type == .image })
         let videos = self.filter({ $0.type == .video })
         let backgroundQueue = DispatchQueue(label: "[WorkItem] background dispatch queue")
         
         let totalItemCounter = self.count
+        let totalFrames = { ()-> Double in
+            var content = Double(images.count)
+            for i in videos {
+                content += Double(i.finderItem.frameRate!) * i.finderItem.avAsset!.duration.seconds
+            }
+            return content
+        }()
         var finishedItemsCounter = 0
         
         if !images.isEmpty {
             status("processing images")
             var concurrentProcessingImagesCount = 0
             
-            DispatchQueue.concurrentPerform(iterations: images.count) { imageIndex in
-                autoreleasepool {
-                    
-                    guard !isProcessingCancelled else { return }
-                    
-                    backgroundQueue.async {
-                        concurrentProcessingImagesCount += 1
+            if enableConcurrent {
+                DispatchQueue.concurrentPerform(iterations: images.count) { imageIndex in
+                    autoreleasepool {
                         
-                        status("processing \(concurrentProcessingImagesCount) images in parallel")
-                    }
-                    
-                    let currentImage = images[imageIndex]
-                    var image = currentImage.finderItem.image!
-                    
-                    let waifu2x = Waifu2x()
-                    waifu2x.didFinishedOneBlock = { total in
-                        currentImage.progress += 1 / Double(total)
-                        onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / Double(totalItemCounter))
-                    }
-                    waifu2x.isGPUEnabled = isUsingGPU
-                    
-                    if chosenScaleLevel! >= 2 {
-                        for _ in 1...chosenScaleLevel! {
-                            image = waifu2x.run(image, model: modelUsed!)!.reload()
+                        guard !isProcessingCancelled else { return }
+                        
+                        backgroundQueue.async {
+                            concurrentProcessingImagesCount += 1
+                            
+                            status("processing \(concurrentProcessingImagesCount) images in parallel")
                         }
-                    } else {
-                        image = waifu2x.run(image, model: modelUsed!)!
+                        
+                        let currentImage = images[imageIndex]
+                        var image = currentImage.finderItem.image!
+                        
+                        let waifu2x = Waifu2x()
+                        waifu2x.didFinishedOneBlock = { total in
+                            currentImage.progress += 1 / Double(total) / Double(chosenScaleLevel!)
+                            onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / totalFrames)
+                        }
+                        waifu2x.isGPUEnabled = isUsingGPU
+                        
+                        if chosenScaleLevel! >= 2 {
+                            for _ in 1...chosenScaleLevel! {
+                                image = waifu2x.run(image, model: modelUsed!)!.reload()
+                            }
+                        } else {
+                            image = waifu2x.run(image, model: modelUsed!)!
+                        }
+                        
+                        let outputFileName: String
+                        if let name = currentImage.finderItem.relativePath {
+                            outputFileName = name[..<name.lastIndex(of: ".")!] + ".png"
+                        } else {
+                            outputFileName = currentImage.finderItem.fileName! + ".png"
+                        }
+                        
+                        let finderItemAtImageOutputPath = FinderItem(at: "\(Configuration.main.saveFolder)/\(outputFileName)")
+                        
+                        finderItemAtImageOutputPath.generateDirectory()
+                        image.write(to: finderItemAtImageOutputPath.path)
+                        
+                        backgroundQueue.async {
+                            concurrentProcessingImagesCount -= 1
+                            status("processing \(concurrentProcessingImagesCount) images in parallel")
+                            finishedItemsCounter += 1
+                            didFinishOneItem(finishedItemsCounter, totalItemCounter)
+                        }
+                        
                     }
-                    
-                    let outputFileName: String
-                    if let name = currentImage.finderItem.relativePath {
-                        outputFileName = name[..<name.lastIndex(of: ".")!] + ".png"
-                    } else {
-                        outputFileName = currentImage.finderItem.fileName! + ".png"
+                }
+            } else {
+                while imageIndex < images.count {
+                    autoreleasepool {
+                        
+                        guard !isProcessingCancelled else { return }
+                        
+                        backgroundQueue.async {
+                            concurrentProcessingImagesCount += 1
+                            
+                            status("processing \(concurrentProcessingImagesCount) images in parallel")
+                        }
+                        
+                        let currentImage = images[imageIndex]
+                        var image = currentImage.finderItem.image!
+                        
+                        let waifu2x = Waifu2x()
+                        waifu2x.didFinishedOneBlock = { total in
+                            currentImage.progress += 1 / Double(total) / Double(chosenScaleLevel!)
+                            onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / totalFrames)
+                        }
+                        waifu2x.isGPUEnabled = isUsingGPU
+                        
+                        if chosenScaleLevel! >= 2 {
+                            for _ in 1...chosenScaleLevel! {
+                                image = waifu2x.run(image, model: modelUsed!)!.reload()
+                            }
+                        } else {
+                            image = waifu2x.run(image, model: modelUsed!)!
+                        }
+                        
+                        let outputFileName: String
+                        if let name = currentImage.finderItem.relativePath {
+                            outputFileName = name[..<name.lastIndex(of: ".")!] + ".png"
+                        } else {
+                            outputFileName = currentImage.finderItem.fileName! + ".png"
+                        }
+                        
+                        let finderItemAtImageOutputPath = FinderItem(at: "\(Configuration.main.saveFolder)/\(outputFileName)")
+                        
+                        finderItemAtImageOutputPath.generateDirectory()
+                        image.write(to: finderItemAtImageOutputPath.path)
+                        
+                        backgroundQueue.async {
+                            concurrentProcessingImagesCount -= 1
+                            status("processing \(concurrentProcessingImagesCount) images in parallel")
+                            finishedItemsCounter += 1
+                            didFinishOneItem(finishedItemsCounter, totalItemCounter)
+                        }
+                        
                     }
-                    
-                    let finderItemAtImageOutputPath = FinderItem(at: "\(Configuration.main.saveFolder)/\(outputFileName)")
-                    
-                    finderItemAtImageOutputPath.generateDirectory()
-                    image.write(to: finderItemAtImageOutputPath.path)
-                    
-                    backgroundQueue.async {
-                        concurrentProcessingImagesCount -= 1
-                        status("processing \(concurrentProcessingImagesCount) images in parallel")
-                        finishedItemsCounter += 1
-                        didFinishOneItem(finishedItemsCounter, totalItemCounter)
-                    }
-                    
                 }
             }
             
@@ -215,8 +275,8 @@ extension Array where Element == WorkItem {
                                     thumbnail = waifu2x.run(thumbnail.reload(withIndex: "\(frameCounter)"), model: modelUsed!)!
                                 }
                                 
-                                currentVideo.progress += 1 / Double(requiredFramesCount) / factor / totalSegmentsCount
-                                onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / Double(totalItemCounter))
+                                currentVideo.progress += 1 / factor
+                                onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / totalFrames)
                             }
                             
                             var sequence = String(frameCounter)
@@ -244,8 +304,8 @@ extension Array where Element == WorkItem {
                                     try! FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/\(sequence).png").copy(to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(previousSequence).png")
                                     frameCounter += 1
                                     
-                                    currentVideo.progress += 1 / Double(requiredFramesCount) / factor / totalSegmentsCount
-                                    onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / Double(totalItemCounter))
+                                    currentVideo.progress += 1 / factor
+                                    onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / totalFrames)
                                     
                                     return
                                 }
@@ -440,6 +500,7 @@ struct ContentView: View {
     @State var chosenComputeOption = "GPU"
     @State var videoSegmentLength = 2000
     @State var frameInterpolation = "none"
+    @State var enableConcurrent = true
     
     var body: some View {
         VStack {
@@ -511,10 +572,10 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $isSheetShown, onDismiss: nil) {
-            SpecificationsView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel, chosenComputeOption: $chosenComputeOption, videoSegmentLength: $videoSegmentLength, frameInterpolation: $frameInterpolation, frameHeight: !finderItems.allSatisfy({ $0.finderItem.avAsset == nil }) ? 400 : 300)
+            SpecificationsView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel, chosenComputeOption: $chosenComputeOption, videoSegmentLength: $videoSegmentLength, frameInterpolation: $frameInterpolation, enableConcurrentPerform: $enableConcurrent, frameHeight: !finderItems.allSatisfy({ $0.finderItem.avAsset == nil }) ? 400 : 300)
         }
         .sheet(isPresented: $isProcessing, onDismiss: nil) {
-            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF, chosenComputeOption: $chosenComputeOption, videoSegmentLength: $videoSegmentLength, frameInterpolation: $frameInterpolation)
+            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF, chosenComputeOption: $chosenComputeOption, videoSegmentLength: $videoSegmentLength, frameInterpolation: $frameInterpolation, enableConcurrent: $enableConcurrent)
         }
         .sheet(isPresented: $isCreatingPDF, onDismiss: nil) {
             ProcessingPDFView(isCreatingPDF: $isCreatingPDF, background: $pdfbackground)
@@ -664,6 +725,7 @@ struct SpecificationsView: View {
     @Binding var chosenComputeOption: String
     @Binding var videoSegmentLength: Int
     @Binding var frameInterpolation: String
+    @Binding var enableConcurrentPerform: Bool
     
     let styleNames: [String] = ["anime", "photo"]
     @State var chosenStyle = Configuration.main.modelStyle {
@@ -679,14 +741,14 @@ struct SpecificationsView: View {
         }
     }
     
-    let scaleLevels: [String] = ["none", "0", "1", "2", "3", "4", "5"]
+    @State var scaleLevels: [String] = []
     
     @State var modelClass: [String] = []
     @State var chosenModelClass: String = ""
     
     let computeOptions = ["CPU", "GPU"]
     
-    let videoSegmentOptions = [500, 1000, 2000, 5000, 10000, 20000]
+    let videoSegmentOptions = [100, 500, 1000, 2000, 5000, 10000, 20000]
     let frameInterpolationOptions = ["none", "2", "4"]
     
     @State var isShowingStyleHint: Bool = false
@@ -696,8 +758,11 @@ struct SpecificationsView: View {
     @State var isShowingGPUHint: Bool = false
     @State var isShowingVideoSegmentHint: Bool = false
     @State var isShowingFrameInterpolationHint: Bool = false
+    @State var isShowingStorageRequiredHint: Bool = false
+    @State var isShowingEnableConcurrent: Bool = false
     
     @State var frameHeight: CGFloat
+    @State var storageRequired: String? = nil
     
     func findModelClass() {
         guard let chosenScaleLevel = Int(chosenScaleLevel) else {
@@ -764,7 +829,7 @@ struct SpecificationsView: View {
                             }
                     }
                     
-                    if !finderItems.allSatisfy({ $0.finderItem.avAsset == nil }) {
+                    if !finderItems.allSatisfy({ $0.type == .image }) {
                         HStack {
                             Spacer()
                             Text("Video segmentation:")
@@ -779,6 +844,14 @@ struct SpecificationsView: View {
                             Text("Frame Interpolation:")
                                 .onHover { bool in
                                     isShowingFrameInterpolationHint = bool
+                                }
+                        }
+                    } else if finderItems.allSatisfy({ $0.type == .image }) {
+                        HStack {
+                            Spacer()
+                            Text("Enable Concurrent Perform:")
+                                .onHover { bool in
+                                    isShowingEnableConcurrent = bool
                                 }
                         }
                     }
@@ -824,6 +897,10 @@ struct SpecificationsView: View {
                             ForEach(noiseLevels, id: \.self) { item in
                                 Button(item.description) {
                                     chosenNoiseLevel = item
+                                    self.storageRequired = nil
+                                    DispatchQueue(label: "background").async {
+                                        self.storageRequired = estimateSize(finderItems: finderItems.map({ $0.finderItem }), frames: videoSegmentLength, scale: self.chosenScaleLevel)
+                                    }
                                 }
                             }
                         }
@@ -862,11 +939,15 @@ struct SpecificationsView: View {
                         
                     }
                     
-                    if !finderItems.allSatisfy({ $0.finderItem.avAsset == nil }) {
+                    if !finderItems.allSatisfy({ $0.type == .image }) {
                         Menu(videoSegmentLength.description + " frames") {
                             ForEach(videoSegmentOptions, id: \.self) { item in
                                 Button(item.description + " frames") {
                                     videoSegmentLength = item
+                                    self.storageRequired = nil
+                                    DispatchQueue(label: "background").async {
+                                        self.storageRequired = estimateSize(finderItems: finderItems.map({ $0.finderItem }), frames: videoSegmentLength, scale: self.chosenScaleLevel)
+                                    }
                                 }
                             }
                         }
@@ -889,6 +970,19 @@ struct SpecificationsView: View {
                                 .padding(.all)
                             
                         }
+                    } else if finderItems.allSatisfy({ $0.type == .image }) {
+                        Menu(enableConcurrentPerform.description) {
+                            ForEach([true, false], id: \.self) { item in
+                                Button(item.description) {
+                                    enableConcurrentPerform = item
+                                }
+                            }
+                        }
+                        .popover(isPresented: $isShowingEnableConcurrent) {
+                            Text("Please enable this unless the images are large.")
+                                .padding(.all)
+                            
+                        }
                     }
                 }
                 
@@ -900,6 +994,19 @@ struct SpecificationsView: View {
             HStack {
                 
                 Spacer()
+                
+                if let storageRequired = storageRequired, !finderItems.allSatisfy({ $0.type == .image }) {
+                    Text("Estimated Storage required: \(storageRequired)")
+                        .padding(.trailing)
+                        .popover(isPresented: $isShowingStorageRequiredHint) {
+                            Text("Storage required when processing the videos.\nIf you can not afford, lower the video segment length.")
+                                .padding(.all)
+                            
+                        }
+                        .onHover { bool in
+                            isShowingStorageRequiredHint = bool
+                        }
+                }
                 
                 Button {
                     isShown = false
@@ -929,13 +1036,24 @@ struct SpecificationsView: View {
             .padding(.all)
             .frame(width: 600, height: frameHeight)
             .onAppear {
-                findModelClass()
+                DispatchQueue(label: "background").async {
+                    findModelClass()
+                    self.storageRequired = estimateSize(finderItems: finderItems.map({ $0.finderItem }), frames: videoSegmentLength, scale: self.chosenScaleLevel)
+                    
+                    self.scaleLevels = { ()-> [String] in
+                        if finderItems.allSatisfy({ $0.type == .image }) {
+                            return  ["0", "1", "2", "3", "4", "5"]
+                        } else {
+                            return ["none", "0", "1", "2", "3"]
+                        }
+                    }()
+                }
             }
             .onChange(of: chosenStyle) { newValue in
                 Configuration.main.modelStyle = newValue
             }
             .onChange(of: chosenScaleLevel) { newValue in
-                if newValue == "none" {
+                if newValue == "none" || finderItems.allSatisfy({ $0.type == .image }) {
                     withAnimation {
                         frameHeight = 300
                     }
@@ -961,6 +1079,7 @@ struct ProcessingView: View {
     @Binding var chosenComputeOption: String
     @Binding var videoSegmentLength: Int
     @Binding var frameInterpolation: String
+    @Binding var enableConcurrent: Bool
     
     @State var processedItemsCounter: Int = 0
     @State var currentTimeTaken: Double = 0 // up to 1s
@@ -1122,14 +1241,8 @@ struct ProcessingView: View {
             ProgressView(value: {()->Double in
                 guard !isCreatingImageSequence else { return 0 }
                 guard !finderItems.isEmpty else { return 1 }
-                let factor: Int
-                if Int(chosenScaleLevel) != nil && Int(chosenScaleLevel)! > 1 {
-                    factor = Int(chosenScaleLevel)!
-                } else {
-                    factor = 1
-                }
                 
-                return progress / Double(factor) <= 1 ? progress / Double(factor) : 1
+                return progress <= 1 ? progress : 1
             }(), total: 1.0)
             .popover(isPresented: $isShowProgressDetail) {
                 Text("\(String(format: "%.2f", progress * 100))%")
@@ -1186,7 +1299,7 @@ struct ProcessingView: View {
             .onAppear {
                 
                 self.workItem = DispatchWorkItem(qos: .utility, flags: .inheritQoS) {
-                    finderItems.work(Int(chosenScaleLevel), modelUsed: modelUsed, isUsingGPU: chosenComputeOption == "GPU", videoSegmentFrames: videoSegmentLength, frameInterpolation: Int(frameInterpolation)) { status in
+                    finderItems.work(Int(chosenScaleLevel), modelUsed: modelUsed, isUsingGPU: chosenComputeOption == "GPU", videoSegmentFrames: videoSegmentLength, frameInterpolation: Int(frameInterpolation), enableConcurrent: enableConcurrent) { status in
                         self.status = status
                     } onStatusProgressChanged: { progress,total in
                         if progress != nil {

@@ -33,6 +33,8 @@
 		B41C4773274AAF6A0024ECB7 /* Matrix.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C475F274AAF6A0024ECB7 /* Matrix.swift */; };
 		B41C4774274AAF6A0024ECB7 /* Plane.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C4760274AAF6A0024ECB7 /* Plane.swift */; };
 		B41C4775274AAF6A0024ECB7 /* Algebra.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C4761274AAF6A0024ECB7 /* Algebra.swift */; };
+		B41E8A1F275CA5B100611371 /* estimateSize.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41E8A1E275CA5B100611371 /* estimateSize.swift */; };
+		B41E8A21275CA98800611371 /* PNGImageSizeRegressor.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = B41E8A20275CA98800611371 /* PNGImageSizeRegressor.mlpackage */; };
 		B437F15A275334CB00A1CE41 /* anime_style_art_rgb_noise3_model.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = B437F141275334CB00A1CE41 /* anime_style_art_rgb_noise3_model.mlpackage */; };
 		B437F15B275334CB00A1CE41 /* upconv_7_photo_noise3_scale2.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = B437F142275334CB00A1CE41 /* upconv_7_photo_noise3_scale2.mlpackage */; };
 		B437F15C275334CB00A1CE41 /* photo_noise2_model.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = B437F143275334CB00A1CE41 /* photo_noise2_model.mlpackage */; };
@@ -109,6 +111,8 @@
 		B41C475F274AAF6A0024ECB7 /* Matrix.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Matrix.swift; sourceTree = "<group>"; };
 		B41C4760274AAF6A0024ECB7 /* Plane.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Plane.swift; sourceTree = "<group>"; };
 		B41C4761274AAF6A0024ECB7 /* Algebra.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Algebra.swift; sourceTree = "<group>"; };
+		B41E8A1E275CA5B100611371 /* estimateSize.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = estimateSize.swift; sourceTree = "<group>"; };
+		B41E8A20275CA98800611371 /* PNGImageSizeRegressor.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = PNGImageSizeRegressor.mlpackage; sourceTree = "<group>"; };
 		B437F141275334CB00A1CE41 /* anime_style_art_rgb_noise3_model.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = anime_style_art_rgb_noise3_model.mlpackage; sourceTree = "<group>"; };
 		B437F142275334CB00A1CE41 /* upconv_7_photo_noise3_scale2.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = upconv_7_photo_noise3_scale2.mlpackage; sourceTree = "<group>"; };
 		B437F143275334CB00A1CE41 /* photo_noise2_model.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = photo_noise2_model.mlpackage; sourceTree = "<group>"; };
@@ -193,6 +197,8 @@
 				B41C473D274AA7850024ECB7 /* ContentView.swift */,
 				B40B65A72754B95200AB08D2 /* ComparisonView.swift */,
 				B445F6FF27585906004BAE04 /* ConfigurationView.swift */,
+				B41E8A1E275CA5B100611371 /* estimateSize.swift */,
+				B41E8A20275CA98800611371 /* PNGImageSizeRegressor.mlpackage */,
 				B437F140275334CB00A1CE41 /* Models */,
 				B41C474A274AAF6A0024ECB7 /* Support */,
 				B49BFD6F274B4BC50046FDDF /* waifu2x-mac */,
@@ -215,9 +221,9 @@
 		B41C474A274AAF6A0024ECB7 /* Support */ = {
 			isa = PBXGroup;
 			children = (
+				B41C4759274AAF6A0024ECB7 /* Support.swift */,
 				B41C474B274AAF6A0024ECB7 /* Numerics */,
 				B41C4752274AAF6A0024ECB7 /* Support */,
-				B41C4759274AAF6A0024ECB7 /* Support.swift */,
 				B41C475B274AAF6A0024ECB7 /* Algebra */,
 			);
 			path = Support;
@@ -466,6 +472,7 @@
 				B41C4769274AAF6A0024ECB7 /* Bechmark.swift in Sources */,
 				B41C4770274AAF6A0024ECB7 /* LinearTransformation.swift in Sources */,
 				B41C4775274AAF6A0024ECB7 /* Algebra.swift in Sources */,
+				B41E8A1F275CA5B100611371 /* estimateSize.swift in Sources */,
 				B49BFDAD274B4BC50046FDDF /* BackgroundTask.swift in Sources */,
 				B49BFDB5274B4BC50046FDDF /* MetalBicubic.swift in Sources */,
 				B437F164275334CB00A1CE41 /* anime_style_art_rgb_noise2_model.mlpackage in Sources */,
@@ -502,6 +509,7 @@
 				B41C476B274AAF6A0024ECB7 /* Canvas.swift in Sources */,
 				B437F163275334CB00A1CE41 /* anime_style_art_noise3_model.mlpackage in Sources */,
 				B437F161275334CB00A1CE41 /* upconv_7_photo_noise2_scale2.mlpackage in Sources */,
+				B41E8A21275CA98800611371 /* PNGImageSizeRegressor.mlpackage in Sources */,
 				B437F160275334CB00A1CE41 /* ukbench_scale2.mlpackage in Sources */,
 				B49BFDB4274B4BC50046FDDF /* NSImage+Bicubic.swift in Sources */,
 				B437F167275334CB00A1CE41 /* photo_noise1_model.mlpackage in Sources */,

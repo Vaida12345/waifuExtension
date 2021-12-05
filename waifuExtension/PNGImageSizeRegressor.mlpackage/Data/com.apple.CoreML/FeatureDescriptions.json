@@ -1,0 +1,18 @@
+{
+  "Outputs" : {
+    "Size" : {
+      "MLFeatureShortDescription" : ""
+    }
+  },
+  "Inputs" : {
+    "Width" : {
+      "MLFeatureShortDescription" : ""
+    },
+    "Height" : {
+      "MLFeatureShortDescription" : ""
+    }
+  },
+  "TrainingInputs" : {
+
+  }
+}
