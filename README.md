@@ -11,7 +11,13 @@ The new version is capable of taking advantages of CPU, GPU, and [ANE](https://g
 Files and source code could be found in [releases](https://github.com/Vaida12345/waifuExtension/releases).
 
 ## Privacy
-This app works completely offline and requires no internet connection. Nothing is collected or stored, expect for some temp files stored in the [container](https://developer.apple.com/documentation/foundation/1413045-nshomedirectory/) of the app. These files will be deleted when the app is opened.
+This app works completely offline and requires no internet connection. Nothing is collected or stored, expect for:
+- Your settings stored in its [containter](https://developer.apple.com/documentation/foundation/1413045-nshomedirectory/).
+- Temp images in during comparison. (These files will be deleted when the windows is closed.)
+- Temp images during processing in its container, the existance would only last for three lines of code, after which it is deleted.
+- Output files and logs (if you turn on "enable log" or "enable dev" in preference) in its output path.
+
+If the app crashes, please choose not to share crash log with Apple.
 
 ## Models
 The models where obtained from [waifu2x-caffe](https://github.com/lltcggie/waifu2x-caffe), and translated to coreML via [coremltools](https://github.com/apple/coremltools).
