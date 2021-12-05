@@ -171,9 +171,9 @@ struct ImageView: View {
         formatter.dateStyle = .none
         formatter.timeStyle = .medium
         
-        FinderItem(at: "\(NSHomeDirectory())/temp").generateDirectory()
+        FinderItem(at: "\(NSHomeDirectory())/tmp").generateDirectory()
         
-        let path = "\(NSHomeDirectory())/temp/\(formatter.string(from: Date()))-\(name).png"
+        let path = "\(NSHomeDirectory())/tmp/\(formatter.string(from: Date()))-\(name).png"
         print(path)
         image.write(to: path)
         _ = shell(["open \(path.replacingOccurrences(of: " ", with: "\\ "))"])

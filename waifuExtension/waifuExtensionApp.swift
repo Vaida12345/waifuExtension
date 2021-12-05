@@ -14,7 +14,7 @@ struct waifuExtensionApp: App {
         WindowGroup {
             ContentView()
                 .frame(minWidth: 600, maxWidth: .infinity, minHeight: 350, maxHeight: .infinity)
-                .onExitCommand {
+                .onDisappear {
                     let finderItem = FinderItem(at: "\(NSHomeDirectory())/tmp")
                     if finderItem.isExistence {
                         try! finderItem.removeFile()
@@ -26,6 +26,12 @@ struct waifuExtensionApp: App {
                 Button("Compare Models") {
                     ComparisonView()
                         .frame(minWidth: 800, maxWidth: .infinity, minHeight: 400, maxHeight: .infinity)
+                        .onDisappear {
+                            let finderItem = FinderItem(at: "\(NSHomeDirectory())/tmp")
+                            if finderItem.isExistence {
+                                try! finderItem.removeFile()
+                            }
+                        }
                         .openInWindow(title: "Comparison", sender: self)
                 }
             }
@@ -34,7 +40,7 @@ struct waifuExtensionApp: App {
         Settings {
             ConfigurationView()
                 .frame(width: 600, height: 100)
-                .onExitCommand {
+                .onDisappear {
                     let finderItem = FinderItem(at: "\(NSHomeDirectory())/tmp")
                     if finderItem.isExistence {
                         try! finderItem.removeFile()

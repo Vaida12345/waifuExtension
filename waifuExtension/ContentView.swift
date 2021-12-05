@@ -582,7 +582,7 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $isSheetShown, onDismiss: nil) {
-            SpecificationsView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel, chosenComputeOption: $chosenComputeOption, videoSegmentLength: $videoSegmentLength, frameInterpolation: $frameInterpolation, enableConcurrentPerform: $enableConcurrent, frameHeight: !finderItems.allSatisfy({ $0.finderItem.avAsset == nil }) ? 400 : 300)
+            SpecificationsView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel, chosenComputeOption: $chosenComputeOption, videoSegmentLength: $videoSegmentLength, frameInterpolation: $frameInterpolation, enableConcurrentPerform: $enableConcurrent, frameHeight: !finderItems.allSatisfy({ $0.finderItem.avAsset == nil }) ? 400 : 350)
         }
         .sheet(isPresented: $isProcessing, onDismiss: nil) {
             ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF, chosenComputeOption: $chosenComputeOption, videoSegmentLength: $videoSegmentLength, frameInterpolation: $frameInterpolation, enableConcurrent: $enableConcurrent)
@@ -908,9 +908,6 @@ struct SpecificationsView: View {
                                 Button(item.description) {
                                     chosenNoiseLevel = item
                                     self.storageRequired = nil
-                                    DispatchQueue(label: "background").async {
-                                        self.storageRequired = estimateSize(finderItems: finderItems.map({ $0.finderItem }), frames: videoSegmentLength, scale: self.chosenScaleLevel)
-                                    }
                                 }
                             }
                         }
@@ -955,9 +952,6 @@ struct SpecificationsView: View {
                                 Button(item.description + " frames") {
                                     videoSegmentLength = item
                                     self.storageRequired = nil
-                                    DispatchQueue(label: "background").async {
-                                        self.storageRequired = estimateSize(finderItems: finderItems.map({ $0.finderItem }), frames: videoSegmentLength, scale: self.chosenScaleLevel)
-                                    }
                                 }
                             }
                         }
@@ -1068,12 +1062,20 @@ struct SpecificationsView: View {
                 }
                 if newValue == "none" || finderItems.allSatisfy({ $0.type == .image }) {
                     withAnimation {
-                        frameHeight = 300
+                        frameHeight = 350
                     }
                 } else {
                     withAnimation {
                         frameHeight = 400
                     }
+                }
+                DispatchQueue(label: "background").async {
+                    self.storageRequired = estimateSize(finderItems: finderItems.map({ $0.finderItem }), frames: videoSegmentLength, scale: self.chosenScaleLevel)
+                }
+            }
+            .onChange(of: videoSegmentLength) { newValue in
+                DispatchQueue(label: "background").async {
+                    self.storageRequired = estimateSize(finderItems: finderItems.map({ $0.finderItem }), frames: videoSegmentLength, scale: self.chosenScaleLevel)
                 }
             }
     }
@@ -1196,15 +1198,6 @@ struct ProcessingView: View {
                         guard !isPaused else { return "paused" }
                         guard progress != 0 else { return "calculating..." }
                         
-                        let factor: Int
-                        if Int(chosenScaleLevel) != nil && Int(chosenScaleLevel)! > 1 {
-                            factor = Int(chosenScaleLevel)!
-                        } else {
-                            factor = 1
-                        }
-                        
-                        let progress = progress / Double(factor)
-                        
                         var value = (pastTimeTaken) / progress
                         value -= pastTimeTaken
                         
@@ -1217,15 +1210,6 @@ struct ProcessingView: View {
                         guard !isFinished else { return "finished" }
                         guard !isPaused else { return "paused" }
                         guard progress != 0 else { return "calculating..." }
-                        
-                        let factor: Int
-                        if Int(chosenScaleLevel) != nil && Int(chosenScaleLevel)! > 1 {
-                            factor = Int(chosenScaleLevel)!
-                        } else {
-                            factor = 1
-                        }
-                        
-                        let progress = progress / Double(factor)
                         
                         var value = (pastTimeTaken) / progress
                         value -= pastTimeTaken
