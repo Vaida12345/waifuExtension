@@ -579,25 +579,25 @@ struct ContentView: View {
                         
                     }
                     .frame(width: geometry.size.width, height: geometry.size.height)
-                    .onDrop(of: [.fileURL], isTargeted: nil) { providers in
-                        isShowingLoadingView = true
-                        for i in providers {
-                            i.loadItem(forTypeIdentifier: "public.file-url", options: nil) { urlData, error in
-                                print(finderItems)
-                                
-                                guard error == nil else { return }
-                                guard let urlData = urlData as? Data else { return }
-                                guard let url = URL(dataRepresentation: urlData, relativeTo: nil) else { return }
-                                
-                                let item = FinderItem(at: url)
-                                rawFinderItems.append(item)
-                            }
-                        }
-                        
-                        return true
-                    }
                 }
             }
+        }
+        .onDrop(of: [.fileURL], isTargeted: nil) { providers in
+            isShowingLoadingView = true
+            for i in providers {
+                i.loadItem(forTypeIdentifier: "public.file-url", options: nil) { urlData, error in
+                    print(finderItems)
+                    
+                    guard error == nil else { return }
+                    guard let urlData = urlData as? Data else { return }
+                    guard let url = URL(dataRepresentation: urlData, relativeTo: nil) else { return }
+                    
+                    let item = FinderItem(at: url)
+                    rawFinderItems.append(item)
+                }
+            }
+            
+            return true
         }
         .sheet(isPresented: $isSheetShown, onDismiss: nil) {
             SpecificationsView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel, chosenComputeOption: $chosenComputeOption, videoSegmentLength: $videoSegmentLength, frameInterpolation: $frameInterpolation, enableConcurrentPerform: $enableConcurrent, frameHeight: !finderItems.allSatisfy({ $0.finderItem.avAsset == nil }) ? 400 : 350)
@@ -645,21 +645,6 @@ struct welcomeView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.all, 0.0)
-        .onDrop(of: [.fileURL], isTargeted: nil) { providers in
-            for i in providers {
-                isShowingLoadingView = true
-                i.loadItem(forTypeIdentifier: "public.file-url", options: nil) { urlData, error in
-                    guard error == nil else { return }
-                    guard let urlData = urlData as? Data else { return }
-                    guard let url = URL(dataRepresentation: urlData, relativeTo: nil) else { return }
-                    
-                    let item = FinderItem(at: url)
-                    rawFinderItems.append(item)
-                }
-            }
-            
-            return true
-        }
         .onTapGesture(count: 2) {
             let panel = NSOpenPanel()
             panel.allowsMultipleSelection = true

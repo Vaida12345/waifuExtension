@@ -1,0 +1,24 @@
+{
+    "fileFormatVersion": "1.0.0",
+    "itemInfoEntries": {
+        "6ACC3C60-B1E5-466C-88EE-4FC394270DD6": {
+            "author": "com.apple.CoreML",
+            "description": "External FeatureDescription Overlay",
+            "name": "FeatureDescriptions.json",
+            "path": "com.apple.CoreML/FeatureDescriptions.json"
+        },
+        "78DEA078-6C73-42C0-834F-303DF8FA0BB2": {
+            "author": "com.apple.CoreML",
+            "description": "CoreML Model Specification",
+            "name": "PNGImageSizeRegressor.mlmodel",
+            "path": "com.apple.CoreML/PNGImageSizeRegressor.mlmodel"
+        },
+        "EF90EC67-47D7-48E1-AF06-F956AAEE65D8": {
+            "author": "com.apple.CoreML",
+            "description": "External Metadata Overlay",
+            "name": "Metadata.json",
+            "path": "com.apple.CoreML/Metadata.json"
+        }
+    },
+    "rootModelIdentifier": "78DEA078-6C73-42C0-834F-303DF8FA0BB2"
+}
