@@ -109,6 +109,7 @@ extension Array where Element == WorkItem {
                     }
                 }
             } else {
+                var imageIndex = 0
                 while imageIndex < images.count {
                     autoreleasepool {
                         
@@ -157,6 +158,7 @@ extension Array where Element == WorkItem {
                             didFinishOneItem(finishedItemsCounter, totalItemCounter)
                         }
                         
+                        imageIndex += 1
                     }
                 }
             }
@@ -1053,6 +1055,9 @@ struct SpecificationsView: View {
                 Configuration.main.modelStyle = newValue
             }
             .onChange(of: chosenScaleLevel) { newValue in
+                if newValue == "4" || newValue == "5" {
+                    enableConcurrentPerform = false
+                }
                 if newValue == "none" || finderItems.allSatisfy({ $0.type == .image }) {
                     withAnimation {
                         frameHeight = 300
