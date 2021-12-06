@@ -669,7 +669,7 @@
 				CODE_SIGN_ENTITLEMENTS = waifuExtension/waifuExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 3.0.0a;
+				CURRENT_PROJECT_VERSION = 3.1.0a;
 				DEVELOPMENT_ASSET_PATHS = "\"waifuExtension/Preview Content\"";
 				DEVELOPMENT_TEAM = 3PH93LN984;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -682,7 +682,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0.1;
-				MARKETING_VERSION = 3.0.0;
+				MARKETING_VERSION = 3.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Vaida.waifuExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -699,7 +699,7 @@
 				CODE_SIGN_ENTITLEMENTS = waifuExtension/waifuExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 3.0.0a;
+				CURRENT_PROJECT_VERSION = 3.1.0a;
 				DEVELOPMENT_ASSET_PATHS = "\"waifuExtension/Preview Content\"";
 				DEVELOPMENT_TEAM = 3PH93LN984;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -712,7 +712,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0.1;
-				MARKETING_VERSION = 3.0.0;
+				MARKETING_VERSION = 3.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Vaida.waifuExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
