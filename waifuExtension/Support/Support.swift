@@ -626,6 +626,15 @@ extension CGRect {
     }
 }
 
+extension CMTime {
+    
+    init(_ value: Double) {
+        let value = value.rounded(toDigit: 3).fraction()
+        self = CMTimeMake(value: Int64(value.numerator), timescale: Int32(value.denominator))
+    }
+    
+}
+
 extension Character {
     
     /// Creates an instance with an `Int`.

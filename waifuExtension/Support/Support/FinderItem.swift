@@ -62,14 +62,21 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     
     /// The extension name of the file.
     ///
+    /// - Attention: The return value is `nil` if the file does not exist.
+    ///
     /// calculus.pdf -> .pdf
     var extensionName: String? {
         guard self.isFile else { return nil }
-        guard self.rawPath.contains(".") else { return nil }
-        return String(self.rawPath[self.rawPath.lastIndex(of: ".")!..<self.rawPath.endIndex])
+        guard let value = try? url.resourceValues(forKeys: [.nameKey]).name else { return nil }
+        guard value.contains(".") else { return nil }
+        return String(value[value.lastIndex(of: ".")!..<value.endIndex])
     }
     
     /// The file name of the file.
+    ///
+    /// - Attention: The return value is `nil` if the file does not exist.
+    ///
+    /// calculus.pdf -> calculus
     var fileName: String? {
         guard let value = try? url.resourceValues(forKeys: [.nameKey]).name else { return nil }
         if value.contains(".") {
@@ -77,6 +84,12 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         } else {
             return value
         }
+    }
+    
+    /// Total displayable size of the file in bytes (this may include space used by metadata), or nil if not available.
+    var fileSize: Int? {
+        guard let value = try? url.resourceValues(forKeys: [.totalFileSizeKey]).totalFileSize else { return nil }
+        return value
     }
     
     /// All the frames of the video.
@@ -159,6 +172,14 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         return false
     }
     
+    /// The icon of the file.
+    var icon: NSImage? {
+        guard self.isExistence else { return nil }
+        let icon = NSWorkspace.shared.icon(forFile: self.path)
+        guard icon.tiffRepresentation != nil else { return nil }
+        return icon
+    }
+    
     /// The image at the path, if exists.
     var image: NSImage? {
         guard self.isExistence else { return nil }
@@ -174,14 +195,14 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     ///
     /// aka, `isFolder`
     var isDirectory: Bool {
-        var isDirectory: ObjCBool = false
-        FileManager.default.fileExists(atPath: self.path, isDirectory: &isDirectory)
-        return isDirectory.boolValue
+        guard let value = try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory else { return false }
+        return value
     }
     
     /// Determines whether a `item` is a file (instead of directory).
     var isFile: Bool {
-        !self.isDirectory
+        guard let value = try? url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile else { return false }
+        return value
     }
     
     /// The absolute path, separated into `String` array.
@@ -256,6 +277,10 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     
     init(at path: String) {
         self.path = path
+    }
+    
+    init(at path: Substring) {
+        self.path = String(path)
     }
     
     init(at url: URL) {
@@ -379,6 +404,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         value.name = newName
         var url = self.url
         try! url.setResourceValues(value)
+        self.path = url.path
     }
     
     /// Rename the file by replacing occurrence.
@@ -394,9 +420,10 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     func saveToPNG() throws {
         if self.extensionName?.lowercased() == ".png" { return }
         guard let image = self.image else { throw NSError(domain: "No image found at path \(self.path)", code: -1, userInfo: ["path": self.path]) }
+        let extensionName = self.extensionName!
         try self.removeFile()
         let imageData = NSBitmapImageRep(data: image.tiffRepresentation!)!.representation(using: .png, properties: [:])!
-        self.path = self.path.replacingOccurrences(of: self.extensionName!, with: ".png")
+        self.path = self.path.replacingOccurrences(of: extensionName, with: ".png")
         try imageData.write(to: self.url)
     }
     
@@ -426,6 +453,14 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         exportSession.exportAsynchronously {
             guard case exportSession.status = AVAssetExportSession.Status.completed else { return }
         }
+    }
+    
+    /// Set an image as icon.
+    ///
+    /// - precondition: The file exists.
+    func setIcon(image: NSImage) throws {
+        precondition(self.isExistence)
+        NSWorkspace.shared.setIcon(image, forFile: self.path, options: .init())
     }
     
     
@@ -478,7 +513,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     }
     
     /// Creates PDF from images in folders.
-    static func createPDF(fromFolder folder: FinderItem, outputPath: String = "\(NSHomeDirectory())/Downloads/PDF Output", onChangingItem: ((_ item: FinderItem)->())? = nil, onFinish: (()->())? = nil) {
+    static func createPDF(fromFolder folder: FinderItem, outputPath: String = "\(NSHomeDirectory())/Downloads/PDF Output", onChangingItem: ((_ item: FinderItem)->())? = nil) {
         
         precondition(folder.isExistence)
         precondition(folder.hasChildren)
@@ -491,25 +526,22 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
             }
         }
         
+        if let onChangingItem = onChangingItem {
+            onChangingItem(folder)
+        }
+        
         // create PDF
         let document = PDFDocument()
         print("create PDF:", folder.fileName ?? "")
-        folder.iteratedOver { child in
-            
+        for child in folder.children! {
             guard child.isFile else { return }
             
-            if let onChangingItem = onChangingItem {
-                onChangingItem(child)
-            }
-            
-            let absolutePath = child.path
-            
-            guard let image = NSImage(contentsOfFile: absolutePath) else { return }
+            guard let image = child.image else { return }
             let imageWidth = 1080.0
             let imageRef = image.representations.first!
             let frame = NSSize(width: imageWidth, height: imageWidth/Double(imageRef.pixelsWide)*Double(imageRef.pixelsHigh))
             image.size = CGSize(width: imageWidth, height: imageWidth / Double(imageRef.pixelsWide)*Double(imageRef.pixelsHigh))
-
+            
             let page = PDFPage(image: image)!
             page.setBounds(NSRect(origin: CGPoint.zero, size: frame), for: .mediaBox)
             document.insert(page, at: document.pageCount)
@@ -519,10 +551,6 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         
         let pastePath = outputPath + "/" + folder.fileName! + ".pdf"
         document.write(toFile: FinderItem(at: pastePath).generateOutputPath())
-        
-        if let onFinish = onFinish {
-            onFinish()
-        }
     }
     
     /// Decode a file from `path` to the expected `type`.
@@ -711,6 +739,11 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         
         func writeImagesAsMovie(_ allImages: [FinderItem], videoPath: String, videoSize: CGSize, videoFPS: Float) {
             // Create AVAssetWriter to write video
+            let finderItemAtVideoPath = FinderItem(at: videoPath)
+            if finderItemAtVideoPath.isExistence {
+                try! finderItemAtVideoPath.removeFile()
+            }
+            
             guard let assetWriter = createAssetWriter(videoPath, size: videoSize) else {
                 print("Error converting images to video: AVAssetWriter not created")
                 return
@@ -869,7 +902,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         writeImagesAsMovie(allImages, videoPath: videoPath, videoSize: videoSize, videoFPS: videoFPS)
     }
     
-    static func trimVideo(sourceURL: URL, outputURL: URL, startTime: Fraction, endTime: Fraction, completion: @escaping ((_ asset: AVAsset)->())) {
+    static func trimVideo(sourceURL: URL, outputURL: URL, startTime: Double, endTime: Double, completion: @escaping ((_ asset: AVAsset)->())) {
         let asset = AVAsset(url: sourceURL as URL)
         
         guard let exportSession = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHEVCHighestQuality) else { return }
@@ -941,13 +974,14 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
                     let realDuration = { ()-> CMTime in
                         let framesCount = Double(videoAsset.frameRate!) * videoAsset.duration.seconds
                         print(framesCount)
-                        let fraction = (framesCount / Double(frameRate)).fraction()
-                        return CMTime(fraction)
+                        print(framesCount / Double(frameRate))
+                        return CMTime(framesCount / Double(frameRate))
                     }()
                     
                     videoTrack!.scaleTimeRange(CMTimeRangeMake(start: atTimeM, duration: videoAsset.duration), toDuration: realDuration)
                     
                     atTimeM = CMTimeAdd(atTimeM, realDuration)
+                    print(atTimeM.seconds.expressedAsTime(), realDuration.seconds.expressedAsTime())
                     completeTrackDuration = CMTimeAdd(completeTrackDuration, realDuration)
                     
                     let firstInstruction = videoCompositionInstruction(videoTrack!, asset: videoAsset)
@@ -984,25 +1018,30 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         
         FinderItem(at: tempFolder).generateDirectory(isFolder: true)
         
-        var index = 0
-        var finishedCounter = 0
         let threshold: Double = 50
-        while index < Int((Double(arrayVideos.count) / threshold).rounded(.up)) {
-            autoreleasepool {
-
-                var sequence = String(index)
-                while sequence.count < 6 { sequence.insert("0", at: sequence.startIndex) }
-                let upperBound = ((index + 1) * Int(threshold)) > arrayVideos.count ? arrayVideos.count : ((index + 1) * Int(threshold))
-
-                mergingVideos(from: Array(arrayVideos[(index * Int(threshold))..<upperBound]), toPath: tempFolder + "/" + sequence + ".m4v") { urlGet, errorGet in
-                    finishedCounter += 1
-                    guard finishedCounter == Int((Double(arrayVideos.count) / threshold).rounded(.up)) else { return }
-                    mergingVideos(from: FinderItem(at: tempFolder).children!, toPath: toPath, completion: completion)
+        
+        if arrayVideos.count >= Int(threshold) {
+            var index = 0
+            var finishedCounter = 0
+            while index < Int((Double(arrayVideos.count) / threshold).rounded(.up)) {
+                autoreleasepool {
+                    
+                    var sequence = String(index)
+                    while sequence.count < 6 { sequence.insert("0", at: sequence.startIndex) }
+                    let upperBound = ((index + 1) * Int(threshold)) > arrayVideos.count ? arrayVideos.count : ((index + 1) * Int(threshold))
+                    
+                    mergingVideos(from: Array(arrayVideos[(index * Int(threshold))..<upperBound]), toPath: tempFolder + "/" + sequence + ".m4v") { urlGet, errorGet in
+                        finishedCounter += 1
+                        guard finishedCounter == Int((Double(arrayVideos.count) / threshold).rounded(.up)) else { return }
+                        mergingVideos(from: FinderItem(at: tempFolder).children!, toPath: toPath, completion: completion)
+                    }
+                    
+                    index += 1
+                    
                 }
-
-                index += 1
-
             }
+        } else {
+            mergingVideos(from: arrayVideos, toPath: toPath, completion: completion)
         }
     }
     

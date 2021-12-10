@@ -29,14 +29,12 @@ public class Waifu2x {
     
     var interrupt = false
     
-    var isGPUEnabled: Bool = true
-    
     private var model_pipeline: BackgroundPipeline<MLMultiArray>! = nil
     private var out_pipeline: BackgroundPipeline<MLMultiArray>! = nil
     
     var didFinishedOneBlock: (( _ total: Int)->Void)? = nil
     
-    func run(_ image: NSImage!, model: Waifu2xModel!, _ callback: @escaping (String) -> Void = { _ in }) -> NSImage? {
+    func run(_ image: NSImage!, model: Waifu2xModel!, concurrentCount: Int = 10, _ callback: @escaping (String) -> Void = { _ in }) -> NSImage? {
         guard image != nil else {
             return nil
         }
@@ -239,7 +237,7 @@ public class Waifu2x {
         
         let in_pipeDate = Date()
         
-        if isGPUEnabled {
+        if MTLCreateSystemDefaultDevice() != nil {
             // calculation with GPU
             
             var arrayLengthFull = 3 * (self.block_size + 2 * self.shrink_size) * (self.block_size + 2 * self.shrink_size)

@@ -61,7 +61,10 @@
 		B437F172275334CB00A1CE41 /* upconv_7_anime_style_art_rgb_noise0_scale2.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = B437F159275334CB00A1CE41 /* upconv_7_anime_style_art_rgb_noise0_scale2.mlpackage */; };
 		B437F174275334DB00A1CE41 /* Waifu2xModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B437F173275334DB00A1CE41 /* Waifu2xModel.swift */; };
 		B445F70027585906004BAE04 /* ConfigurationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B445F6FF27585906004BAE04 /* ConfigurationView.swift */; };
+		B46F2AE8275DB02D002D01CB /* estimateTime.swift in Sources */ = {isa = PBXBuildFile; fileRef = B46F2AE7275DB02D002D01CB /* estimateTime.swift */; };
+		B46F2AEA275DB26E002D01CB /* Table.swift in Sources */ = {isa = PBXBuildFile; fileRef = B46F2AE9275DB26E002D01CB /* Table.swift */; };
 		B47664D62753056300FD78EA /* Calculation.metal in Sources */ = {isa = PBXBuildFile; fileRef = B47664D52753056300FD78EA /* Calculation.metal */; };
+		B483A9D327633F26007381F6 /* icon.icns in Resources */ = {isa = PBXBuildFile; fileRef = B483A9D227633F26007381F6 /* icon.icns */; };
 		B49BFD94274B4BC50046FDDF /* BackgroundPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD70274B4BC50046FDDF /* BackgroundPipeline.swift */; };
 		B49BFD96274B4BC50046FDDF /* MLModel+Prediction.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD72274B4BC50046FDDF /* MLModel+Prediction.swift */; };
 		B49BFD97274B4BC50046FDDF /* NSImage+PNG.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD74274B4BC50046FDDF /* NSImage+PNG.swift */; };
@@ -139,7 +142,10 @@
 		B437F159275334CB00A1CE41 /* upconv_7_anime_style_art_rgb_noise0_scale2.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = upconv_7_anime_style_art_rgb_noise0_scale2.mlpackage; sourceTree = "<group>"; };
 		B437F173275334DB00A1CE41 /* Waifu2xModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Waifu2xModel.swift; sourceTree = "<group>"; };
 		B445F6FF27585906004BAE04 /* ConfigurationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationView.swift; sourceTree = "<group>"; };
+		B46F2AE7275DB02D002D01CB /* estimateTime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = estimateTime.swift; sourceTree = "<group>"; };
+		B46F2AE9275DB26E002D01CB /* Table.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Table.swift; sourceTree = "<group>"; };
 		B47664D52753056300FD78EA /* Calculation.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Calculation.metal; sourceTree = "<group>"; };
+		B483A9D227633F26007381F6 /* icon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = icon.icns; sourceTree = "<group>"; };
 		B49BFD70274B4BC50046FDDF /* BackgroundPipeline.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BackgroundPipeline.swift; sourceTree = "<group>"; };
 		B49BFD72274B4BC50046FDDF /* MLModel+Prediction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "MLModel+Prediction.swift"; sourceTree = "<group>"; };
 		B49BFD73274B4BC50046FDDF /* waifu2x_mac.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = waifu2x_mac.h; sourceTree = "<group>"; };
@@ -175,9 +181,8 @@
 		B41C472F274AA7850024ECB7 = {
 			isa = PBXGroup;
 			children = (
-				B41527FA27555EC80051CE81 /* README.md */,
-				B41527FC27555ECF0051CE81 /* LICENSE */,
 				B41C473A274AA7850024ECB7 /* waifuExtension */,
+				B46F2AE6275DAFFE002D01CB /* Assets */,
 				B41C4739274AA7850024ECB7 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -245,6 +250,7 @@
 				B41C4756274AAF6A0024ECB7 /* Canvas.swift */,
 				B41C4757274AAF6A0024ECB7 /* MachineLearning.swift */,
 				B41C4758274AAF6A0024ECB7 /* FinderItem.swift */,
+				B46F2AE9275DB26E002D01CB /* Table.swift */,
 			);
 			path = Support;
 			sourceTree = "<group>";
@@ -343,6 +349,15 @@
 			path = ukbench;
 			sourceTree = "<group>";
 		};
+		B46F2AE6275DAFFE002D01CB /* Assets */ = {
+			isa = PBXGroup;
+			children = (
+				B41527FA27555EC80051CE81 /* README.md */,
+				B41527FC27555ECF0051CE81 /* LICENSE */,
+			);
+			name = Assets;
+			sourceTree = "<group>";
+		};
 		B49BFD6F274B4BC50046FDDF /* waifu2x-mac */ = {
 			isa = PBXGroup;
 			children = (
@@ -373,6 +388,7 @@
 			children = (
 				B4B406E0275D103B00E2078D /* PNGImageSizeRegressor.mlpackage */,
 				B41E8A1E275CA5B100611371 /* estimateSize.swift */,
+				B46F2AE7275DB02D002D01CB /* estimateTime.swift */,
 			);
 			path = SuppportingFiles;
 			sourceTree = "<group>";
@@ -380,6 +396,7 @@
 		B4B406E2275D104400E2078D /* Assets */ = {
 			isa = PBXGroup;
 			children = (
+				B483A9D227633F26007381F6 /* icon.icns */,
 				B41C473F274AA7850024ECB7 /* Assets.xcassets */,
 				B41C4744274AA7850024ECB7 /* waifuExtension.entitlements */,
 				B41C4741274AA7850024ECB7 /* Preview Content */,
@@ -457,6 +474,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B4BC66A12759BC7700627EAE /* dain-ncnn-vulkan-20210210-macos in Resources */,
+				B483A9D327633F26007381F6 /* icon.icns in Resources */,
 				B41C4743274AA7850024ECB7 /* Preview Assets.xcassets in Resources */,
 				B41C4740274AA7850024ECB7 /* Assets.xcassets in Resources */,
 				B41527FB27555EC80051CE81 /* README.md in Resources */,
@@ -472,6 +490,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B46F2AE8275DB02D002D01CB /* estimateTime.swift in Sources */,
 				B437F174275334DB00A1CE41 /* Waifu2xModel.swift in Sources */,
 				B49BFDAE274B4BC50046FDDF /* NSImage+Crop.swift in Sources */,
 				B437F165275334CB00A1CE41 /* upconv_7_anime_style_art_rgb_noise2_scale2.mlpackage in Sources */,
@@ -510,6 +529,7 @@
 				B41C473E274AA7850024ECB7 /* ContentView.swift in Sources */,
 				B437F16F275334CB00A1CE41 /* anime_style_art_rgb_noise1_model.mlpackage in Sources */,
 				B41C4763274AAF6A0024ECB7 /* Int10.swift in Sources */,
+				B46F2AEA275DB26E002D01CB /* Table.swift in Sources */,
 				B41C476A274AAF6A0024ECB7 /* Point.swift in Sources */,
 				B41C4771274AAF6A0024ECB7 /* Expression.swift in Sources */,
 				B437F16B275334CB00A1CE41 /* anime_style_art_rgb_noise0_model.mlpackage in Sources */,
@@ -669,7 +689,7 @@
 				CODE_SIGN_ENTITLEMENTS = waifuExtension/waifuExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 3.1.0a;
+				CURRENT_PROJECT_VERSION = 3.1.1a;
 				DEVELOPMENT_ASSET_PATHS = "\"waifuExtension/Preview Content\"";
 				DEVELOPMENT_TEAM = 3PH93LN984;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -682,7 +702,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0.1;
-				MARKETING_VERSION = 3.1.0;
+				MARKETING_VERSION = 3.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Vaida.waifuExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -699,7 +719,7 @@
 				CODE_SIGN_ENTITLEMENTS = waifuExtension/waifuExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 3.1.0a;
+				CURRENT_PROJECT_VERSION = 3.1.1a;
 				DEVELOPMENT_ASSET_PATHS = "\"waifuExtension/Preview Content\"";
 				DEVELOPMENT_TEAM = 3PH93LN984;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -712,7 +732,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0.1;
-				MARKETING_VERSION = 3.1.0;
+				MARKETING_VERSION = 3.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Vaida.waifuExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

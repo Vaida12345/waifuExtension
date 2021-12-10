@@ -53,20 +53,14 @@ extension Array where Element == WorkItem {
         return self.contains(WorkItem(at: finderItem, type: .image))
     }
     
-    func work(_ chosenScaleLevel: Int?, modelUsed: Waifu2xModel?, isUsingGPU: Bool, videoSegmentFrames: Int = 10, frameInterpolation: Int?, enableConcurrent: Bool, onStatusChanged status: @escaping ((_ status: String)->()), onStatusProgressChanged: @escaping ((_ progress: Int?, _ total: Int?)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
+    func work(_ chosenScaleLevel: Int?, modelUsed: Waifu2xModel?, videoSegmentFrames: Int = 10, frameInterpolation: Int?, enableConcurrent: Bool, onStatusChanged status: @escaping ((_ status: String)->()), onStatusProgressChanged: @escaping ((_ progress: Int?, _ total: Int?)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
         
         let images = self.filter({ $0.type == .image })
         let videos = self.filter({ $0.type == .video })
         let backgroundQueue = DispatchQueue(label: "[WorkItem] background dispatch queue")
         
         let totalItemCounter = self.count
-        let totalFrames = { ()-> Double in
-            var content = Double(images.count)
-            for i in videos {
-                content += Double(i.finderItem.frameRate!) * i.finderItem.avAsset!.duration.seconds
-            }
-            return content
-        }()
+        let totalFrames = videos.map({ Double($0.finderItem.frameRate!) * $0.finderItem.avAsset!.duration.seconds }).reduce(0.0, +) + Double(images.count)
         var finishedItemsCounter = 0
         let scaleFactor = {()-> Double in
             if let chosenScaleLevel = chosenScaleLevel {
@@ -101,14 +95,13 @@ extension Array where Element == WorkItem {
                             currentImage.progress += 1 / Double(total) / scaleFactor
                             onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / totalFrames)
                         }
-                        waifu2x.isGPUEnabled = isUsingGPU
                         
                         if chosenScaleLevel! >= 2 {
                             for _ in 1...chosenScaleLevel! {
-                                image = waifu2x.run(image, model: modelUsed!)!.reload()
+                                image = waifu2x.run(image, model: modelUsed!, concurrentCount: concurrentProcessingImagesCount)!.reload()
                             }
                         } else {
-                            image = waifu2x.run(image, model: modelUsed!)!
+                            image = waifu2x.run(image, model: modelUsed!, concurrentCount: concurrentProcessingImagesCount)!
                         }
                         
                         let outputFileName: String
@@ -153,7 +146,6 @@ extension Array where Element == WorkItem {
                             currentImage.progress += 1 / Double(total) / scaleFactor
                             onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / totalFrames)
                         }
-                        waifu2x.isGPUEnabled = isUsingGPU
                         
                         if chosenScaleLevel! >= 2 {
                             for _ in 1...chosenScaleLevel! {
@@ -216,15 +208,15 @@ extension Array where Element == WorkItem {
                     FinderItem(at: path).generateDirectory()
                     paths.append(path)
                     
-                    FinderItem.trimVideo(sourceURL: currentVideo.finderItem.url, outputURL: URL(fileURLWithPath: path), startTime: (Double(segmentIndex) * Double(videoSegmentLength)).fraction(), endTime: {()->Fraction in
+                    FinderItem.trimVideo(sourceURL: currentVideo.finderItem.url, outputURL: URL(fileURLWithPath: path), startTime: (Double(segmentIndex) * Double(videoSegmentLength)), endTime: {()->Double in
                         if Double(segmentIndex) * videoSegmentLength + videoSegmentLength <= duration {
-                            return Double(Double(segmentIndex) * videoSegmentLength + videoSegmentLength).fraction()
+                            return Double(Double(segmentIndex) * videoSegmentLength + videoSegmentLength)
                         } else {
-                            return Double(duration).fraction()
+                            return Double(duration)
                         }
                     }()) { _ in
                         finishedCounter += 1
-                        onStatusProgressChanged(segmentIndex + 1, Int((duration / videoSegmentLength).rounded(.up)))
+                        onStatusProgressChanged(finishedCounter, Int((duration / videoSegmentLength).rounded(.up)))
                         
                         splitVideo(withIndex: segmentIndex + 1, duration: duration, filePath: filePath, currentVideo: currentVideo, completion: completion)
                         guard finishedCounter == Int((duration / videoSegmentLength).rounded(.up)) else { return }
@@ -373,6 +365,7 @@ extension Array where Element == WorkItem {
                     }
                     
                     // status: merge videos
+                    status("merging videos for \(filePath)")
                     
                     let mergedVideoPath = "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/videos/\(indexSequence).m4v"
                     FinderItem(at: mergedVideoPath).generateDirectory()
@@ -380,7 +373,7 @@ extension Array where Element == WorkItem {
                     let arbitraryFrame = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/000000.png")
                     let arbitraryFrameCGImage = arbitraryFrame.image!.cgImage(forProposedRect: nil, context: nil, hints: nil)!
                     
-                    try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/splitVideo/video \(indexSequence).m4v").removeFile()
+                    if !Configuration.main.isDevEnabled { try! FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/splitVideo/video \(indexSequence).m4v").removeFile() }
                     
                     if frameInterpolation == nil {
                         let enlargedFrames: [FinderItem] = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames").children!
@@ -425,7 +418,7 @@ extension Array where Element == WorkItem {
                     var finished = 0
                     while index < paths.count {
                         
-                        onStatusProgressChanged(index + 1, paths.count)
+                        onStatusProgressChanged(index, paths.count)
                         generateImagesAndMergeToVideoForSegment(segmentsFinderItem: FinderItem(at: paths[index]), index: index, currentVideo: currentVideo, filePath: filePath, totalSegmentsCount: Double(paths.count)) {
                             finished += 1
                             
@@ -458,6 +451,12 @@ extension Array where Element == WorkItem {
                                     Configuration.main.saveLog(printMatrix(matrix: [["", "frames", "duration", "fps"], ["before", "\(currentVideo.finderItem.avAsset!.duration.seconds * Double(currentVideo.finderItem.frameRate!))", "\(currentVideo.finderItem.avAsset!.duration.seconds)", "\(currentVideo.finderItem.frameRate!)"], ["after", "\(destinationFinderItem.avAsset!.duration.seconds * Double(destinationFinderItem.frameRate!))", "\(destinationFinderItem.avAsset!.duration.seconds)", "\(destinationFinderItem.frameRate!)"]]))
                                     Configuration.main.saveLog("")
                                     print("")
+                                    
+                                    if abs((currentVideo.finderItem.avAsset!.duration.seconds * Double(currentVideo.finderItem.frameRate!)) - destinationFinderItem.avAsset!.duration.seconds * Double(destinationFinderItem.frameRate!)) > 5 {
+                                        Configuration.main.saveError("Sorry, error occurred considering the following files:")
+                                        Configuration.main.saveError(printMatrix(matrix: [["", "frames", "duration", "fps"], ["before", "\(currentVideo.finderItem.avAsset!.duration.seconds * Double(currentVideo.finderItem.frameRate!))", "\(currentVideo.finderItem.avAsset!.duration.seconds)", "\(currentVideo.finderItem.frameRate!)"], ["after", "\(destinationFinderItem.avAsset!.duration.seconds * Double(destinationFinderItem.frameRate!))", "\(destinationFinderItem.avAsset!.duration.seconds)", "\(destinationFinderItem.frameRate!)"]]))
+                                        Configuration.main.saveError("")
+                                    }
                                     
                                     if videos.count - 1 == videoIndex {
                                         completion()
@@ -521,9 +520,7 @@ struct ContentView: View {
     @State var isProcessing: Bool = false
     @State var isCreatingPDF: Bool = false
     @State var modelUsed: Waifu2xModel? = nil
-    @State var pdfbackground = DispatchQueue(label: "PDF Background")
     @State var chosenScaleLevel: String = "1"
-    @State var chosenComputeOption = "GPU"
     @State var videoSegmentLength = 2000
     @State var frameInterpolation = "none"
     @State var enableConcurrent = true
@@ -586,8 +583,6 @@ struct ContentView: View {
             isShowingLoadingView = true
             for i in providers {
                 i.loadItem(forTypeIdentifier: "public.file-url", options: nil) { urlData, error in
-                    print(finderItems)
-                    
                     guard error == nil else { return }
                     guard let urlData = urlData as? Data else { return }
                     guard let url = URL(dataRepresentation: urlData, relativeTo: nil) else { return }
@@ -600,13 +595,13 @@ struct ContentView: View {
             return true
         }
         .sheet(isPresented: $isSheetShown, onDismiss: nil) {
-            SpecificationsView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel, chosenComputeOption: $chosenComputeOption, videoSegmentLength: $videoSegmentLength, frameInterpolation: $frameInterpolation, enableConcurrentPerform: $enableConcurrent, frameHeight: !finderItems.allSatisfy({ $0.finderItem.avAsset == nil }) ? 400 : 350)
+            SpecificationsView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel, videoSegmentLength: $videoSegmentLength, frameInterpolation: $frameInterpolation, enableConcurrentPerform: $enableConcurrent, frameHeight: !finderItems.allSatisfy({ $0.finderItem.avAsset == nil }) ? 400 : 350)
         }
         .sheet(isPresented: $isProcessing, onDismiss: nil) {
-            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF, chosenComputeOption: $chosenComputeOption, videoSegmentLength: $videoSegmentLength, frameInterpolation: $frameInterpolation, enableConcurrent: $enableConcurrent)
+            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF, videoSegmentLength: $videoSegmentLength, frameInterpolation: $frameInterpolation, enableConcurrent: $enableConcurrent)
         }
         .sheet(isPresented: $isCreatingPDF, onDismiss: nil) {
-            ProcessingPDFView(isCreatingPDF: $isCreatingPDF, background: $pdfbackground)
+            ProcessingPDFView(isCreatingPDF: $isCreatingPDF)
         }
         .sheet(isPresented: $isShowingLoadingView, onDismiss: nil, content: {
             LoadingView(text: "Loading files...")
@@ -658,6 +653,23 @@ struct welcomeView: View {
                 
             }
         }
+        .onDrop(of: [.fileURL], isTargeted: nil) { providers in
+            isShowingLoadingView = true
+            for i in providers {
+                i.loadItem(forTypeIdentifier: "public.file-url", options: nil) { urlData, error in
+                    print(finderItems)
+                    
+                    guard error == nil else { return }
+                    guard let urlData = urlData as? Data else { return }
+                    guard let url = URL(dataRepresentation: urlData, relativeTo: nil) else { return }
+                    
+                    let item = FinderItem(at: url)
+                    rawFinderItems.append(item)
+                }
+            }
+            
+            return true
+        }
     }
 }
 
@@ -701,6 +713,7 @@ struct GridItemView: View {
             
             Text(((item.finderItem.relativePath ?? item.finderItem.fileName) ?? item.finderItem.path))
                 .multilineTextAlignment(.center)
+                .lineLimit(1)
                 .padding([.leading, .bottom, .trailing])
                 .onHover { bool in
                     self.isShowingHint = bool
@@ -741,7 +754,6 @@ struct SpecificationsView: View {
             findModelClass()
         }
     }
-    @Binding var chosenComputeOption: String
     @Binding var videoSegmentLength: Int
     @Binding var frameInterpolation: String
     @Binding var enableConcurrentPerform: Bool
@@ -764,8 +776,6 @@ struct SpecificationsView: View {
     
     @State var modelClass: [String] = []
     @State var chosenModelClass: String = ""
-    
-    let computeOptions = ["CPU", "GPU"]
     
     let videoSegmentOptions = [100, 500, 1000, 2000, 5000, 10000, 20000]
     let frameInterpolationOptions = ["none", "2", "4"]
@@ -829,24 +839,16 @@ struct SpecificationsView: View {
                         }
                     }
                     
-                    if !modelClass.isEmpty {
-                        HStack {
-                            Spacer()
-                            Text("Model Class:")
-                                .onHover { bool in
-                                    isShowingModelClassHint = bool
-                                }
-                                .padding(.bottom)
-                        }
-                    }
-                    
-                    HStack {
-                        Spacer()
-                        Text("Compute With:")
-                            .onHover { bool in
-                                isShowingGPUHint = bool
-                            }
-                    }
+//                    if !modelClass.isEmpty {
+//                        HStack {
+//                            Spacer()
+//                            Text("Model Class:")
+//                                .onHover { bool in
+//                                    isShowingModelClassHint = bool
+//                                }
+//                                .padding(.bottom)
+//                        }
+//                    }
                     
                     if !finderItems.allSatisfy({ $0.type == .image }) {
                         HStack {
@@ -926,34 +928,21 @@ struct SpecificationsView: View {
                         }
                     }
                     
-                    if !modelClass.isEmpty {
-                        Menu(chosenModelClass) {
-                            ForEach(modelClass, id: \.self) { item in
-                                Button(item) {
-                                    chosenModelClass = item
-                                }
-                            }
-                        }
-                        .padding(.bottom)
-                        .popover(isPresented: $isShowingModelClassHint) {
-                            Text("The model to use.")
-                                .padding(.all)
-                            
-                        }
-                    }
-                    
-                    Menu(chosenComputeOption) {
-                        ForEach(computeOptions, id: \.self) { item in
-                            Button(item) {
-                                chosenComputeOption = item
-                            }
-                        }
-                    }
-                    .popover(isPresented: $isShowingGPUHint) {
-                        Text("GPU recommended")
-                            .padding(.all)
-                        
-                    }
+//                    if !modelClass.isEmpty {
+//                        Menu(chosenModelClass) {
+//                            ForEach(modelClass, id: \.self) { item in
+//                                Button(item) {
+//                                    chosenModelClass = item
+//                                }
+//                            }
+//                        }
+//                        .padding(.bottom)
+//                        .popover(isPresented: $isShowingModelClassHint) {
+//                            Text("The model to use.")
+//                                .padding(.all)
+//
+//                        }
+//                    }
                     
                     if !finderItems.allSatisfy({ $0.type == .image }) {
                         Menu(videoSegmentLength.description + " frames") {
@@ -1100,7 +1089,6 @@ struct ProcessingView: View {
     @Binding var isSheetShown: Bool
     @Binding var chosenScaleLevel: String
     @Binding var isCreatingPDF: Bool
-    @Binding var chosenComputeOption: String
     @Binding var videoSegmentLength: Int
     @Binding var frameInterpolation: String
     @Binding var enableConcurrent: Bool
@@ -1272,6 +1260,7 @@ struct ProcessingView: View {
                         isSheetShown = true
                         isProcessingCancelled = true
                         workItem!.cancel()
+                        exit(0)
                     }
                     .padding(.trailing)
                     
@@ -1305,7 +1294,7 @@ struct ProcessingView: View {
             .onAppear {
                 
                 self.workItem = DispatchWorkItem(qos: .utility, flags: .inheritQoS) {
-                    finderItems.work(Int(chosenScaleLevel), modelUsed: modelUsed, isUsingGPU: chosenComputeOption == "GPU", videoSegmentFrames: videoSegmentLength, frameInterpolation: Int(frameInterpolation), enableConcurrent: enableConcurrent) { status in
+                    finderItems.work(Int(chosenScaleLevel), modelUsed: modelUsed, videoSegmentFrames: videoSegmentLength, frameInterpolation: Int(frameInterpolation), enableConcurrent: enableConcurrent) { status in
                         self.status = status
                     } onStatusProgressChanged: { progress,total in
                         if progress != nil {
@@ -1319,6 +1308,7 @@ struct ProcessingView: View {
                         processedItemsCounter = finished
                     } completion: {
                         isFinished = true
+                        try! FinderItem(at: Configuration.main.saveFolder).setIcon(image: NSImage(imageLiteralResourceName: "icon"))
                     }
                 }
                 
@@ -1337,7 +1327,6 @@ struct ProcessingView: View {
 struct ProcessingPDFView: View {
     
     @Binding var isCreatingPDF: Bool
-    @Binding var background: DispatchQueue
     
     @State var finderItemsCount: Int = 0
     @State var processedItemsCount: Int = 0
@@ -1360,11 +1349,6 @@ struct ProcessingPDFView: View {
                     HStack {
                         Spacer()
                         Text("Processed:")
-                    }
-                    
-                    HStack {
-                        Spacer()
-                        Text("To be processed:")
                     }
                     
                     Spacer()
@@ -1390,23 +1374,21 @@ struct ProcessingPDFView: View {
                         Spacer()
                     }
                     
-                    HStack {
-                        Text("\(finderItemsCount - processedItemsCount) items")
-                        
-                        Spacer()
-                    }
-                    
                     Spacer()
                 }
             }
             
             Spacer()
             
-            ProgressView(value: {()->Double in
-                guard finderItemsCount != 0 else { return 1 }
-                return Double(processedItemsCount) / Double(finderItemsCount)
-            }())
-                .padding(.all)
+            if !isFinished {
+                ProgressView()
+                    .progressViewStyle(.linear)
+                    .padding(.all)
+            } else {
+                ProgressView(value: 1)
+                    .progressViewStyle(.linear)
+                    .padding(.all)
+            }
             
             Spacer()
             
@@ -1414,7 +1396,7 @@ struct ProcessingPDFView: View {
                 Spacer()
                 
                 Button("Show in Finder") {
-                    _ = shell(["open \(NSHomeDirectory())/Downloads/PDF\\ output"])
+                    _ = shell(["open \(FinderItem(at: "\(NSHomeDirectory())/Downloads/PDF output").shellPath)"])
                 }
                 .padding(.trailing)
                 
@@ -1426,31 +1408,18 @@ struct ProcessingPDFView: View {
             .padding(.all)
         }
         .padding(.all)
-        .frame(width: 600, height: 300)
+        .frame(width: 600, height: 250)
         .onAppear {
             
-            isProcessingCancelled = false
-            
-            var counter = 0
-            FinderItem(at: "\(Configuration.main.saveFolder)").iteratedOver { child in
-                guard child.image != nil else { return }
-                counter += 1
-            }
-            
-            finderItemsCount = counter
-            
-            background.async {
-                FinderItem(at: "\(Configuration.main.saveFolder)").iteratedOver { child in
-                    guard child.isDirectory else { return }
-                    
-                    FinderItem.createPDF(fromFolder: child) { item in
-                        currentProcessingItem = item
-                        processedItemsCount += 1
-                    } onFinish: {
-                        isFinished = true
-                    }
+            DispatchQueue(label: "background").async {
+                isProcessingCancelled = false
+                
+                FinderItem.createPDF(fromFolder: FinderItem(at: "\(Configuration.main.saveFolder)")) { item in
+                    currentProcessingItem = item
+                    processedItemsCount += 1
                 }
                 
+                isFinished = true
             }
             
         }
