@@ -160,7 +160,6 @@ struct Configuration: Codable {
     }
     
     func saveError(_ value: String) {
-        guard self.isLogEnabled else { return }
         let path = self.saveFolder + "/error.txt"
         var content = ""
         if let previousLog = try? String(contentsOfFile: path) {

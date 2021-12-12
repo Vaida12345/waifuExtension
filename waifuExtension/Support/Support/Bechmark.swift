@@ -62,7 +62,7 @@ struct Benchmark {
         init(fromResultsAt path: String, name: String? = nil) {
             let results = try! FinderItem.loadJSON(from: path, type: [Double].self)
             self.results = results
-            self.title = name ?? FinderItem(at: path).fileName!
+            self.title = name ?? FinderItem(at: path).fileName
             self.upperBound  = 0
             self.action = { _ in  }
         }

@@ -12,7 +12,7 @@ import AppKit
 import AVFoundation
 import AVKit
 
-class FinderItem: CustomStringConvertible, Identifiable, Equatable {
+class FinderItem: Codable, CustomStringConvertible, Equatable, Hashable, Identifiable {
     
     
     //MARK: - Basic Properties
@@ -20,27 +20,31 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     /// The absolute path.
     var path: String
     
+    /// The context’s direct ancestor in the context hierarchy.
     var parent: FinderItem? = nil
     
+    /// The path relative.
     var relativePath: String? = nil
     
     
     //MARK: - Instance Properties
     
-    /// The audio / video asset at the path, if exists.
+    /// Returns the audio / video asset at the path, if exists.
     var avAsset: AVAsset? {
         guard AVAsset(url: self.url).isReadable else { return nil }
         return AVAsset(url: self.url)
     }
     
-    /// The audio track of the video file
+    /// Returns the audio track of the video file, if exists.
     var audioTrack: AVAssetTrack? {
         return self.avAsset?.tracks(withMediaType: AVMediaType.audio).first
     }
     
-    /// The files that are **strictly** instead this folder.
+    /// Returns the files that are **strictly** instead this folder.
     ///
     /// The files that are only inside this folder, not its subfolders.
+    ///
+    /// - Note: `children` are sorted by name.
     var children: [FinderItem]? {
         guard let children = self.rawChildren else { return nil }
         return children.sorted(by: {
@@ -56,29 +60,27 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         })
     }
     
+    /// Returns the description of the `FinderItem`.
+    ///
+    /// In the form of `FinderItem<\(self.path)>`.
     var description: String {
         return "FinderItem<\(self.path)>"
     }
     
-    /// The extension name of the file.
-    ///
-    /// - Attention: The return value is `nil` if the file does not exist.
+    /// Returns the extension name of the file.
     ///
     /// calculus.pdf -> .pdf
-    var extensionName: String? {
-        guard self.isFile else { return nil }
-        guard let value = try? url.resourceValues(forKeys: [.nameKey]).name else { return nil }
-        guard value.contains(".") else { return nil }
+    var extensionName: String {
+        let value = (try? url.resourceValues(forKeys: [.nameKey]).name) ?? self.rawPath
+        guard value.contains(".") else { return "" }
         return String(value[value.lastIndex(of: ".")!..<value.endIndex])
     }
     
-    /// The file name of the file.
-    ///
-    /// - Attention: The return value is `nil` if the file does not exist.
+    /// Returns the file name of the file.
     ///
     /// calculus.pdf -> calculus
-    var fileName: String? {
-        guard let value = try? url.resourceValues(forKeys: [.nameKey]).name else { return nil }
+    var fileName: String {
+        let value = (try? url.resourceValues(forKeys: [.nameKey]).name) ?? self.rawPath
         if value.contains(".") {
             return String(value[..<value.lastIndex(of: ".")!])
         } else {
@@ -86,13 +88,19 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         }
     }
     
-    /// Total displayable size of the file in bytes (this may include space used by metadata), or nil if not available.
+    /// Returns the total displayable size of the file in bytes (this may include space used by metadata).
+    ///
+    /// Use `.expressAsFileSize()` to express as file size.
+    ///
+    /// - Attention: The return value is `nil` if the file does not exist.
     var fileSize: Int? {
         guard let value = try? url.resourceValues(forKeys: [.totalFileSizeKey]).totalFileSize else { return nil }
         return value
     }
     
-    /// All the frames of the video.
+    /// Returns all the frames of the video.
+    ///
+    /// - Attention: The return value is `nil` if the file does not exist, or `avAsset` not found.
     var frames: [NSImage]? {
         guard let asset = self.avAsset else { return nil }
         let vidLength: CMTime = asset.duration
@@ -112,33 +120,41 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         var images: [NSImage] = []
         
         while counter < requiredFramesCount {
-            let imageGenerator = AVAssetImageGenerator(asset: asset)
-            imageGenerator.requestedTimeToleranceAfter = CMTime.zero
-            imageGenerator.requestedTimeToleranceBefore = CMTime.zero
-            let time: CMTime = CMTimeMake(value: Int64(value), timescale: vidLength.timescale)
-            var imageRef: CGImage?
-            do {
-                imageRef = try imageGenerator.copyCGImage(at: time, actualTime: nil)
-            } catch {
-                print(error)
+            autoreleasepool {
+                let imageGenerator = AVAssetImageGenerator(asset: asset)
+                imageGenerator.requestedTimeToleranceAfter = CMTime.zero
+                imageGenerator.requestedTimeToleranceBefore = CMTime.zero
+                let time: CMTime = CMTimeMake(value: Int64(value), timescale: vidLength.timescale)
+                var imageRef: CGImage?
+                do {
+                    imageRef = try imageGenerator.copyCGImage(at: time, actualTime: nil)
+                } catch {
+                    print(error)
+                }
+                guard let ref = imageRef else { return }
+                let thumbnail = NSImage(cgImage: ref, size: NSSize(width: ref.width, height: ref.height))
+                
+                images.append(thumbnail)
+                
+                value += Int(step)
+                counter += 1
             }
-            guard let ref = imageRef else { continue }
-            let thumbnail = NSImage(cgImage: ref, size: NSSize(width: ref.width, height: ref.height))
-            
-            images.append(thumbnail)
-            
-            value += Int(step)
-            counter += 1
         }
         
         return images
     }
     
+    /// Returns the frame rate of the video.
+    ///
+    /// - Attention: The return value is `nil` if the file doesn't exist or not a video.
     var frameRate: Float? {
         guard let value = self.avAsset?.tracks(withMediaType: .video).first else { return nil }
         return value.nominalFrameRate
     }
     
+    /// Returns the first frame rate of the video.
+    ///
+    /// - Attention: The return value is `nil` if the file doesn't exist or not a video.
     var firstFrame: NSImage? {
         guard let asset = self.avAsset else { return nil }
         let vidLength: CMTime = asset.duration
@@ -158,12 +174,16 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     }
     
     /// Determines whether there are files in this folder.
+    ///
+    /// The return value is `nil` if the files doesn't exist.
     var hasChildren: Bool {
         guard let rawChildren = self.rawChildren else { return false }
         return !rawChildren.isEmpty
     }
     
     /// Determines whether this folder has subfolder.
+    ///
+    /// The return value is `nil` if the files doesn't exist.
     var hasSubfolder: Bool {
         guard let rawChildren = self.rawChildren else { return false }
         for i in rawChildren {
@@ -172,7 +192,9 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         return false
     }
     
-    /// The icon of the file.
+    /// Returns the icon of the file.
+    ///
+    /// The return value is `nil` if the files doesn't exist, or, there is no tiff representation behind.
     var icon: NSImage? {
         guard self.isExistence else { return nil }
         let icon = NSWorkspace.shared.icon(forFile: self.path)
@@ -180,44 +202,46 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         return icon
     }
     
-    /// The image at the path, if exists.
+    /// Returns the image at the path, if exists.
     var image: NSImage? {
         guard self.isExistence else { return nil }
         return NSImage(contentsOfFile: self.path)
     }
     
-    /// Determine whether the file exists at the required position.
+    /// Determines whether the file exists at the required position.
     var isExistence: Bool {
         return FileManager.default.fileExists(atPath: self.path)
     }
     
     /// Determines whether a `item` is a directory (instead of file).
     ///
-    /// aka, `isFolder`
+    /// The return value is `false` if the files doesn't exist.
     var isDirectory: Bool {
         guard let value = try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory else { return false }
         return value
     }
     
     /// Determines whether a `item` is a file (instead of directory).
+    ///
+    /// The return value is `false` if the files doesn't exist.
     var isFile: Bool {
         guard let value = try? url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile else { return false }
         return value
     }
     
-    /// The absolute path, separated into `String` array.
+    /// Returns the absolute path, separated into `String` array.
     var pathArray: [String] {
         return path.split(separator: "/").map({ String($0) })
     }
     
-    /// The individual path.
+    /// Returns the individual path.
     ///
     /// /Study/Calculus/Materials -> Materials
     var rawPath: String {
         return self.pathArray.last!
     }
     
-    /// The files that are **strictly** instead this file.
+    /// Returns the files that are **strictly** instead this file.
     ///
     /// This property does not sort the children, however, please use this to save time.
     var rawChildren: [FinderItem]? {
@@ -229,45 +253,45 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         })
     }
     
-    /// The path to run in shell.
+    /// Returns the path to run in shell.
     var shellPath: String {
-        var path = self.path
-        path = path.replacingOccurrences(of: "\\", with: "\\\\")
-        path = path.replacingOccurrences(of: " ", with: "\\ ")
-        path = path.replacingOccurrences(of: "(", with: "\\(")
-        path = path.replacingOccurrences(of: ")", with: "\\)")
-        path = path.replacingOccurrences(of: "[", with: "\\[")
-        path = path.replacingOccurrences(of: "]", with: "\\]")
-        path = path.replacingOccurrences(of: "{", with: "\\{")
-        path = path.replacingOccurrences(of: "}", with: "\\}")
-        path = path.replacingOccurrences(of: "`", with: "\\`")
-        path = path.replacingOccurrences(of: "~", with: "\\~")
-        path = path.replacingOccurrences(of: "!", with: "\\!")
-        path = path.replacingOccurrences(of: "@", with: "\\@")
-        path = path.replacingOccurrences(of: "#", with: "\\#")
-        path = path.replacingOccurrences(of: "$", with: "\\$")
-        path = path.replacingOccurrences(of: "%", with: "\\%")
-        path = path.replacingOccurrences(of: "&", with: "\\&")
-        path = path.replacingOccurrences(of: "*", with: "\\*")
-        path = path.replacingOccurrences(of: "=", with: "\\=")
-        path = path.replacingOccurrences(of: "|", with: "\\|")
-        path = path.replacingOccurrences(of: ";", with: "\\;")
-        path = path.replacingOccurrences(of: "\"", with: "\\\"")
-        path = path.replacingOccurrences(of: "\'", with: "\\\'")
-        path = path.replacingOccurrences(of: "<", with: "\\<")
-        path = path.replacingOccurrences(of: ">", with: "\\>")
-        path = path.replacingOccurrences(of: ",", with: "\\,")
-        path = path.replacingOccurrences(of: "?", with: "\\?")
-        
-        return path
+        return self.path.replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: " ", with: "\\ ")
+            .replacingOccurrences(of: "(", with: "\\(")
+            .replacingOccurrences(of: ")", with: "\\)")
+            .replacingOccurrences(of: "[", with: "\\[")
+            .replacingOccurrences(of: "]", with: "\\]")
+            .replacingOccurrences(of: "{", with: "\\{")
+            .replacingOccurrences(of: "}", with: "\\}")
+            .replacingOccurrences(of: "`", with: "\\`")
+            .replacingOccurrences(of: "~", with: "\\~")
+            .replacingOccurrences(of: "!", with: "\\!")
+            .replacingOccurrences(of: "@", with: "\\@")
+            .replacingOccurrences(of: "#", with: "\\#")
+            .replacingOccurrences(of: "$", with: "\\$")
+            .replacingOccurrences(of: "%", with: "\\%")
+            .replacingOccurrences(of: "&", with: "\\&")
+            .replacingOccurrences(of: "*", with: "\\*")
+            .replacingOccurrences(of: "=", with: "\\=")
+            .replacingOccurrences(of: "|", with: "\\|")
+            .replacingOccurrences(of: ";", with: "\\;")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "\'", with: "\\\'")
+            .replacingOccurrences(of: "<", with: "\\<")
+            .replacingOccurrences(of: ">", with: "\\>")
+            .replacingOccurrences(of: ",", with: "\\,")
+            .replacingOccurrences(of: "?", with: "\\?")
     }
     
-    /// The url of the path.
+    /// Returns the url of the path.
     var url: URL {
-        return URL(fileURLWithPath: self.path)
+        get { return URL(fileURLWithPath: self.path) }
+        set { self.path = newValue.path }
     }
     
-    /// The audio track of the video file
+    /// Returns the audio track of the video file.
+    ///
+    /// - Attention: The return value is `nil` if the file doesn't exist or not a video.
     var videoTrack: AVAssetTrack? {
         return self.avAsset?.tracks(withMediaType: AVMediaType.video).first
     }
@@ -275,21 +299,38 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     
     //MARK: - Initializers
     
+    /// Creates an instance with an absolute path.
+    ///
+    /// - Parameters:
+    ///    - path: The absolute path.
     init(at path: String) {
         self.path = path
     }
     
+    /// Creates an instance with an absolute path.
+    ///
+    /// - Parameters:
+    ///    - path: The absolute path.
     init(at path: Substring) {
         self.path = String(path)
     }
     
+    /// Creates an instance with a url.
+    ///
+    /// - Parameters:
+    ///    - url: The file url.
     init(at url: URL) {
         self.path = url.path
     }
     
     //MARK: - Instance Methods
     
-    /// Copy the current item to the `path`.
+    /// Copies the current item to the `path`.
+    ///
+    /// - Note: It creates the folder at the copied item path.
+    ///
+    /// - Parameters:
+    ///    - path: The absolute path of the copied item.
     func copy(to path: String) throws {
         FinderItem(at: path).generateDirectory()
         try FileManager.default.copyItem(at: self.url, to: URL(fileURLWithPath: path))
@@ -299,9 +340,11 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
     ///
     /// - Important: The paths are relative paths.
     ///
-    /// - Note: This method ignores `.DS_Store`
+    /// - Note: This method ignores `.DS_Store`.
     ///
-    /// - Returns: Files that are only contained in the folder, not its subfolders.
+    /// - Attention: The return value is `nil` if the file doesn't exist or it is not a folder.
+    ///
+    /// - Returns: Files that are only contained in the folder, not its subfolders; `nil` otherwise.
     private func findFiles() -> [String]? {
         guard self.isDirectory && self.isExistence else { return nil }
         guard var allFiles = FileManager.default.enumerator(atPath: self.path)?.allObjects as? [String] else { return nil }
@@ -311,9 +354,19 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         return allFiles
     }
     
+    /// Hashes the essential components of this value by feeding them into the given hasher.
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(self.path)
+        hasher.combine(self.parent)
+        hasher.combine(self.relativePath)
+    }
+    
     /// Generates the desired folders at the path.
     ///
     /// - Note: This function also generates all the folders containing the final folder.
+    ///
+    /// - Parameters:
+    ///    - isFolder: Determines whether the `FinderItem` path is a folder. Required only if the folder name contains ".".
     func generateDirectory(isFolder: Bool = false) {
         var folders = self.pathArray
         if !isFolder && folders.last!.contains(".") { folders.removeLast() }
@@ -339,7 +392,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         } else {
             var counter = 2
             let filePathWithoutExtension = path[..<(path.lastIndex(of: ".") ?? path.endIndex)]
-            let fileExtension = self.extensionName ?? ""
+            let fileExtension = self.extensionName
             while FileManager.default.fileExists(atPath: "\(filePathWithoutExtension) \(counter)\(fileExtension)") { counter += 1 }
             
             return "\(filePathWithoutExtension) \(counter)\(fileExtension)"
@@ -370,18 +423,30 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         guard self.isDirectory else { return }
         
         guard let children = self.children else { return }
-        for i in children {
-            if i.isDirectory { i.iteratedOver(action) }
-            action(i)
+        var index = 0
+        while index < children.count {
+            autoreleasepool {
+                let child = children[index]
+                if child.isDirectory { child.iteratedOver(action) }
+                action(child)
+            }
+            index += 1
         }
     }
     
-    /// Open the current file.
+    /// Opens the current file.
     func open() {
-        _ = shell(["open \(self.path.replacingOccurrences(of: " ", with: "\\ "))"])
+        NSWorkspace.shared.open(self.url)
     }
     
-    /// The relative path to other item.
+    /// Returns the relative path to other item.
+    ///
+    /// - Attention: The return value is `nil` if current item is not in the folder of `item`.
+    ///
+    /// - Parameters:
+    ///    - item: A folder that hoped to contain current item.
+    ///
+    /// - Returns: The relative path to other item; `nil` otherwise.
     func relativePath(to item: FinderItem) -> String? {
         guard self.path.contains(item.path) else { return nil }
         var path = self.path.replacingOccurrences(of: item.path, with: "")
@@ -394,40 +459,56 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         try FileManager.default.removeItem(atPath: self.path)
     }
     
-    /// Rename the file.
+    /// Renames the file.
+    ///
+    /// This method changes the `path`.
     ///
     /// - Parameters:
     ///     - newName: The name for the file.
-    func renamed(with newName: String) {
-        precondition(self.isExistence)
+    func renamed(with newName: String) throws {
         var value = URLResourceValues()
         value.name = newName
-        var url = self.url
-        try! url.setResourceValues(value)
-        self.path = url.path
+        try self.url.setResourceValues(value)
     }
     
-    /// Rename the file by replacing occurrence.
-    func renamed(byReplacingOccurrenceOf occurrence: String, with replacement: String) {
-        guard var fileName = fileName else { return }
-        fileName = fileName.replacingOccurrences(of: occurrence, with: replacement)
-        self.renamed(with: fileName)
-    }
-    
-    /// Save an image as .png
+    /// Renames the file by replacing occurrence.
     ///
-    /// This method would delete the original file.
+    /// - Parameters:
+    ///    - target: The target to be replaced.
+    ///    - replacement: The replacement used to replace the target.
+    func renamed(byReplacingOccurrenceOf target: String, with replacement: String) throws {
+        var fileName = fileName
+        fileName = fileName.replacingOccurrences(of: target, with: replacement)
+        try self.renamed(with: fileName)
+    }
+    
+    /// Saves an image as .png.
+    ///
+    /// This method changes the `path`.
     func saveToPNG() throws {
-        if self.extensionName?.lowercased() == ".png" { return }
+        if self.extensionName.lowercased() == ".png" { return }
         guard let image = self.image else { throw NSError(domain: "No image found at path \(self.path)", code: -1, userInfo: ["path": self.path]) }
-        let extensionName = self.extensionName!
+        
         try self.removeFile()
         let imageData = NSBitmapImageRep(data: image.tiffRepresentation!)!.representation(using: .png, properties: [:])!
-        self.path = self.path.replacingOccurrences(of: extensionName, with: ".png")
+        if extensionName != "" {
+            self.path = self.path.replacingOccurrences(of: extensionName, with: ".png")
+        } else {
+            self.path = self.path + ".png"
+        }
         try imageData.write(to: self.url)
     }
     
-    func saveAudioTrack(to path: String) throws {
+    /// Saves the audio track to `path`.
+    ///
+    /// - Important: The export thread differences from current thread.
+    ///
+    /// - Note: The preset used is `AVAssetExportPresetAppleM4A`.
+    ///
+    /// - Parameters:
+    ///    - path: The path where to save the audio track. The path should end with .m4v or .mov.
+    ///    - completion: The closure run after the function is finished.
+    func saveAudioTrack(to path: String, completion: (()->Void)? = nil) throws {
         // Create a composition
         let composition = AVMutableComposition()
         guard let asset = avAsset else {
@@ -452,13 +533,16 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         // Export file
         exportSession.exportAsynchronously {
             guard case exportSession.status = AVAssetExportSession.Status.completed else { return }
+            if let completion = completion {
+                completion()
+            }
         }
     }
     
     /// Set an image as icon.
     ///
     /// - precondition: The file exists.
-    func setIcon(image: NSImage) throws {
+    func setIcon(image: NSImage) {
         precondition(self.isExistence)
         NSWorkspace.shared.setIcon(image, forFile: self.path, options: .init())
     }
@@ -479,7 +563,6 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
             guard child.isFile else { return }
             let child = child
             guard (try? child.saveToPNG()) != nil else { return }
-            guard child.extensionName != nil else { return }
             let absolutePath = child.path
             
             let file = absolutePath.split(separator: "/").last!.replacingOccurrences(of: " ", with: "\\ ")
@@ -532,7 +615,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         
         // create PDF
         let document = PDFDocument()
-        print("create PDF:", folder.fileName ?? "")
+        print("create PDF:", folder.fileName)
         for child in folder.children! {
             guard child.isFile else { return }
             
@@ -549,7 +632,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         
         guard document.pageCount != 0  else { return }
         
-        let pastePath = outputPath + "/" + folder.fileName! + ".pdf"
+        let pastePath = outputPath + "/" + folder.fileName + ".pdf"
         document.write(toFile: FinderItem(at: pastePath).generateOutputPath())
     }
     
@@ -600,7 +683,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         }
         
         for i in children {
-            let value = String(i.fileName!.split(whereSeparator: separator).first!)
+            let value = String(i.fileName.split(whereSeparator: separator).first!)
             if !folders.keys.contains(value) {
                 folders[value] = 1
             } else {
@@ -610,7 +693,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         
         let keys = folders.filter({ $0.value >= organizeThreshold }).keys
         for i in children {
-            let value = String(i.fileName!.split(whereSeparator: separator).first!)
+            let value = String(i.fileName.split(whereSeparator: separator).first!)
             guard keys.contains(value) else { continue }
             
             var pastePath = i.rawPath.replacingOccurrences(of: value, with: "")
@@ -637,8 +720,8 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         item.iteratedOver { item in
             print(item)
             for i in occurrences {
-                item.renamed(byReplacingOccurrenceOf: i, with: "")
-                item.renamed(byReplacingOccurrenceOf: "  ", with: " ")
+                try! item.renamed(byReplacingOccurrenceOf: i, with: "")
+                try! item.renamed(byReplacingOccurrenceOf: "  ", with: " ")
             }
         }
     }
@@ -695,7 +778,6 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
         
         do {
             if FileManager.default.fileExists(atPath: outputURL.path) {
-                
                 try FileManager.default.removeItem(at: outputURL)
             }
         } catch { }
@@ -746,6 +828,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
             
             guard let assetWriter = createAssetWriter(videoPath, size: videoSize) else {
                 print("Error converting images to video: AVAssetWriter not created")
+                Configuration.main.saveLog("Error converting images to video: AVAssetWriter not created")
                 return
             }
             
@@ -763,6 +846,7 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
             assetWriter.startSession(atSourceTime: CMTime.zero)
             if (pixelBufferAdaptor.pixelBufferPool == nil) {
                 print("Error converting images to video: pixelBufferPool nil after starting session")
+                Configuration.main.saveLog("Error converting images to video: pixelBufferPool nil after starting session")
                 return
             }
             
@@ -973,8 +1057,6 @@ class FinderItem: CustomStringConvertible, Identifiable, Equatable {
                     
                     let realDuration = { ()-> CMTime in
                         let framesCount = Double(videoAsset.frameRate!) * videoAsset.duration.seconds
-                        print(framesCount)
-                        print(framesCount / Double(frameRate))
                         return CMTime(framesCount / Double(frameRate))
                     }()
                     

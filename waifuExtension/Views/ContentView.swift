@@ -39,7 +39,7 @@ func addItemIfPossible(of item: FinderItem, to finderItems: [WorkItem]) -> [Work
             autoreleasepool {
                 guard !finderItems.contains(child) else { return }
                 guard child.image != nil || child.avAsset != nil else { return }
-                child.relativePath = item.fileName! + "/" + child.relativePath(to: item)!
+                child.relativePath = item.fileName + "/" + child.relativePath(to: item)!
                 finderItems.append(WorkItem(at: child, type: child.image != nil ? .image : .video))
             }
         }
@@ -70,6 +70,9 @@ extension Array where Element == WorkItem {
             }
             return 1
         }()
+        
+        FinderItem(at: Configuration.main.saveFolder).generateDirectory(isFolder: true)
+        FinderItem(at: Configuration.main.saveFolder).setIcon(image: NSImage(imageLiteralResourceName: "icon"))
         
         if !images.isEmpty {
             status("processing images")
@@ -108,7 +111,7 @@ extension Array where Element == WorkItem {
                         if let name = currentImage.finderItem.relativePath {
                             outputFileName = name[..<name.lastIndex(of: ".")!] + ".png"
                         } else {
-                            outputFileName = currentImage.finderItem.fileName! + ".png"
+                            outputFileName = currentImage.finderItem.fileName + ".png"
                         }
                         
                         let finderItemAtImageOutputPath = FinderItem(at: "\(Configuration.main.saveFolder)/\(outputFileName)")
@@ -159,7 +162,7 @@ extension Array where Element == WorkItem {
                         if let name = currentImage.finderItem.relativePath {
                             outputFileName = name[..<name.lastIndex(of: ".")!] + ".png"
                         } else {
-                            outputFileName = currentImage.finderItem.fileName! + ".png"
+                            outputFileName = currentImage.finderItem.fileName + ".png"
                         }
                         
                         let finderItemAtImageOutputPath = FinderItem(at: "\(Configuration.main.saveFolder)/\(outputFileName)")
@@ -207,6 +210,17 @@ extension Array where Element == WorkItem {
                     let path = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/splitVideo/video \(segmentSequence).m4v"
                     FinderItem(at: path).generateDirectory()
                     paths.append(path)
+                    guard FinderItem(at: path).avAsset == nil else {
+                        finishedCounter += 1
+                        onStatusProgressChanged(finishedCounter, Int((duration / videoSegmentLength).rounded(.up)))
+                        
+                        splitVideo(withIndex: segmentIndex + 1, duration: duration, filePath: filePath, currentVideo: currentVideo, completion: completion)
+                        guard finishedCounter == Int((duration / videoSegmentLength).rounded(.up)) else { return }
+                        onStatusProgressChanged(nil, nil)
+                        completion()
+                        
+                        return
+                    }
                     
                     FinderItem.trimVideo(sourceURL: currentVideo.finderItem.url, outputURL: URL(fileURLWithPath: path), startTime: (Double(segmentIndex) * Double(videoSegmentLength)), endTime: {()->Double in
                         if Double(segmentIndex) * videoSegmentLength + videoSegmentLength <= duration {
@@ -253,6 +267,18 @@ extension Array where Element == WorkItem {
                     var indexSequence = String(index)
                     while indexSequence.count < 6 { indexSequence.insert("0", at: indexSequence.startIndex) }
                     
+                    let mergedVideoPath = "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/videos/\(indexSequence).m4v"
+                    guard FinderItem(at: mergedVideoPath).avAsset == nil else {
+                        if !Configuration.main.isDevEnabled {
+                            do {
+                                try FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)").removeFile()
+                            } catch {  }
+                        }
+                        // completion after all videos are finished.
+                        completion()
+                        return
+                    }
+                    
                     print("frames to process: \(requiredFramesCount)")
                     FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames").generateDirectory(isFolder: true)
                     FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames").generateDirectory(isFolder: true)
@@ -262,7 +288,15 @@ extension Array where Element == WorkItem {
                     DispatchQueue.concurrentPerform(iterations: requiredFramesCount) { frameCounter in
                         autoreleasepool {
                             
+                            var sequence = String(frameCounter)
+                            while sequence.count < 6 { sequence.insert("0", at: sequence.startIndex) }
+                            
                             // generate frames
+                            guard FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/\(sequence).png").image == nil else {
+                                currentVideo.progress += 1
+                                onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / totalFrames)
+                                return
+                            }
                             
                             let imageGenerator = AVAssetImageGenerator(asset: asset)
                             imageGenerator.requestedTimeToleranceAfter = CMTime.zero
@@ -273,7 +307,9 @@ extension Array where Element == WorkItem {
                             do {
                                 imageRef = try imageGenerator.copyCGImage(at: time, actualTime: nil)
                             } catch {
+                                Configuration.main.saveError("Image could be found at \(time.seconds)s in \(currentVideo.finderItem.fileName). Skipped.")
                                 print(error)
+                                return
                             }
                             if colorSpace == nil {
                                 colorSpace = imageRef?.colorSpace
@@ -296,9 +332,6 @@ extension Array where Element == WorkItem {
                                 currentVideo.progress += 1 / factor
                                 onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / totalFrames)
                             }
-                            
-                            var sequence = String(frameCounter)
-                            while sequence.count < 6 { sequence.insert("0", at: sequence.startIndex) }
                             
                             thumbnail.write(to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/\(sequence).png")
                         }
@@ -341,14 +374,17 @@ extension Array where Element == WorkItem {
                                 
                                 try! FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/\(sequence).png").copy(to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(processedSequence).png")
                                 
-                                FinderItem.addFrame(fromFrame1: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/\(previousSequence).png", fromFrame2: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/\(sequence).png", to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(intermediateSequence).png")
+                                if FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(intermediateSequence).png").image == nil {
+                                    FinderItem.addFrame(fromFrame1: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/\(previousSequence).png", fromFrame2: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/\(sequence).png", to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(intermediateSequence).png")
+                                }
                                 
-                                if frameInterpolation! == 4 {
-                                    var intermediateSequence1 = String(frameCounter * frameInterpolation! - frameInterpolation! / 2 - 1)
-                                    while intermediateSequence1.count < 6 { intermediateSequence1.insert("0", at: intermediateSequence1.startIndex) }
-                                    
-                                    var intermediateSequence3 = String(frameCounter * frameInterpolation! - frameInterpolation! / 2 + 1)
-                                    while intermediateSequence3.count < 6 { intermediateSequence3.insert("0", at: intermediateSequence3.startIndex) }
+                                var intermediateSequence1 = String(frameCounter * frameInterpolation! - frameInterpolation! / 2 - 1)
+                                while intermediateSequence1.count < 6 { intermediateSequence1.insert("0", at: intermediateSequence1.startIndex) }
+                                
+                                var intermediateSequence3 = String(frameCounter * frameInterpolation! - frameInterpolation! / 2 + 1)
+                                while intermediateSequence3.count < 6 { intermediateSequence3.insert("0", at: intermediateSequence3.startIndex) }
+                                
+                                if frameInterpolation! == 4 && (FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(intermediateSequence1).png").image == nil || FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(intermediateSequence3).png").image == nil) {
                                     
                                     FinderItem.addFrame(fromFrame1: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/\(previousSequence).png", fromFrame2: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(intermediateSequence).png", to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(intermediateSequence1).png")
                                     
@@ -364,10 +400,6 @@ extension Array where Element == WorkItem {
                         }
                     }
                     
-                    // status: merge videos
-                    status("merging videos for \(filePath)")
-                    
-                    let mergedVideoPath = "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/videos/\(indexSequence).m4v"
                     FinderItem(at: mergedVideoPath).generateDirectory()
                     
                     let arbitraryFrame = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/000000.png")
@@ -398,7 +430,7 @@ extension Array where Element == WorkItem {
                 guard !isProcessingCancelled else { return }
                 
                 let currentVideo = videos[videoIndex]
-                let filePath = currentVideo.finderItem.relativePath ?? (currentVideo.finderItem.fileName! + currentVideo.finderItem.extensionName!)
+                let filePath = currentVideo.finderItem.relativePath ?? (currentVideo.finderItem.fileName + currentVideo.finderItem.extensionName)
                 
                 status("generating audio for \(filePath)")
                 
@@ -426,7 +458,10 @@ extension Array where Element == WorkItem {
                             guard finished == paths.count else { return }
                             guard !isProcessingCancelled else { return }
                             
-                            let outputPath = "\(Configuration.main.saveFolder)/tmp/\(filePath)/\(currentVideo.finderItem.fileName!).m4v"
+                            let outputPath = "\(Configuration.main.saveFolder)/tmp/\(filePath)/\(currentVideo.finderItem.fileName).m4v"
+                            
+                            // status: merge videos
+                            status("merging video for \(filePath)")
                             
                             FinderItem.mergeVideos(from: FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/videos").children!, toPath: outputPath, tempFolder: "\(Configuration.main.saveFolder)/tmp/\(filePath)/merging video", frameRate: currentVideo.finderItem.frameRate! * Float((frameInterpolation == nil ? 1 : frameInterpolation!))) { urlGet, errorGet in
                                 
@@ -446,8 +481,8 @@ extension Array where Element == WorkItem {
                                     didFinishOneItem(finishedItemsCounter, totalItemCounter)
                                     
                                     print(">>>>> results: ")
-                                    print("Video \(currentVideo.finderItem.fileName ?? "") done")
-                                    Configuration.main.saveLog("Video \(currentVideo.finderItem.fileName ?? "") done")
+                                    print("Video \(currentVideo.finderItem.fileName) done")
+                                    Configuration.main.saveLog("Video \(currentVideo.finderItem.fileName) done")
                                     Configuration.main.saveLog(printMatrix(matrix: [["", "frames", "duration", "fps"], ["before", "\(currentVideo.finderItem.avAsset!.duration.seconds * Double(currentVideo.finderItem.frameRate!))", "\(currentVideo.finderItem.avAsset!.duration.seconds)", "\(currentVideo.finderItem.frameRate!)"], ["after", "\(destinationFinderItem.avAsset!.duration.seconds * Double(destinationFinderItem.frameRate!))", "\(destinationFinderItem.avAsset!.duration.seconds)", "\(destinationFinderItem.frameRate!)"]]))
                                     Configuration.main.saveLog("")
                                     print("")
@@ -524,63 +559,35 @@ struct ContentView: View {
     @State var videoSegmentLength = 2000
     @State var frameInterpolation = "none"
     @State var enableConcurrent = true
+    @State var gridNumber = 1.6
+    @State var aspectRatio = true
     
     @State var isShowingLoadingView = false
     @State var rawFinderItems: [FinderItem] = []
     
     var body: some View {
         VStack {
-            HStack {
-                if !finderItems.isEmpty {
-                    Button("Remove All") {
-                        withAnimation {
-                            finderItems = []
-                        }
-                    }
-                    .padding(.all)
-                }
-                
-                Spacer()
-                
-                Button("Add Item") {
-                    let panel = NSOpenPanel()
-                    panel.allowsMultipleSelection = true
-                    panel.canChooseDirectories = true
-                    if panel.runModal() == .OK {
-                        isShowingLoadingView = true
-                        for i in panel.urls {
-                            rawFinderItems.append(FinderItem(at: i))
-                        }
-                    }
-                }
-                    .padding(.all)
-                
-                Button("Done") {
-                    isSheetShown = true
-                }
-                    .disabled(finderItems.isEmpty || isSheetShown)
-                    .padding([.top, .bottom, .trailing])
-            }
-            
             if finderItems.isEmpty {
                 welcomeView(finderItems: $finderItems, rawFinderItems: $rawFinderItems, isShowingLoadingView: $isShowingLoadingView)
             } else {
                 GeometryReader { geometry in
                     
-                    ScrollView {
-                        LazyVGrid(columns: Array(repeating: .init(.flexible()), count: 5)) {
-                            ForEach(finderItems) { item in
-                                GridItemView(finderItems: $finderItems, item: item, geometry: geometry)
+                    withAnimation {
+                        ScrollView {
+                            LazyVGrid(columns: Array(repeating: .init(.flexible()), count: Int(8 / gridNumber))) {
+                                ForEach(finderItems) { item in
+                                    GridItemView(finderItems: $finderItems, gridNumber: $gridNumber, aspectRatio: $aspectRatio, item: item, geometry: geometry)
+                                }
                             }
+                            .padding()
+                            
                         }
-                        
+                        .frame(width: geometry.size.width, height: geometry.size.height)
                     }
-                    .frame(width: geometry.size.width, height: geometry.size.height)
                 }
             }
         }
         .onDrop(of: [.fileURL], isTargeted: nil) { providers in
-            isShowingLoadingView = true
             for i in providers {
                 i.loadItem(forTypeIdentifier: "public.file-url", options: nil) { urlData, error in
                     guard error == nil else { return }
@@ -591,6 +598,7 @@ struct ContentView: View {
                     rawFinderItems.append(item)
                 }
             }
+            isShowingLoadingView = true
             
             return true
         }
@@ -617,6 +625,57 @@ struct ContentView: View {
                 isShowingLoadingView = false
             }
         }
+        .toolbar {
+            ToolbarItem(placement: .navigation) {
+                Button("Remove All") {
+                    finderItems = []
+                }
+                .disabled(finderItems.isEmpty)
+            }
+            
+            ToolbarItemGroup {
+                Button(action: {
+                    withAnimation {
+                        aspectRatio.toggle()
+                    }
+                }, label: {
+                    Label("", systemImage: aspectRatio ? "rectangle.arrowtriangle.2.outward" : "rectangle.arrowtriangle.2.inward")
+                        .labelStyle(.iconOnly)
+                })
+                .help("Show thumbnails as square or in full aspect ratio")
+                
+                Slider(
+                    value: $gridNumber,
+                    in: 1...8,
+                    minimumValueLabel:
+                        Text("􀏅").font(.system(size: 8)),
+                    maximumValueLabel:
+                        Text("􀏅").font(.system(size: 16))
+                ) {
+                    Text("Grid Item Count")
+                }
+                .frame(width: 150)
+                
+                Button("Add Item") {
+                    let panel = NSOpenPanel()
+                    panel.allowsMultipleSelection = true
+                    panel.canChooseDirectories = true
+                    if panel.runModal() == .OK {
+                        for i in panel.urls {
+                            rawFinderItems.append(FinderItem(at: i))
+                        }
+                        isShowingLoadingView = true
+                    }
+                }
+            }
+            
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Done") {
+                    isSheetShown = true
+                }
+                .disabled(finderItems.isEmpty || isSheetShown)
+            }
+        }
     }
 }
 
@@ -633,7 +692,7 @@ struct welcomeView: View {
                 .scaledToFit()
                 .padding(.all)
                 .frame(width: 100, height: 100, alignment: .center)
-            Text("Drag files or folder \n or \n Click to add files.")
+            Text("Drag files or folder.")
                 .font(.title)
                 .multilineTextAlignment(.center)
                 .padding(.all)
@@ -645,30 +704,12 @@ struct welcomeView: View {
             panel.allowsMultipleSelection = true
             panel.canChooseDirectories = true
             if panel.runModal() == .OK {
-                isShowingLoadingView = true
                 for i in panel.urls {
                     let item = FinderItem(at: i)
                     rawFinderItems.append(item)
                 }
-                
+                isShowingLoadingView = true
             }
-        }
-        .onDrop(of: [.fileURL], isTargeted: nil) { providers in
-            isShowingLoadingView = true
-            for i in providers {
-                i.loadItem(forTypeIdentifier: "public.file-url", options: nil) { urlData, error in
-                    print(finderItems)
-                    
-                    guard error == nil else { return }
-                    guard let urlData = urlData as? Data else { return }
-                    guard let url = URL(dataRepresentation: urlData, relativeTo: nil) else { return }
-                    
-                    let item = FinderItem(at: url)
-                    rawFinderItems.append(item)
-                }
-            }
-            
-            return true
         }
     }
 }
@@ -677,6 +718,8 @@ struct welcomeView: View {
 struct GridItemView: View {
     
     @Binding var finderItems: [WorkItem]
+    @Binding var gridNumber: Double
+    @Binding var aspectRatio: Bool
     
     @State var isShowingHint: Bool = false
     @State var image: NSImage = NSImage(named: "placeholder")!
@@ -690,12 +733,15 @@ struct GridItemView: View {
             Image(nsImage: image)
                 .resizable()
                 .cornerRadius(5)
-                .aspectRatio(contentMode: .fit)
+                .aspectRatio(contentMode: aspectRatio ? .fit : .fill)
+                .frame(width: geometry.size.width * gridNumber / 8.5, height: geometry.size.width * gridNumber / 8.5)
+                .clipShape(ContainerRelativeShape())
+                .cornerRadius(5)
                 .padding([.top, .leading, .trailing])
                 .popover(isPresented: $isShowingHint) {
                     Text(image != NSImage(named: "placeholder")! ?
                         """
-                        name: \(item.finderItem.fileName ?? "???")
+                        name: \(item.finderItem.fileName)
                         path: \(item.finderItem.path)
                         size: \(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.width) × \(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.height)
                         length: \(item.finderItem.avAsset?.duration.seconds.expressedAsTime() ?? "0s")
@@ -703,7 +749,7 @@ struct GridItemView: View {
                          :
                         """
                         Loading...
-                        name: \(item.finderItem.fileName ?? "???")
+                        name: \(item.finderItem.fileName)
                         path: \(item.finderItem.path)
                         (If this continuous, please transcode your video into HEVC and retry)
                         """)
@@ -711,7 +757,7 @@ struct GridItemView: View {
                         .padding()
                 }
             
-            Text(((item.finderItem.relativePath ?? item.finderItem.fileName) ?? item.finderItem.path))
+            Text(((item.finderItem.relativePath ?? item.finderItem.fileName)))
                 .multilineTextAlignment(.center)
                 .lineLimit(1)
                 .padding([.leading, .bottom, .trailing])
@@ -719,10 +765,9 @@ struct GridItemView: View {
                     self.isShowingHint = bool
                 }
         }
-        .frame(width: geometry.size.width / 5, height: geometry.size.width / 5)
         .contextMenu {
             Button("Open") {
-                print(item.finderItem.path)
+                
                 _ = shell(["open \(item.finderItem.shellPath)"])
             }
             Button("Show in Finder") {
@@ -1096,28 +1141,10 @@ struct ProcessingView: View {
     @State var processedItemsCounter: Int = 0
     @State var currentTimeTaken: Double = 0 // up to 1s
     @State var pastTimeTaken: Double = 0 // up to 1s
-    @State var isPaused: Bool = false {
-        didSet {
-            if isPaused {
-                timer.upstream.connect().cancel()
-                
-                background.suspend()
-            } else {
-                timer = Timer.publish(every: 1, on: .current, in: .common).autoconnect()
-                
-                background.resume()
-            }
-        }
-    }
+    @State var isPaused: Bool = false
     @State var currentProcessingItemsCount: Int = 0
     @State var timer = Timer.publish(every: 1, on: .current, in: .common).autoconnect()
-    @State var isFinished: Bool = false {
-        didSet {
-            if isFinished {
-                timer.upstream.connect().cancel()
-            }
-        }
-    }
+    @State var isFinished: Bool = false
     @State var progress: Double = 0.0
     @State var isCreatingImageSequence: Bool = false
     @State var isMergingVideo: Bool = false
@@ -1126,7 +1153,10 @@ struct ProcessingView: View {
     @State var statusProgress: (progress: Int, total: Int)? = nil
     @State var isShowProgressDetail = false
     @State var workItem: DispatchWorkItem? = nil
-    var background: DispatchQueue = DispatchQueue(label: "background")
+    @State var isShowingQuitConfirmation = false
+    @State var isShowingReplace = false
+    
+    var background: DispatchQueue = DispatchQueue(label: "background", qos: .utility)
     
     var body: some View {
         VStack {
@@ -1255,12 +1285,7 @@ struct ProcessingView: View {
                 
                 if !isFinished {
                     Button("Cancel") {
-                        isFinished = true
-                        isProcessing = false
-                        isSheetShown = true
-                        isProcessingCancelled = true
-                        workItem!.cancel()
-                        exit(0)
+                        isShowingQuitConfirmation = true
                     }
                     .padding(.trailing)
                     
@@ -1293,7 +1318,14 @@ struct ProcessingView: View {
             .frame(width: 600, height: 350)
             .onAppear {
                 
-                self.workItem = DispatchWorkItem(qos: .utility, flags: .inheritQoS) {
+                background.async {
+                    for i in self.finderItems {
+                        if FinderItem(at: Configuration.main.saveFolder).children != nil, FinderItem(at: Configuration.main.saveFolder).children!.contains(i.finderItem) {
+                            isShowingReplace = true
+                            break
+                        }
+                    }
+                    
                     finderItems.work(Int(chosenScaleLevel), modelUsed: modelUsed, videoSegmentFrames: videoSegmentLength, frameInterpolation: Int(frameInterpolation), enableConcurrent: enableConcurrent) { status in
                         self.status = status
                     } onStatusProgressChanged: { progress,total in
@@ -1308,17 +1340,61 @@ struct ProcessingView: View {
                         processedItemsCounter = finished
                     } completion: {
                         isFinished = true
-                        try! FinderItem(at: Configuration.main.saveFolder).setIcon(image: NSImage(imageLiteralResourceName: "icon"))
                     }
                 }
                 
-                background.async {
-                    workItem!.perform()
-                }
             }
             .onReceive(timer) { timer in
                 currentTimeTaken += 1
                 pastTimeTaken += 1
+            }
+            .onChange(of: isPaused) { newValue in
+                if newValue {
+                    timer.upstream.connect().cancel()
+                    background.suspend()
+                } else {
+                    timer = Timer.publish(every: 1, on: .current, in: .common).autoconnect()
+                    background.resume()
+                }
+            }
+            .onChange(of: isFinished) { newValue in
+                if newValue {
+                    timer.upstream.connect().cancel()
+                }
+            }
+            .confirmationDialog("Quit the app?", isPresented: $isShowingQuitConfirmation) {
+                Button("Quit", role: .destructive) {
+                    exit(0)
+                }
+                
+                Button("Cancel", role: .cancel) {
+                    isShowingQuitConfirmation = false
+                }
+            }
+            .sheet(isPresented: $isShowingReplace, onDismiss: nil) {
+                VStack {
+                    HStack {
+                        Text("Items of the same name already exists in output location.\nDo you want to replace them?")
+                    }
+                    .padding(.top)
+                    HStack {
+                        Spacer()
+                        Button("Skip") {
+                            for i in self.finderItems {
+                                if FinderItem(at: Configuration.main.saveFolder).children != nil, FinderItem(at: Configuration.main.saveFolder).children!.contains(i.finderItem) {
+                                    finderItems.remove(at: finderItems.firstIndex(of: i)!)
+                                }
+                            }
+                            isShowingReplace = false
+                        }
+                        .padding(.trailing)
+                        Button("Replace") {
+                            isShowingReplace = false
+                        }
+                    }
+                    .padding([.horizontal, .bottom])
+                }
+                .frame(width: 500, height: 100)
             }
     }
 }
@@ -1359,7 +1435,7 @@ struct ProcessingPDFView: View {
                     
                     HStack {
                         if let currentProcessingItem = currentProcessingItem {
-                            Text(currentProcessingItem.relativePath ?? currentProcessingItem.fileName ?? "error")
+                            Text(currentProcessingItem.relativePath ?? currentProcessingItem.fileName)
                         } else {
                             Text("Error: \(currentProcessingItem.debugDescription)")
                         }

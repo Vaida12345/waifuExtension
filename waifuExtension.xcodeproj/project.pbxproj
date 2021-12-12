@@ -17,9 +17,7 @@
 		B41C4762274AAF6A0024ECB7 /* Fraction.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C474C274AAF6A0024ECB7 /* Fraction.swift */; };
 		B41C4763274AAF6A0024ECB7 /* Int10.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C474D274AAF6A0024ECB7 /* Int10.swift */; };
 		B41C4764274AAF6A0024ECB7 /* Complex.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C474E274AAF6A0024ECB7 /* Complex.swift */; };
-		B41C4765274AAF6A0024ECB7 /* PreciseFloat.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C474F274AAF6A0024ECB7 /* PreciseFloat.swift */; };
 		B41C4766274AAF6A0024ECB7 /* Arithmetical.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C4750274AAF6A0024ECB7 /* Arithmetical.swift */; };
-		B41C4767274AAF6A0024ECB7 /* PreciseInt.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C4751274AAF6A0024ECB7 /* PreciseInt.swift */; };
 		B41C4768274AAF6A0024ECB7 /* CommentCreator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C4753274AAF6A0024ECB7 /* CommentCreator.swift */; };
 		B41C4769274AAF6A0024ECB7 /* Bechmark.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C4754274AAF6A0024ECB7 /* Bechmark.swift */; };
 		B41C476A274AAF6A0024ECB7 /* Point.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C4755274AAF6A0024ECB7 /* Point.swift */; };
@@ -98,9 +96,7 @@
 		B41C474C274AAF6A0024ECB7 /* Fraction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Fraction.swift; sourceTree = "<group>"; };
 		B41C474D274AAF6A0024ECB7 /* Int10.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Int10.swift; sourceTree = "<group>"; };
 		B41C474E274AAF6A0024ECB7 /* Complex.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Complex.swift; sourceTree = "<group>"; };
-		B41C474F274AAF6A0024ECB7 /* PreciseFloat.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PreciseFloat.swift; sourceTree = "<group>"; };
 		B41C4750274AAF6A0024ECB7 /* Arithmetical.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Arithmetical.swift; sourceTree = "<group>"; };
-		B41C4751274AAF6A0024ECB7 /* PreciseInt.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PreciseInt.swift; sourceTree = "<group>"; };
 		B41C4753274AAF6A0024ECB7 /* CommentCreator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CommentCreator.swift; sourceTree = "<group>"; };
 		B41C4754274AAF6A0024ECB7 /* Bechmark.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Bechmark.swift; sourceTree = "<group>"; };
 		B41C4755274AAF6A0024ECB7 /* Point.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Point.swift; sourceTree = "<group>"; };
@@ -234,9 +230,7 @@
 				B41C474C274AAF6A0024ECB7 /* Fraction.swift */,
 				B41C474D274AAF6A0024ECB7 /* Int10.swift */,
 				B41C474E274AAF6A0024ECB7 /* Complex.swift */,
-				B41C474F274AAF6A0024ECB7 /* PreciseFloat.swift */,
 				B41C4750274AAF6A0024ECB7 /* Arithmetical.swift */,
-				B41C4751274AAF6A0024ECB7 /* PreciseInt.swift */,
 			);
 			path = Numerics;
 			sourceTree = "<group>";
@@ -499,9 +493,7 @@
 				B437F15E275334CB00A1CE41 /* upconv_7_anime_style_art_rgb_noise3_scale2.mlpackage in Sources */,
 				B41C4772274AAF6A0024ECB7 /* Polynomial.swift in Sources */,
 				B437F15C275334CB00A1CE41 /* photo_noise2_model.mlpackage in Sources */,
-				B41C4765274AAF6A0024ECB7 /* PreciseFloat.swift in Sources */,
 				B437F15A275334CB00A1CE41 /* anime_style_art_rgb_noise3_model.mlpackage in Sources */,
-				B41C4767274AAF6A0024ECB7 /* PreciseInt.swift in Sources */,
 				B41C4762274AAF6A0024ECB7 /* Fraction.swift in Sources */,
 				B49BFD97274B4BC50046FDDF /* NSImage+PNG.swift in Sources */,
 				B437F169275334CB00A1CE41 /* upconv_7_photo_noise1_scale2.mlpackage in Sources */,
@@ -689,7 +681,7 @@
 				CODE_SIGN_ENTITLEMENTS = waifuExtension/waifuExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 3.1.1a;
+				CURRENT_PROJECT_VERSION = 3.1.2b;
 				DEVELOPMENT_ASSET_PATHS = "\"waifuExtension/Preview Content\"";
 				DEVELOPMENT_TEAM = 3PH93LN984;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -702,7 +694,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0.1;
-				MARKETING_VERSION = 3.1.1;
+				MARKETING_VERSION = 3.1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Vaida.waifuExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -719,7 +711,7 @@
 				CODE_SIGN_ENTITLEMENTS = waifuExtension/waifuExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 3.1.1a;
+				CURRENT_PROJECT_VERSION = 3.1.2b;
 				DEVELOPMENT_ASSET_PATHS = "\"waifuExtension/Preview Content\"";
 				DEVELOPMENT_TEAM = 3PH93LN984;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -732,7 +724,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0.1;
-				MARKETING_VERSION = 3.1.1;
+				MARKETING_VERSION = 3.1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Vaida.waifuExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

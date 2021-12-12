@@ -22,6 +22,7 @@ struct UInt10: Arithmetical {
     
     /// The description of this value.
     var description: String {
+        guard !self.words.isEmpty else { return "<UInt10: []>" }
         return self.normalized().words.reversed().reduce("", { $0 + String($1.content) })
     }
     
@@ -62,8 +63,12 @@ struct UInt10: Arithmetical {
     ///
     /// - Parameters:
     ///    - words: The words in radix 10.
-    init(words: [Word]) {
+    fileprivate init(words: [Word]) {
         self.words = words
+    }
+    
+    private init(reversedWords: [Word]) {
+        self.init(words: reversedWords.reversed())
     }
     
     /// Creates an instance with empty words.
@@ -182,14 +187,14 @@ struct UInt10: Arithmetical {
     }
     
     /// Remove the unwanted zeros.
-    mutating func normalize() {
-        self = self.normalized()
+    mutating func normalize(n: Int = 0) {
+        self = self.normalized(n: n)
     }
     
     /// Remove the unwanted zeros.
-    func normalized() -> Self {
+    func normalized(n: Int = 0) -> Self {
         var value = self
-        while value.words.last == 0 && value.words.count != 1 {
+        while value.words.last == 0 && value.words.count != 1 && value.words.count > n {
             value.words.removeLast()
         }
         return value
@@ -256,24 +261,28 @@ struct UInt10: Arithmetical {
             return (Self(result.quotient), Self(result.remainder))
         }
         
+        let lhsCount = lhs.words.count
         var remainders: Self = lhs
         var quotients: Self = Self()
         
         let lhs = lhs.normalized()
         let rhs = rhs.normalized()
-        
         var index = 0
         while index < lhs.words.count && remainders >= rhs {
-            let lhsSmall = Self(words: Array(remainders.words[lhs.words.count - (index+rhs.words.count)..<remainders.words.count]))
+            let lhsSmall = UInt10(reversedWords: Array(remainders.words.reversed()[0...index]))
+            //            print(lhsSmall, rhs)
             guard lhsSmall >= rhs else { index += 1; quotients.words.append(0); continue }
             
             var result: Word = 0
             while (Self(words: [result]) + 1) * rhs <= lhsSmall { result += 1 }
             
+            //            print(lhsSmall, rhs, result)
+            
             quotients.words.append(result)
             
-            remainders -= (Self(words: [result]) * rhs).pow10(lhs.words.count - rhs.words.count - quotients.words.count + 1)
-            remainders.normalize()
+            remainders -= (Self(words: [result]) * rhs).pow10(lhs.words.count - index - 1)
+            remainders.normalize(n: lhsCount)
+            //            print("re", remainders, remainders.words)
             
             index += 1
         }
@@ -395,7 +404,7 @@ struct UInt10: Arithmetical {
     static func < (_ lhs: Self, _ rhs: Self) -> Bool {
         guard lhs != rhs else { return false }
         guard lhs.normalized().words.count == rhs.normalized().words.count else { return lhs.normalized().words.count < rhs.normalized().words.count }
-        var index = lhs.words.count - 1
+        var index = lhs.normalized().words.count - 1
         while true {
             if lhs[index] < rhs[index]  {
                 return true
