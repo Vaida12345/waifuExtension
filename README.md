@@ -32,7 +32,7 @@ When processing a standard 1080p image (1920 × 1080), MacBook Pro with the M1 M
 
 ## Interface
 This app was written with [SwiftUI](https://developer.apple.com/xcode/swiftui/).
-<img width="1720" alt="Screen Shot 2021-11-29 at 2 20 33 PM" src="https://user-images.githubusercontent.com/91354917/143818805-dffb73c7-835c-4b06-9227-a531c90b6364.png">
+<img width="2068" alt="Screen Shot 2021-12-12 at 2 53 54 PM" src="https://user-images.githubusercontent.com/91354917/145703436-9c515ff9-a02d-4272-9589-69c9318f8576.png">
 
 ## Preview
 <img width="1417" alt="Screen Shot 2021-11-29 at 2 44 41 PM" src="https://user-images.githubusercontent.com/91354917/143820789-45edbf68-a0c5-4478-be80-b26da1a3ce9c.png">
