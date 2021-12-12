@@ -46,15 +46,23 @@ struct ComparisonView: View {
     var body: some View {
         if finderItem == nil {
             VStack {
-                Image(systemName: "square.and.arrow.down.fill")
-                    .resizable()
-                    .scaledToFit()
-                    .padding(.all)
-                    .frame(width: 100, height: 100, alignment: .center)
-                Text("Drag a file here")
-                    .font(.title)
-                    .multilineTextAlignment(.center)
-                    .padding(.all)
+                Spacer()
+                HStack {
+                    Spacer()
+                    
+                    Image(systemName: "square.and.arrow.down.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .padding(.all)
+                        .frame(width: 100, height: 100, alignment: .center)
+                    Text("Drag a file here")
+                        .font(.title)
+                        .multilineTextAlignment(.center)
+                        .padding(.all)
+                    
+                    Spacer()
+                }
+                Spacer()
             }
             .padding(.all, 0.0)
             .onDrop(of: [.fileURL], isTargeted: nil) { providers in

@@ -89,6 +89,9 @@ struct Configuration: Codable {
     var isLogEnabled = false
     var isDevEnabled = false
     
+    var gridNumber = 1.6
+    var aspectRatio = true
+    
     var saveFolder: String {
         get {
             return getFolder

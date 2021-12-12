@@ -249,8 +249,7 @@ extension Array where Element == WorkItem {
                 autoreleasepool {
                     
                     guard !isProcessingCancelled else { return }
-                    
-                    let asset = segmentsFinderItem.avAsset!
+                    guard let asset = segmentsFinderItem.avAsset else { return }
                     
                     let vidLength: CMTime = asset.duration
                     let seconds: Double = CMTimeGetSeconds(vidLength)
@@ -274,6 +273,8 @@ extension Array where Element == WorkItem {
                                 try FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)").removeFile()
                             } catch {  }
                         }
+                        currentVideo.progress += Double(requiredFramesCount)
+                        onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / totalFrames)
                         // completion after all videos are finished.
                         completion()
                         return
@@ -559,16 +560,15 @@ struct ContentView: View {
     @State var videoSegmentLength = 2000
     @State var frameInterpolation = "none"
     @State var enableConcurrent = true
-    @State var gridNumber = 1.6
-    @State var aspectRatio = true
+    @State var gridNumber = Configuration.main.gridNumber
+    @State var aspectRatio = Configuration.main.aspectRatio
     
     @State var isShowingLoadingView = false
-    @State var rawFinderItems: [FinderItem] = []
     
     var body: some View {
         VStack {
             if finderItems.isEmpty {
-                welcomeView(finderItems: $finderItems, rawFinderItems: $rawFinderItems, isShowingLoadingView: $isShowingLoadingView)
+                welcomeView(finderItems: $finderItems, isShowingLoadingView: $isShowingLoadingView)
             } else {
                 GeometryReader { geometry in
                     
@@ -576,7 +576,7 @@ struct ContentView: View {
                         ScrollView {
                             LazyVGrid(columns: Array(repeating: .init(.flexible()), count: Int(8 / gridNumber))) {
                                 ForEach(finderItems) { item in
-                                    GridItemView(finderItems: $finderItems, gridNumber: $gridNumber, aspectRatio: $aspectRatio, item: item, geometry: geometry)
+                                    GridItemView(finderItems: $finderItems, gridNumber: $gridNumber, aspectRatio: $aspectRatio, isLoading: $isShowingLoadingView, item: item, geometry: geometry)
                                 }
                             }
                             .padding()
@@ -588,20 +588,29 @@ struct ContentView: View {
             }
         }
         .onDrop(of: [.fileURL], isTargeted: nil) { providers in
-            for i in providers {
-                i.loadItem(forTypeIdentifier: "public.file-url", options: nil) { urlData, error in
-                    guard error == nil else { return }
-                    guard let urlData = urlData as? Data else { return }
-                    guard let url = URL(dataRepresentation: urlData, relativeTo: nil) else { return }
-                    
-                    let item = FinderItem(at: url)
-                    rawFinderItems.append(item)
+            isShowingLoadingView = true
+            DispatchQueue(label: "background", qos: .userInitiated).async {
+                for i in providers {
+                    i.loadItem(forTypeIdentifier: "public.file-url", options: nil) { urlData, error in
+                        guard error == nil else { return }
+                        guard let urlData = urlData as? Data else { return }
+                        guard let url = URL(dataRepresentation: urlData, relativeTo: nil) else { return }
+                        
+                        let item = FinderItem(at: url)
+                        finderItems = addItemIfPossible(of: item, to: finderItems)
+                        
+                        if i == providers.last {
+                            isShowingLoadingView = false
+                        }
+                    }
                 }
             }
-            isShowingLoadingView = true
-            
             return true
         }
+        .onChange(of: gridNumber, perform: { newValue in
+            Configuration.main.gridNumber = newValue
+            Configuration.main.write()
+        })
         .sheet(isPresented: $isSheetShown, onDismiss: nil) {
             SpecificationsView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel, videoSegmentLength: $videoSegmentLength, frameInterpolation: $frameInterpolation, enableConcurrentPerform: $enableConcurrent, frameHeight: !finderItems.allSatisfy({ $0.finderItem.avAsset == nil }) ? 400 : 350)
         }
@@ -615,58 +624,68 @@ struct ContentView: View {
             LoadingView(text: "Loading files...")
                 .frame(width: 400, height: 75)
         })
-        .onChange(of: isShowingLoadingView) { newValue in
-            guard newValue == true else { return }
-            DispatchQueue(label: "background").async {
-                self.finderItems = addItems(of: rawFinderItems, to: finderItems)
-                
-                rawFinderItems.removeAll()
-                
-                isShowingLoadingView = false
-            }
-        }
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 Button("Remove All") {
                     finderItems = []
                 }
                 .disabled(finderItems.isEmpty)
+                .help("Remove all files.")
             }
             
             ToolbarItemGroup {
                 Button(action: {
                     withAnimation {
                         aspectRatio.toggle()
+                        Configuration.main.aspectRatio = aspectRatio
+                        Configuration.main.write()
                     }
                 }, label: {
                     Label("", systemImage: aspectRatio ? "rectangle.arrowtriangle.2.outward" : "rectangle.arrowtriangle.2.inward")
                         .labelStyle(.iconOnly)
                 })
-                .help("Show thumbnails as square or in full aspect ratio")
+                .help("Show thumbnails as square or in full aspect ratio.")
                 
                 Slider(
                     value: $gridNumber,
                     in: 1...8,
                     minimumValueLabel:
-                        Text("􀏅").font(.system(size: 8)),
+                        Text("􀏅")
+                        .font(.system(size: 8))
+                        .onTapGesture(perform: {
+                            withAnimation {
+                                gridNumber = 1.6
+                            }
+                        }),
                     maximumValueLabel:
-                        Text("􀏅").font(.system(size: 16))
+                        Text("􀏅")
+                        .font(.system(size: 16))
+                        .onTapGesture(perform: {
+                            withAnimation {
+                                gridNumber = 1.6
+                            }
+                        })
                 ) {
-                    Text("Grid Item Count")
+                    Text("Grid Item Count\nTap to restore default.")
                 }
                 .frame(width: 150)
+                .help("Set the size of each thumbnail.")
                 
                 Button("Add Item") {
                     let panel = NSOpenPanel()
                     panel.allowsMultipleSelection = true
                     panel.canChooseDirectories = true
                     if panel.runModal() == .OK {
-                        for i in panel.urls {
-                            rawFinderItems.append(FinderItem(at: i))
-                        }
                         isShowingLoadingView = true
+                        DispatchQueue(label: "background", qos: .userInitiated).async {
+                            for i in panel.urls {
+                                finderItems = addItemIfPossible(of: FinderItem(at: i), to: finderItems)
+                            }
+                            isShowingLoadingView = false
+                        }
                     }
                 }
+                .help("Add another item.")
             }
             
             ToolbarItem(placement: .confirmationAction) {
@@ -674,6 +693,7 @@ struct ContentView: View {
                     isSheetShown = true
                 }
                 .disabled(finderItems.isEmpty || isSheetShown)
+                .help("Begin processing.")
             }
         }
     }
@@ -682,7 +702,6 @@ struct ContentView: View {
 struct welcomeView: View {
     
     @Binding var finderItems: [WorkItem]
-    @Binding var rawFinderItems: [FinderItem]
     @Binding var isShowingLoadingView: Bool
     
     var body: some View {
@@ -704,11 +723,13 @@ struct welcomeView: View {
             panel.allowsMultipleSelection = true
             panel.canChooseDirectories = true
             if panel.runModal() == .OK {
-                for i in panel.urls {
-                    let item = FinderItem(at: i)
-                    rawFinderItems.append(item)
-                }
                 isShowingLoadingView = true
+                DispatchQueue(label: "background", qos: .userInitiated).async {
+                    for i in panel.urls {
+                        finderItems = addItemIfPossible(of: FinderItem(at: i), to: finderItems)
+                    }
+                    isShowingLoadingView = false
+                }
             }
         }
     }
@@ -720,9 +741,9 @@ struct GridItemView: View {
     @Binding var finderItems: [WorkItem]
     @Binding var gridNumber: Double
     @Binding var aspectRatio: Bool
+    @Binding var isLoading: Bool
     
-    @State var isShowingHint: Bool = false
-    @State var image: NSImage = NSImage(named: "placeholder")!
+    @State var image: NSImage? = nil
     
     let item: WorkItem
     let geometry: GeometryProxy
@@ -730,48 +751,32 @@ struct GridItemView: View {
     var body: some View {
         VStack(alignment: .center) {
             
-            Image(nsImage: image)
-                .resizable()
-                .cornerRadius(5)
-                .aspectRatio(contentMode: aspectRatio ? .fit : .fill)
-                .frame(width: geometry.size.width * gridNumber / 8.5, height: geometry.size.width * gridNumber / 8.5)
-                .clipShape(ContainerRelativeShape())
-                .cornerRadius(5)
-                .padding([.top, .leading, .trailing])
-                .popover(isPresented: $isShowingHint) {
-                    Text(image != NSImage(named: "placeholder")! ?
-                        """
-                        name: \(item.finderItem.fileName)
-                        path: \(item.finderItem.path)
-                        size: \(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.width) × \(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.height)
-                        length: \(item.finderItem.avAsset?.duration.seconds.expressedAsTime() ?? "0s")
-                        """
-                         :
-                        """
-                        Loading...
-                        name: \(item.finderItem.fileName)
-                        path: \(item.finderItem.path)
-                        (If this continuous, please transcode your video into HEVC and retry)
-                        """)
-                        .multilineTextAlignment(.center)
-                        .padding()
-                }
-            
+            if let image = image {
+                Image(nsImage: image)
+                    .resizable()
+                    .cornerRadius(5)
+                    .aspectRatio(contentMode: aspectRatio ? .fit : .fill)
+                    .frame(width: geometry.size.width * gridNumber / 8.5, height: geometry.size.width * gridNumber / 8.5)
+                    .clipped()
+                    .cornerRadius(5)
+                    .padding([.top, .leading, .trailing])
+            } else {
+                Rectangle()
+                    .padding([.top, .leading, .trailing])
+                    .opacity(0)
+                    .frame(width: geometry.size.width * gridNumber / 8.5, height: geometry.size.width * gridNumber / 8.5)
+            }
             Text(((item.finderItem.relativePath ?? item.finderItem.fileName)))
                 .multilineTextAlignment(.center)
                 .lineLimit(1)
                 .padding([.leading, .bottom, .trailing])
-                .onHover { bool in
-                    self.isShowingHint = bool
-                }
         }
         .contextMenu {
             Button("Open") {
-                
-                _ = shell(["open \(item.finderItem.shellPath)"])
+                item.finderItem.open()
             }
             Button("Show in Finder") {
-                _ = shell(["open \(item.finderItem.shellPath) -R"])
+                shell(["open \(item.finderItem.shellPath) -R"])
             }
             Button("Delete") {
                 withAnimation {
@@ -779,11 +784,35 @@ struct GridItemView: View {
                 }
             }
         }
+        .onTapGesture(count: 2, perform: {
+            item.finderItem.open()
+        })
         .onAppear {
-            DispatchQueue(label: "background").async {
+            DispatchQueue(label: "img", qos: .utility).async {
                 image = (item.finderItem.image ?? item.finderItem.firstFrame) ?? NSImage(named: "placeholder")!
+                isLoading = false
             }
         }
+        .help({() -> String in
+            if let image = image {
+                var value = """
+                            name: \(item.finderItem.fileName)
+                            path: \(item.finderItem.path)
+                            size: \(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.width) × \(image.cgImage(forProposedRect: nil, context: nil, hints: nil)!.height)
+                            """
+                if item.type == .video {
+                    value += "\nlength: \(item.finderItem.avAsset?.duration.seconds.expressedAsTime() ?? "0s")"
+                }
+                return value
+            } else {
+                return """
+                        Loading...
+                        name: \(item.finderItem.fileName)
+                        path: \(item.finderItem.path)
+                        (If this continuous, please transcode your video into HEVC and retry)
+                        """
+            }
+        }())
     }
 }
 
@@ -825,16 +854,6 @@ struct SpecificationsView: View {
     let videoSegmentOptions = [100, 500, 1000, 2000, 5000, 10000, 20000]
     let frameInterpolationOptions = ["none", "2", "4"]
     
-    @State var isShowingStyleHint: Bool = false
-    @State var isShowingNoiceHint: Bool = false
-    @State var isShowingScaleHint: Bool = false
-    @State var isShowingModelClassHint: Bool = false
-    @State var isShowingGPUHint: Bool = false
-    @State var isShowingVideoSegmentHint: Bool = false
-    @State var isShowingFrameInterpolationHint: Bool = false
-    @State var isShowingStorageRequiredHint: Bool = false
-    @State var isShowingEnableConcurrent: Bool = false
-    
     @State var frameHeight: CGFloat
     @State var storageRequired: String? = nil
     
@@ -860,27 +879,21 @@ struct SpecificationsView: View {
                             Spacer()
                             Text("Style:")
                                 .padding(.bottom)
-                                .onHover { bool in
-                                    isShowingStyleHint = bool
-                                }
+                                .help("anime: for illustrations or 2D images or CG\nphoto: for photos of real world or 3D images")
                         }
                     }
                     
                     HStack {
                         Spacer()
                         Text("Scale Level:")
-                            .onHover { bool in
-                                isShowingScaleHint = bool
-                            }
+                            .help("Choose how much you want to scale.")
                     }
                     
                     if Int(chosenScaleLevel) != nil {
                         HStack {
                             Spacer()
                             Text("Denoise Level:")
-                                .onHover { bool in
-                                    isShowingNoiceHint = bool
-                                }
+                                .help("denoise level 3 recommended.\nHint: Don't know which to choose? go to Compare > Compare Models and try by yourself!")
                         }
                     }
                     
@@ -899,26 +912,20 @@ struct SpecificationsView: View {
                         HStack {
                             Spacer()
                             Text("Video segmentation:")
-                                .onHover { bool in
-                                    isShowingVideoSegmentHint = bool
-                                }
+                                .help("Lager the value, less the storage used. But the process would be slower.")
                         }
                         .padding(.top)
                         
                         HStack {
                             Spacer()
                             Text("Frame Interpolation:")
-                                .onHover { bool in
-                                    isShowingFrameInterpolationHint = bool
-                                }
+                                .help("Enable frame interpolation will make video smoother")
                         }
                     } else if finderItems.allSatisfy({ $0.type == .image }) {
                         HStack {
                             Spacer()
                             Text("Enable Concurrent Perform:")
-                                .onHover { bool in
-                                    isShowingEnableConcurrent = bool
-                                }
+                                .help("Please enable this unless the images are large.")
                         }
                     }
                 }
@@ -934,15 +941,6 @@ struct SpecificationsView: View {
                             }
                         }
                         .padding(.bottom)
-                        .popover(isPresented: $isShowingStyleHint) {
-                            Text("anime: for illustrations or 2D images or CG")
-                                .padding([.top, .leading, .trailing])
-                                .padding(.bottom, 3)
-                            
-                            Text("photo: for photos of real world or 3D images")
-                                .padding([.leading, .bottom, .trailing])
-                            
-                        }
                     }
                     
                     Menu(Int(chosenScaleLevel) != nil ? pow(2, Int(chosenScaleLevel)!).description : chosenScaleLevel) {
@@ -951,11 +949,6 @@ struct SpecificationsView: View {
                                 chosenScaleLevel = item
                             }
                         }
-                    }
-                    .popover(isPresented: $isShowingScaleHint) {
-                        Text("Choose how much you want to scale.")
-                            .padding(.all)
-                        
                     }
                     
                     if Int(chosenScaleLevel) != nil {
@@ -966,10 +959,6 @@ struct SpecificationsView: View {
                                     self.storageRequired = nil
                                 }
                             }
-                        }
-                        .popover(isPresented: $isShowingNoiceHint) {
-                            Text("denoise level 3 recommended.\nHint: Don't know which to choose? go to Compare > Compare Models and try by yourself!")
-                                .padding(.all)
                         }
                     }
                     
@@ -999,11 +988,6 @@ struct SpecificationsView: View {
                             }
                         }
                         .padding(.top)
-                        .popover(isPresented: $isShowingVideoSegmentHint) {
-                            Text("Lager the value, less the storage used. But the process would be slower.")
-                                .padding(.all)
-                            
-                        }
                         
                         Menu(Int(frameInterpolation) != nil ? frameInterpolation + "x" : frameInterpolation) {
                             ForEach(frameInterpolationOptions, id: \.self) { item in
@@ -1012,11 +996,6 @@ struct SpecificationsView: View {
                                 }
                             }
                         }
-                        .popover(isPresented: $isShowingFrameInterpolationHint) {
-                            Text("Enable frame interpolation will make video smoother")
-                                .padding(.all)
-                            
-                        }
                     } else if finderItems.allSatisfy({ $0.type == .image }) {
                         Menu(enableConcurrentPerform.description) {
                             ForEach([true, false], id: \.self) { item in
@@ -1024,11 +1003,6 @@ struct SpecificationsView: View {
                                     enableConcurrentPerform = item
                                 }
                             }
-                        }
-                        .popover(isPresented: $isShowingEnableConcurrent) {
-                            Text("Please enable this unless the images are large.")
-                                .padding(.all)
-                            
                         }
                     }
                 }
@@ -1045,14 +1019,7 @@ struct SpecificationsView: View {
                 if let storageRequired = storageRequired, !finderItems.allSatisfy({ $0.type == .image }) {
                     Text("Estimated Storage required: \(storageRequired)")
                         .padding(.trailing)
-                        .popover(isPresented: $isShowingStorageRequiredHint) {
-                            Text("Storage required when processing the videos.\nIf you can not afford, lower the video segment length.")
-                                .padding(.all)
-                            
-                        }
-                        .onHover { bool in
-                            isShowingStorageRequiredHint = bool
-                        }
+                        .help("Storage required when processing the videos.\nIf you can not afford, lower the video segment length.")
                 }
                 
                 Button {
@@ -1062,6 +1029,7 @@ struct SpecificationsView: View {
                         .frame(width: 80)
                 }
                 .padding(.trailing)
+                .help("Return to previous page.")
                 
                 Button {
                     isProcessing = true
@@ -1076,7 +1044,9 @@ struct SpecificationsView: View {
                 } label: {
                     Text("OK")
                         .frame(width: 80)
-                }.disabled(frameInterpolation == "none" && chosenScaleLevel == "none")
+                }
+                .disabled(frameInterpolation == "none" && chosenScaleLevel == "none")
+                .help("Begin processing.")
             }
                 .padding(.all)
         }
@@ -1142,16 +1112,11 @@ struct ProcessingView: View {
     @State var currentTimeTaken: Double = 0 // up to 1s
     @State var pastTimeTaken: Double = 0 // up to 1s
     @State var isPaused: Bool = false
-    @State var currentProcessingItemsCount: Int = 0
     @State var timer = Timer.publish(every: 1, on: .current, in: .common).autoconnect()
     @State var isFinished: Bool = false
     @State var progress: Double = 0.0
-    @State var isCreatingImageSequence: Bool = false
-    @State var isMergingVideo: Bool = false
-    @State var videos: [FinderItem] = []
     @State var status: String = "Loading..."
     @State var statusProgress: (progress: Int, total: Int)? = nil
-    @State var isShowProgressDetail = false
     @State var workItem: DispatchWorkItem? = nil
     @State var isShowingQuitConfirmation = false
     @State var isShowingReplace = false
@@ -1263,19 +1228,11 @@ struct ProcessingView: View {
             Spacer()
             
             ProgressView(value: {()->Double in
-                guard !isCreatingImageSequence else { return 0 }
                 guard !finderItems.isEmpty else { return 1 }
                 
                 return progress <= 1 ? progress : 1
             }(), total: 1.0)
-            .popover(isPresented: $isShowProgressDetail) {
-                Text("\(String(format: "%.2f", progress * 100))%")
-                    .padding(.all, 3)
-                    .frame(width: 100)
-            }
-            .onHover { bool in
-                isShowProgressDetail = bool
-            }
+                .help("\(String(format: "%.2f", progress * 100))%")
             .padding([.bottom])
             
             Spacer()
@@ -1284,32 +1241,45 @@ struct ProcessingView: View {
                 Spacer()
                 
                 if !isFinished {
-                    Button("Cancel") {
+                    Button() {
                         isShowingQuitConfirmation = true
+                    } label: {
+                        Text("Cancel")
+                            .frame(width: 80)
                     }
                     .padding(.trailing)
+                    .help("Cancel and quit.")
                     
-                    Button(isPaused ? "Resume" : "Pause") {
+                    Button() {
                         isPaused.toggle()
+                    } label: {
+                        Text(isPaused ? "Resume" : "Pause")
+                            .frame(width: 80)
                     }
                     .disabled(true)
                 } else {
-                    Button("Create PDF") {
+                    Button() {
                         finderItems = []
                         isProcessing = false
                         isCreatingPDF = true
+                    } label: {
+                        Text("Create PDF")
+                            .frame(width: 80)
                     }
                     .disabled((FinderItem(at: "\(Configuration.main.saveFolder)").children?.filter({ $0.isDirectory }).isEmpty ?? false))
                     .padding(.trailing)
                     
                     Button("Show in Finder") {
-                        _ = shell(["open \(FinderItem(at: Configuration.main.saveFolder).shellPath)"])
+                        shell(["open \(FinderItem(at: Configuration.main.saveFolder).shellPath)"])
                     }
                     .padding(.trailing)
                     
-                    Button("Done") {
+                    Button() {
                         finderItems = []
                         isProcessing = false
+                    } label: {
+                        Text("Done")
+                            .frame(width: 80)
                     }
                 }
             }
@@ -1320,9 +1290,9 @@ struct ProcessingView: View {
                 
                 background.async {
                     for i in self.finderItems {
-                        if FinderItem(at: Configuration.main.saveFolder).children != nil, FinderItem(at: Configuration.main.saveFolder).children!.contains(i.finderItem) {
+                        if FinderItem(at: Configuration.main.saveFolder).hasChildren, FinderItem(at: Configuration.main.saveFolder).allChildren!.contains(where: { $0.relativePath == i.finderItem.relativePath || $0.relativePath == i.finderItem.name }) {
                             isShowingReplace = true
-                            break
+                            return
                         }
                     }
                     
@@ -1372,27 +1342,78 @@ struct ProcessingView: View {
                 }
             }
             .sheet(isPresented: $isShowingReplace, onDismiss: nil) {
-                VStack {
-                    HStack {
-                        Text("Items of the same name already exists in output location.\nDo you want to replace them?")
-                    }
-                    .padding(.top)
-                    HStack {
-                        Spacer()
-                        Button("Skip") {
-                            for i in self.finderItems {
-                                if FinderItem(at: Configuration.main.saveFolder).children != nil, FinderItem(at: Configuration.main.saveFolder).children!.contains(i.finderItem) {
-                                    finderItems.remove(at: finderItems.firstIndex(of: i)!)
+                HStack {
+                    Image(systemName: "exclamationmark.triangle")
+                        .padding(.horizontal)
+                        .font(.system(size: 30))
+                    
+                    VStack {
+                        HStack {
+                            Text("Items of the same name already exists in output location.\nDo you want to replace them?")
+                                .padding(.top)
+                            
+                            Spacer()
+                        }
+                        
+                        HStack {
+                            Spacer()
+                            Button() {
+                                for i in self.finderItems {
+                                    if FinderItem(at: Configuration.main.saveFolder).hasChildren, FinderItem(at: Configuration.main.saveFolder).allChildren!.contains(where: { $0.relativePath == i.finderItem.relativePath || $0.relativePath == i.finderItem.name }) {
+                                        finderItems.remove(at: finderItems.firstIndex(of: i)!)
+                                    }
                                 }
+                                isShowingReplace = false
+                                
+                                background.async {
+                                    finderItems.work(Int(chosenScaleLevel), modelUsed: modelUsed, videoSegmentFrames: videoSegmentLength, frameInterpolation: Int(frameInterpolation), enableConcurrent: enableConcurrent) { status in
+                                        self.status = status
+                                    } onStatusProgressChanged: { progress,total in
+                                        if progress != nil {
+                                            self.statusProgress = (progress!, total!)
+                                        } else {
+                                            self.statusProgress = nil
+                                        }
+                                    } onProgressChanged: { progress in
+                                        self.progress = progress
+                                    } didFinishOneItem: { finished,total in
+                                        processedItemsCounter = finished
+                                    } completion: {
+                                        isFinished = true
+                                    }
+                                }
+                            } label: {
+                                Text("Skip")
+                                    .frame(width: 80)
                             }
-                            isShowingReplace = false
+                            .padding(.trailing)
+                            Button() {
+                                isShowingReplace = false
+                                
+                                background.async {
+                                    finderItems.work(Int(chosenScaleLevel), modelUsed: modelUsed, videoSegmentFrames: videoSegmentLength, frameInterpolation: Int(frameInterpolation), enableConcurrent: enableConcurrent) { status in
+                                        self.status = status
+                                    } onStatusProgressChanged: { progress,total in
+                                        if progress != nil {
+                                            self.statusProgress = (progress!, total!)
+                                        } else {
+                                            self.statusProgress = nil
+                                        }
+                                    } onProgressChanged: { progress in
+                                        self.progress = progress
+                                    } didFinishOneItem: { finished,total in
+                                        processedItemsCounter = finished
+                                    } completion: {
+                                        isFinished = true
+                                    }
+                                }
+                            } label: {
+                                Text("Replace")
+                                    .frame(width: 80)
+                            }
                         }
-                        .padding(.trailing)
-                        Button("Replace") {
-                            isShowingReplace = false
-                        }
+                        .padding([.horizontal, .bottom])
                     }
-                    .padding([.horizontal, .bottom])
                 }
                 .frame(width: 500, height: 100)
             }
@@ -1412,79 +1433,64 @@ struct ProcessingPDFView: View {
     var body: some View {
         VStack {
             
+            Spacer()
+            
             HStack {
                 VStack(spacing: 10) {
-                    Spacer()
-                    
-                    HStack {
-                        Spacer()
-                        Text("Processing:")
-                    }
-                    .padding(.bottom)
-                    
-                    HStack {
-                        Spacer()
-                        Text("Processed:")
-                    }
-                    
-                    Spacer()
+                    Text("Processing:")
+                    Text("Processed:")
                 }
                 
                 VStack(spacing: 10) {
-                    Spacer()
-                    
                     HStack {
                         if let currentProcessingItem = currentProcessingItem {
-                            Text(currentProcessingItem.relativePath ?? currentProcessingItem.fileName)
+                            Text(isFinished ? "Finished" : currentProcessingItem.relativePath ?? currentProcessingItem.fileName)
                         } else {
-                            Text("Error: \(currentProcessingItem.debugDescription)")
+                            Text("Loading")
                         }
                         
                         Spacer()
                     }
-                    .padding(.bottom)
                     
                     HStack {
                         Text("\(processedItemsCount) items")
                         
                         Spacer()
                     }
-                    
-                    Spacer()
                 }
             }
-            
-            Spacer()
+            .padding([.horizontal, .bottom])
             
             if !isFinished {
                 ProgressView()
                     .progressViewStyle(.linear)
-                    .padding(.all)
+                    .padding(.horizontal)
             } else {
                 ProgressView(value: 1)
                     .progressViewStyle(.linear)
-                    .padding(.all)
+                    .padding(.horizontal)
             }
-            
-            Spacer()
             
             HStack {
                 Spacer()
                 
                 Button("Show in Finder") {
-                    _ = shell(["open \(FinderItem(at: "\(NSHomeDirectory())/Downloads/PDF output").shellPath)"])
+                    shell(["open \(FinderItem(at: "\(NSHomeDirectory())/Downloads/PDF output").shellPath)"])
                 }
                 .padding(.trailing)
                 
-                Button("Done") {
+                Button() {
                     isCreatingPDF = false
+                } label: {
+                    Text("Done")
+                        .frame(width: 80)
                 }
                 .disabled(!isFinished)
             }
-            .padding(.all)
+            .padding()
         }
         .padding(.all)
-        .frame(width: 600, height: 250)
+        .frame(width: 600, height: 170)
         .onAppear {
             
             DispatchQueue(label: "background").async {
@@ -1530,6 +1536,6 @@ struct LoadingView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        LoadingView(text: "123")
+        ProcessingPDFView(isCreatingPDF: .constant(true))
     }
 }

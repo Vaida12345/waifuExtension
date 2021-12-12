@@ -14,7 +14,7 @@ struct waifuExtensionApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .frame(minWidth: 610, idealWidth: 900, maxWidth: .infinity, minHeight: 360, idealHeight: 450, maxHeight: .infinity)
+                .frame(minWidth: 620, idealWidth: 900, maxWidth: .infinity, minHeight: 360, idealHeight: 450, maxHeight: .infinity)
                 .navigationTitle("")
         }
         .commands {

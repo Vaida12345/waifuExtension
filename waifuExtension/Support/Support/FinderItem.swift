@@ -29,6 +29,17 @@ class FinderItem: Codable, CustomStringConvertible, Equatable, Hashable, Identif
     
     //MARK: - Instance Properties
     
+    /// Returns the files that are inside this folder, or its subfolders.
+    var allChildren: [FinderItem]? {
+        guard let items = FileManager.default.enumerator(atPath: self.path)?.allObjects as? [String] else { return nil }
+        return items.map { i in
+            let item = FinderItem(at: self.path + "/" + i)
+            item.parent = self
+            item.relativePath = item.relativePath(to: self)
+            return item
+        }
+    }
+    
     /// Returns the audio / video asset at the path, if exists.
     var avAsset: AVAsset? {
         guard AVAsset(url: self.url).isReadable else { return nil }
@@ -40,7 +51,7 @@ class FinderItem: Codable, CustomStringConvertible, Equatable, Hashable, Identif
         return self.avAsset?.tracks(withMediaType: AVMediaType.audio).first
     }
     
-    /// Returns the files that are **strictly** instead this folder.
+    /// Returns the files that are **strictly** inside this folder.
     ///
     /// The files that are only inside this folder, not its subfolders.
     ///
@@ -229,6 +240,11 @@ class FinderItem: Codable, CustomStringConvertible, Equatable, Hashable, Identif
         return value
     }
     
+    /// The full name of the file.
+    var name: String {
+        return (try? url.resourceValues(forKeys: [.nameKey]).name) ?? self.rawPath
+    }
+    
     /// Returns the absolute path, separated into `String` array.
     var pathArray: [String] {
         return path.split(separator: "/").map({ String($0) })
@@ -241,7 +257,7 @@ class FinderItem: Codable, CustomStringConvertible, Equatable, Hashable, Identif
         return self.pathArray.last!
     }
     
-    /// Returns the files that are **strictly** instead this file.
+    /// Returns the files that are **strictly** inside this file.
     ///
     /// This property does not sort the children, however, please use this to save time.
     var rawChildren: [FinderItem]? {
@@ -249,6 +265,7 @@ class FinderItem: Codable, CustomStringConvertible, Equatable, Hashable, Identif
         return paths.map({
             let item = FinderItem(at: self.path + "/" + $0)
             item.parent = self
+            item.relativePath = item.relativePath(to: self)
             return item
         })
     }
@@ -601,16 +618,16 @@ class FinderItem: Codable, CustomStringConvertible, Equatable, Hashable, Identif
         precondition(folder.isExistence)
         precondition(folder.hasChildren)
         
+        if let onChangingItem = onChangingItem {
+            onChangingItem(folder)
+        }
+        
         if folder.hasSubfolder {
             for i in folder.children! {
                 if i.isDirectory && i.hasChildren {
-                    createPDF(fromFolder: i, outputPath: outputPath)
+                    createPDF(fromFolder: i, outputPath: outputPath, onChangingItem: onChangingItem)
                 }
             }
-        }
-        
-        if let onChangingItem = onChangingItem {
-            onChangingItem(folder)
         }
         
         // create PDF
@@ -634,6 +651,8 @@ class FinderItem: Codable, CustomStringConvertible, Equatable, Hashable, Identif
         
         let pastePath = outputPath + "/" + folder.fileName + ".pdf"
         document.write(toFile: FinderItem(at: pastePath).generateOutputPath())
+        
+        FinderItem(at: outputPath).setIcon(image: NSImage(named: "pdf icon")!)
     }
     
     /// Decode a file from `path` to the expected `type`.
