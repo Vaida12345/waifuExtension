@@ -10,6 +10,8 @@ The new version is capable of taking advantages of CPU, GPU, and [ANE](https://g
 ## Install
 Files and source code could be found in [releases](https://github.com/Vaida12345/waifuExtension/releases).
 
+Note: If mac says the app was damaged / unkown developer, please go to `System Preferences > Security & Privacy > General`, and click `Open Anyway`. [Show Details.](https://github.com/Vaida12345/Annotation/wiki#why-i-cant-open-the-app)
+
 ## Privacy
 This app works completely offline and requires no internet connection. Nothing is collected or stored, expect for:
 - Your settings stored in its [containter](https://developer.apple.com/documentation/foundation/1413045-nshomedirectory/).
