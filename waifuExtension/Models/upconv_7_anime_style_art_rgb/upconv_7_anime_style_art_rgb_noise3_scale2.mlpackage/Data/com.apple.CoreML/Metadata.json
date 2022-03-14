@@ -1,4 +1,6 @@
 {
-  "MLModelLicenseKey" : "model converted by coremltools from the works of lltcggie",
-  "MLModelAuthorKey" : "lltcggie, Vaida"
+  "MLModelVersionStringKey" : "--",
+  "MLModelDescriptionKey" : "--",
+  "MLModelAuthorKey" : "lltcggie, Vaida",
+  "MLModelLicenseKey" : "model converted by coremltools from the works of lltcggie"
 }

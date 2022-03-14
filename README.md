@@ -10,6 +10,8 @@ The new version is capable of taking advantages of CPU, GPU, and [ANE](https://g
 ## Install
 Files and source code could be found in [releases](https://github.com/Vaida12345/waifuExtension/releases).
 
+Note: If mac says the app was damaged / unknown developer, please go to `System Preferences > Security & Privacy > General`, and click `Open Anyway`. [Show Details.](https://github.com/Vaida12345/Annotation/wiki#why-i-cant-open-the-app)
+
 ## Privacy
 This app works completely offline and requires no internet connection. Nothing is collected or stored, expect for:
 - Your settings stored in its [containter](https://developer.apple.com/documentation/foundation/1413045-nshomedirectory/).
@@ -37,6 +39,9 @@ This app was written with [SwiftUI](https://developer.apple.com/xcode/swiftui/).
 ## Preview
 <img width="1417" alt="Screen Shot 2021-11-29 at 2 44 41 PM" src="https://user-images.githubusercontent.com/91354917/143820789-45edbf68-a0c5-4478-be80-b26da1a3ce9c.png">
 
+<img width="1013" alt="Screen Shot 2022-02-22 at 6 15 29 PM" src="https://user-images.githubusercontent.com/91354917/155111707-9ceff33a-d786-40a6-be7e-836f9475074f.png">
+
+
 ## Denoise Level
 You can compare results from different model by choosing Compare > Compare Models. Example:
 <img width="1446" alt="Screen Shot 2021-11-29 at 5 58 27 PM" src="https://user-images.githubusercontent.com/91354917/143847147-b6b12fee-9761-4dab-8899-fa49ea02c63f.png">
@@ -46,3 +51,4 @@ You can compare results from different model by choosing Compare > Compare Model
  - [waifu2x-caffe](https://github.com/lltcggie/waifu2x-caffe) for all the models.
  - [stack overflow](https://stackoverflow.com) for all the solutions.
  - [dain-ncnn-vulkan](https://github.com/nihui/dain-ncnn-vulkan) for frame implemented AI.
+ - [realsr-ncnn-vulkan](https://github.com/nihui/realsr-ncnn-vulkan) for realsr-ncnn-vulkan.

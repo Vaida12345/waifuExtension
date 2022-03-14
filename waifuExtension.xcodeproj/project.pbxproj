@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		B40B65A82754B95200AB08D2 /* ComparisonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B40B65A72754B95200AB08D2 /* ComparisonView.swift */; };
+		B414BFE327DF9B2A007D2ABB /* realsr-ncnn-vulkan-20210210-macos in Resources */ = {isa = PBXBuildFile; fileRef = B414BFE227DF9B2A007D2ABB /* realsr-ncnn-vulkan-20210210-macos */; };
 		B41527FB27555EC80051CE81 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = B41527FA27555EC80051CE81 /* README.md */; };
 		B41527FD27555ECF0051CE81 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = B41527FC27555ECF0051CE81 /* LICENSE */; };
 		B41C473C274AA7850024ECB7 /* waifuExtensionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C473B274AA7850024ECB7 /* waifuExtensionApp.swift */; };
@@ -86,6 +87,7 @@
 
 /* Begin PBXFileReference section */
 		B40B65A72754B95200AB08D2 /* ComparisonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComparisonView.swift; sourceTree = "<group>"; };
+		B414BFE227DF9B2A007D2ABB /* realsr-ncnn-vulkan-20210210-macos */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "realsr-ncnn-vulkan-20210210-macos"; sourceTree = "<group>"; };
 		B41527FA27555EC80051CE81 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		B41527FC27555ECF0051CE81 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		B41C4738274AA7850024ECB7 /* waifuExtension.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = waifuExtension.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -201,6 +203,7 @@
 				B437F140275334CB00A1CE41 /* Models */,
 				B41C474A274AAF6A0024ECB7 /* Support */,
 				B49BFD6F274B4BC50046FDDF /* waifu2x-mac */,
+				B414BFE227DF9B2A007D2ABB /* realsr-ncnn-vulkan-20210210-macos */,
 				B4BC66A02759BC7700627EAE /* dain-ncnn-vulkan-20210210-macos */,
 				B4B406E2275D104400E2078D /* Assets */,
 			);
@@ -440,7 +443,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1310;
-				LastUpgradeCheck = 1310;
+				LastUpgradeCheck = 1320;
 				TargetAttributes = {
 					B41C4737274AA7850024ECB7 = {
 						CreatedOnToolsVersion = 13.1;
@@ -471,6 +474,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B4BC66A12759BC7700627EAE /* dain-ncnn-vulkan-20210210-macos in Resources */,
+				B414BFE327DF9B2A007D2ABB /* realsr-ncnn-vulkan-20210210-macos in Resources */,
 				B483A9D327633F26007381F6 /* icon.icns in Resources */,
 				B41C4743274AA7850024ECB7 /* Preview Assets.xcassets in Resources */,
 				B483A6CA2766222D00ED828A /* pdf icon.icns in Resources */,
@@ -683,9 +687,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = waifuExtension/waifuExtension.entitlements;
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 3.1.3b;
+				CURRENT_PROJECT_VERSION = 3.1.3c;
 				DEVELOPMENT_ASSET_PATHS = "\"waifuExtension/Preview Content\"";
 				DEVELOPMENT_TEAM = 3PH93LN984;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -713,9 +718,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = waifuExtension/waifuExtension.entitlements;
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 3.1.3b;
+				CURRENT_PROJECT_VERSION = 3.1.3c;
 				DEVELOPMENT_ASSET_PATHS = "\"waifuExtension/Preview Content\"";
 				DEVELOPMENT_TEAM = 3PH93LN984;
 				ENABLE_HARDENED_RUNTIME = YES;

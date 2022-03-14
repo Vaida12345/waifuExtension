@@ -124,7 +124,10 @@ struct Waifu2xModel: Equatable {
         Waifu2xModel(class: "photo", name: "photo_noise2_model", stye: "photo", scale: 1, noise: 2),
         Waifu2xModel(class: "photo", name: "photo_noise3_model", stye: "photo", scale: 1, noise: 3),
         
-        Waifu2xModel(class: "ukbench", name: "ukbench_scale2", stye: nil, scale: 1, noise: nil)
+        Waifu2xModel(class: "ukbench", name: "ukbench_scale2", stye: nil, scale: 1, noise: nil),
+        
+        Waifu2xModel(class: "realsr-ncnn-vulkan", name: "DF2K", stye: "photo", scale: -1, noise: -1),
+        Waifu2xModel(class: "realsr-ncnn-vulkan", name: "DF2K_JPEG", stye: "photo", scale: -1, noise: -1)
     ]
     
     static let waifu2x_anime_style_art_rgb_scale2 = Waifu2xModel(class: "anime_style_art_rgb", name: "anime_style_art_rgb_scale2", stye: "anime", scale: 2, noise: nil)
@@ -150,5 +153,8 @@ struct Waifu2xModel: Equatable {
     static let waifu2x_photo_noise1 = Waifu2xModel(class: "photo", name: "photo_noise1_model", stye: "photo", scale: 1, noise: 1)
     static let waifu2x_photo_noise2 = Waifu2xModel(class: "photo", name: "photo_noise2_model", stye: "photo", scale: 1, noise: 2)
     static let waifu2x_photo_noise3 = Waifu2xModel(class: "photo", name: "photo_noise3_model", stye: "photo", scale: 1, noise: 3)
+    
+    static let waifu2x_realsr_ncnn_vulkan_DF2k = Waifu2xModel(class: "realsr-ncnn-vulkan", name: "DF2K", stye: "photo", scale: -1, noise: -1)
+    static let waifu2x_realsr_ncnn_vulkan_DF2k_JPEG = Waifu2xModel(class: "realsr-ncnn-vulkan", name: "DF2K_JPEG", stye: "photo", scale: -1, noise: -1)
 }
 

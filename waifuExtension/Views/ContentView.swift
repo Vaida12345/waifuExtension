@@ -53,7 +53,7 @@ extension Array where Element == WorkItem {
         return self.contains(WorkItem(at: finderItem, type: .image))
     }
     
-    func work(_ chosenScaleLevel: Int?, modelUsed: Waifu2xModel?, videoSegmentFrames: Int = 10, frameInterpolation: Int?, enableConcurrent: Bool, onStatusChanged status: @escaping ((_ status: String)->()), onStatusProgressChanged: @escaping ((_ progress: Int?, _ total: Int?)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
+    func work(_ chosenScaleLevel: Int?, modelUsed: Waifu2xModel?, videoSegmentFrames: Int = 10, frameInterpolation: Int?, enableConcurrent: Bool, denoiseLevel: Int?, ttaEnabled: Bool, onStatusChanged status: @escaping ((_ status: String)->()), onStatusProgressChanged: @escaping ((_ progress: Int?, _ total: Int?)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
         
         let images = self.filter({ $0.type == .image })
         let videos = self.filter({ $0.type == .video })
@@ -101,10 +101,10 @@ extension Array where Element == WorkItem {
                         
                         if chosenScaleLevel! >= 2 {
                             for _ in 1...chosenScaleLevel! {
-                                image = waifu2x.run(image, model: modelUsed!, concurrentCount: concurrentProcessingImagesCount)!.reload()
+                                image = waifu2x.run(image, model: modelUsed!, concurrentCount: concurrentProcessingImagesCount, scaleLevel: chosenScaleLevel, denoiseLevel: denoiseLevel, path: currentImage.finderItem.path, ttaEnabled: ttaEnabled)!.reload()
                             }
                         } else {
-                            image = waifu2x.run(image, model: modelUsed!, concurrentCount: concurrentProcessingImagesCount)!
+                            image = waifu2x.run(image, model: modelUsed!, concurrentCount: concurrentProcessingImagesCount, scaleLevel: chosenScaleLevel, denoiseLevel: denoiseLevel, path: currentImage.finderItem.path, ttaEnabled: ttaEnabled)!
                         }
                         
                         let outputFileName: String
@@ -152,10 +152,10 @@ extension Array where Element == WorkItem {
                         
                         if chosenScaleLevel! >= 2 {
                             for _ in 1...chosenScaleLevel! {
-                                image = waifu2x.run(image, model: modelUsed!)!.reload()
+                                image = waifu2x.run(image, model: modelUsed!, scaleLevel: chosenScaleLevel, denoiseLevel: denoiseLevel, path: currentImage.finderItem.path, ttaEnabled: ttaEnabled)!.reload()
                             }
                         } else {
-                            image = waifu2x.run(image, model: modelUsed!)!
+                            image = waifu2x.run(image, model: modelUsed!, scaleLevel: chosenScaleLevel, denoiseLevel: denoiseLevel, path: currentImage.finderItem.path, ttaEnabled: ttaEnabled)!
                         }
                         
                         let outputFileName: String
@@ -182,7 +182,9 @@ extension Array where Element == WorkItem {
                 }
             }
             
-            status("finished processing images")
+            backgroundQueue.sync {
+                status("finished processing images")
+            }
         }
         
         if !videos.isEmpty {
@@ -324,10 +326,10 @@ extension Array where Element == WorkItem {
                                 
                                 if chosenScaleLevel! >= 2 {
                                     for _ in 1...chosenScaleLevel! {
-                                        thumbnail = waifu2x.run(thumbnail.reload(withIndex: "\(frameCounter)"), model: modelUsed!)!
+                                        thumbnail = waifu2x.run(thumbnail.reload(withIndex: "\(frameCounter)"), model: modelUsed!, scaleLevel: chosenScaleLevel, denoiseLevel: denoiseLevel, ttaEnabled: ttaEnabled)!
                                     }
                                 } else {
-                                    thumbnail = waifu2x.run(thumbnail.reload(withIndex: "\(frameCounter)"), model: modelUsed!)!
+                                    thumbnail = waifu2x.run(thumbnail.reload(withIndex: "\(frameCounter)"), model: modelUsed!, scaleLevel: chosenScaleLevel, denoiseLevel: denoiseLevel, ttaEnabled: ttaEnabled)!
                                 }
                                 
                                 currentVideo.progress += 1 / factor
@@ -562,6 +564,7 @@ struct ContentView: View {
     @State var enableConcurrent = true
     @State var gridNumber = Configuration.main.gridNumber
     @State var aspectRatio = Configuration.main.aspectRatio
+    @State var ttaEnabled = true
     
     @State var isShowingLoadingView = false
     
@@ -612,10 +615,10 @@ struct ContentView: View {
             Configuration.main.write()
         })
         .sheet(isPresented: $isSheetShown, onDismiss: nil) {
-            SpecificationsView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel, videoSegmentLength: $videoSegmentLength, frameInterpolation: $frameInterpolation, enableConcurrentPerform: $enableConcurrent, frameHeight: !finderItems.allSatisfy({ $0.finderItem.avAsset == nil }) ? 400 : 350)
+            SpecificationsView(finderItems: finderItems, isShown: $isSheetShown, isProcessing: $isProcessing, modelUsed: $modelUsed, chosenScaleLevel: $chosenScaleLevel, videoSegmentLength: $videoSegmentLength, frameInterpolation: $frameInterpolation, enableConcurrentPerform: $enableConcurrent, ttaEnabled: $ttaEnabled, frameHeight: !finderItems.allSatisfy({ $0.finderItem.avAsset == nil }) ? 400 : 350)
         }
         .sheet(isPresented: $isProcessing, onDismiss: nil) {
-            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF, videoSegmentLength: $videoSegmentLength, frameInterpolation: $frameInterpolation, enableConcurrent: $enableConcurrent)
+            ProcessingView(isProcessing: $isProcessing, finderItems: $finderItems, modelUsed: $modelUsed, isSheetShown: $isSheetShown, chosenScaleLevel: $chosenScaleLevel, isCreatingPDF: $isCreatingPDF, videoSegmentLength: $videoSegmentLength, frameInterpolation: $frameInterpolation, enableConcurrent: $enableConcurrent, denoiseLevel: $chosenScaleLevel, ttaEnabled: $ttaEnabled)
         }
         .sheet(isPresented: $isCreatingPDF, onDismiss: nil) {
             ProcessingPDFView(isCreatingPDF: $isCreatingPDF)
@@ -831,6 +834,7 @@ struct SpecificationsView: View {
     @Binding var videoSegmentLength: Int
     @Binding var frameInterpolation: String
     @Binding var enableConcurrentPerform: Bool
+    @Binding var ttaEnabled: Bool
     
     let styleNames: [String] = ["anime", "photo"]
     @State var chosenStyle = Configuration.main.modelStyle {
@@ -853,6 +857,8 @@ struct SpecificationsView: View {
     
     let videoSegmentOptions = [100, 500, 1000, 2000, 5000, 10000, 20000]
     let frameInterpolationOptions = ["none", "2", "4"]
+    let modelNames = ["DF2K", "DF2K_JPEG"]
+    @State var chosenModelName: String = "DF2K"
     
     @State var frameHeight: CGFloat
     @State var storageRequired: String? = nil
@@ -863,7 +869,8 @@ struct SpecificationsView: View {
             self.chosenModelClass = ""
             return
         }
-        self.modelClass = Array(Set(Waifu2xModel.allModels.filter({ ($0.style == chosenStyle || $0.style == nil) && $0.noise == Int(chosenNoiseLevel) && $0.scale == ( chosenScaleLevel == 0 ? 1 : 2 ) }).map({ $0.class })))
+        self.modelClass = Array(Set(Waifu2xModel.allModels.filter({ ($0.style == chosenStyle || $0.style == nil) && ($0.noise == Int(chosenNoiseLevel) || $0.noise == -1) && ($0.scale == ( chosenScaleLevel == 0 ? 1 : 2 ) || $0.scale == -1) }).map({ $0.class })))
+        
         self.chosenModelClass = modelClass[0]
     }
     
@@ -889,24 +896,39 @@ struct SpecificationsView: View {
                             .help("Choose how much you want to scale.")
                     }
                     
-                    if Int(chosenScaleLevel) != nil {
+                    if chosenModelClass != "realsr-ncnn-vulkan" {
+                        if Int(chosenScaleLevel) != nil {
+                            HStack {
+                                Spacer()
+                                Text("Denoise Level:")
+                                    .help("denoise level 3 recommended.\nHint: Don't know which to choose? go to Compare > Compare Models and try by yourself!")
+                            }
+                        }
+                    } else {
                         HStack {
                             Spacer()
-                            Text("Denoise Level:")
-                                .help("denoise level 3 recommended.\nHint: Don't know which to choose? go to Compare > Compare Models and try by yourself!")
+                            Text("")
                         }
                     }
                     
-//                    if !modelClass.isEmpty {
-//                        HStack {
-//                            Spacer()
-//                            Text("Model Class:")
-//                                .onHover { bool in
-//                                    isShowingModelClassHint = bool
-//                                }
-//                                .padding(.bottom)
-//                        }
-//                    }
+                    if !modelClass.isEmpty {
+                        HStack {
+                            Spacer()
+                            Text("Model Class:")
+                                .help("The model used.")
+                                
+                        }
+                        
+                        if chosenModelClass == "realsr-ncnn-vulkan" {
+                            HStack {
+                                Spacer()
+                                Text("Model Name:")
+                                    .help("The model used.")
+                                    .padding(.bottom)
+                            }
+                        }
+                    }
+                    
                     
                     if !finderItems.allSatisfy({ $0.type == .image }) {
                         HStack {
@@ -943,40 +965,59 @@ struct SpecificationsView: View {
                         .padding(.bottom)
                     }
                     
-                    Menu(Int(chosenScaleLevel) != nil ? pow(2, Int(chosenScaleLevel)!).description : chosenScaleLevel) {
-                        ForEach(scaleLevels, id: \.self) { item in
-                            Button(Int(item) != nil ? pow(2, Int(item)!).description : item) {
-                                chosenScaleLevel = item
-                            }
-                        }
-                    }
-                    
-                    if Int(chosenScaleLevel) != nil {
-                        Menu(chosenNoiseLevel.description) {
-                            ForEach(noiseLevels, id: \.self) { item in
-                                Button(item.description) {
-                                    chosenNoiseLevel = item
-                                    self.storageRequired = nil
+                    if chosenModelClass != "realsr-ncnn-vulkan" {
+                        Menu(Int(chosenScaleLevel) != nil ? pow(2, Int(chosenScaleLevel)!).description : chosenScaleLevel) {
+                            ForEach(scaleLevels, id: \.self) { item in
+                                Button(Int(item) != nil ? pow(2, Int(item)!).description : item) {
+                                    chosenScaleLevel = item
                                 }
                             }
                         }
+                    } else {
+                        Menu("4") {
+                            Button("4") {  }
+                        }
+                        .help("To choose other scale levels, choose some class other than realsr-ncnn-vulkan")
                     }
                     
-//                    if !modelClass.isEmpty {
-//                        Menu(chosenModelClass) {
-//                            ForEach(modelClass, id: \.self) { item in
-//                                Button(item) {
-//                                    chosenModelClass = item
-//                                }
-//                            }
-//                        }
-//                        .padding(.bottom)
-//                        .popover(isPresented: $isShowingModelClassHint) {
-//                            Text("The model to use.")
-//                                .padding(.all)
-//
-//                        }
-//                    }
+                    if chosenModelClass != "realsr-ncnn-vulkan" {
+                        if Int(chosenScaleLevel) != nil {
+                            Menu(chosenNoiseLevel.description) {
+                                ForEach(noiseLevels, id: \.self) { item in
+                                    Button(item.description) {
+                                        chosenNoiseLevel = item
+                                        self.storageRequired = nil
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        HStack {
+                            Toggle("enable tta mode", isOn: $ttaEnabled)
+                        }
+                    }
+                    
+                    if !modelClass.isEmpty {
+                        Menu(chosenModelClass) {
+                            ForEach(modelClass, id: \.self) { item in
+                                Button(item) {
+                                    chosenModelClass = item
+                                }
+                            }
+                        }
+                        
+                        if chosenModelClass == "realsr-ncnn-vulkan" {
+                            Menu(chosenModelName) {
+                                ForEach(modelNames, id: \.self) { item in
+                                    Button(item) {
+                                        chosenModelName = item
+                                    }
+                                }
+                            }
+                            .padding(.bottom)
+                            
+                        }
+                    }
                     
                     if !finderItems.allSatisfy({ $0.type == .image }) {
                         Menu(videoSegmentLength.description + " frames") {
@@ -1038,7 +1079,12 @@ struct SpecificationsView: View {
                     if chosenScaleLevel == "none" {
                         self.modelUsed = nil
                     } else {
-                        self.modelUsed = Waifu2xModel.allModels.filter({ ($0.style == chosenStyle || $0.style == nil) && $0.noise == Int(chosenNoiseLevel) && $0.scale == ( Int(chosenScaleLevel)! == 0 ? 1 : 2 ) && $0.class == self.chosenModelClass }).first!
+                        let posibleModels = Waifu2xModel.allModels.filter({ ($0.style == chosenStyle || $0.style == nil) && ($0.noise == Int(chosenNoiseLevel) || $0.noise == -1) && ($0.scale == ( Int(chosenScaleLevel) == 0 ? 1 : 2 ) || $0.scale == -1) && ($0.class == chosenModelClass) })
+                        if self.chosenModelClass == "realsr-ncnn-vulkan" {
+                            self.modelUsed = posibleModels.filter{ $0.name == chosenModelName }.first!
+                        } else {
+                            self.modelUsed = posibleModels.first!
+                        }
                     }
                     
                 } label: {
@@ -1107,6 +1153,8 @@ struct ProcessingView: View {
     @Binding var videoSegmentLength: Int
     @Binding var frameInterpolation: String
     @Binding var enableConcurrent: Bool
+    @Binding var denoiseLevel: String
+    @Binding var ttaEnabled: Bool
     
     @State var processedItemsCounter: Int = 0
     @State var currentTimeTaken: Double = 0 // up to 1s
@@ -1229,6 +1277,7 @@ struct ProcessingView: View {
             
             ProgressView(value: {()->Double in
                 guard !finderItems.isEmpty else { return 1 }
+                guard !isFinished else { return 1}
                 
                 return progress <= 1 ? progress : 1
             }(), total: 1.0)
@@ -1296,7 +1345,7 @@ struct ProcessingView: View {
                         }
                     }
                     
-                    finderItems.work(Int(chosenScaleLevel), modelUsed: modelUsed, videoSegmentFrames: videoSegmentLength, frameInterpolation: Int(frameInterpolation), enableConcurrent: enableConcurrent) { status in
+                    finderItems.work(Int(chosenScaleLevel), modelUsed: modelUsed, videoSegmentFrames: videoSegmentLength, frameInterpolation: Int(frameInterpolation), enableConcurrent: enableConcurrent, denoiseLevel: Int(denoiseLevel), ttaEnabled: ttaEnabled) { status in
                         self.status = status
                     } onStatusProgressChanged: { progress,total in
                         if progress != nil {
@@ -1366,7 +1415,7 @@ struct ProcessingView: View {
                                 isShowingReplace = false
                                 
                                 background.async {
-                                    finderItems.work(Int(chosenScaleLevel), modelUsed: modelUsed, videoSegmentFrames: videoSegmentLength, frameInterpolation: Int(frameInterpolation), enableConcurrent: enableConcurrent) { status in
+                                    finderItems.work(Int(chosenScaleLevel), modelUsed: modelUsed, videoSegmentFrames: videoSegmentLength, frameInterpolation: Int(frameInterpolation), enableConcurrent: enableConcurrent, denoiseLevel: Int(denoiseLevel), ttaEnabled: ttaEnabled) { status in
                                         self.status = status
                                     } onStatusProgressChanged: { progress,total in
                                         if progress != nil {
@@ -1391,7 +1440,7 @@ struct ProcessingView: View {
                                 isShowingReplace = false
                                 
                                 background.async {
-                                    finderItems.work(Int(chosenScaleLevel), modelUsed: modelUsed, videoSegmentFrames: videoSegmentLength, frameInterpolation: Int(frameInterpolation), enableConcurrent: enableConcurrent) { status in
+                                    finderItems.work(Int(chosenScaleLevel), modelUsed: modelUsed, videoSegmentFrames: videoSegmentLength, frameInterpolation: Int(frameInterpolation), enableConcurrent: enableConcurrent, denoiseLevel: Int(denoiseLevel), ttaEnabled: ttaEnabled) { status in
                                         self.status = status
                                     } onStatusProgressChanged: { progress,total in
                                         if progress != nil {

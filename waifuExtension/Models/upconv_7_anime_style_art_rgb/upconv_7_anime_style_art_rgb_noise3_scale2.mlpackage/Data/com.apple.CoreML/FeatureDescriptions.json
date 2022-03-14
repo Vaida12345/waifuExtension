@@ -1,12 +1,12 @@
 {
   "Outputs" : {
     "conv7" : {
-      "MLFeatureShortDescription" : ""
+      "MLFeatureShortDescription" : "--"
     }
   },
   "Inputs" : {
     "input" : {
-      "MLFeatureShortDescription" : ""
+      "MLFeatureShortDescription" : "--"
     }
   },
   "TrainingInputs" : {

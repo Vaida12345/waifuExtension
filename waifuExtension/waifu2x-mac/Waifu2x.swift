@@ -34,10 +34,35 @@ public class Waifu2x {
     
     var didFinishedOneBlock: (( _ total: Int)->Void)? = nil
     
-    func run(_ image: NSImage!, model: Waifu2xModel!, concurrentCount: Int = 10, _ callback: @escaping (String) -> Void = { _ in }) -> NSImage? {
+    func run(_ image: NSImage!, model: Waifu2xModel!, concurrentCount: Int = 10, scaleLevel: Int? = nil, denoiseLevel: Int? = nil, path: String? = nil, ttaEnabled: Bool = false, _ callback: @escaping (String) -> Void = { _ in }) -> NSImage? {
         guard image != nil else {
             return nil
         }
+        
+        if model.class == "realsr-ncnn-vulkan" {
+            var path = path
+            var isGenerated = false
+            if path == nil {
+                path = FinderItem(at: "\(NSHomeDirectory())/tmp/vulkan/input/file.png").generateOutputPath()
+                image.write(to: path!)
+                isGenerated = true
+            }
+            let outputPath = FinderItem(at: "\(NSHomeDirectory())/tmp/vulkan/output/file.png").generateOutputPath()
+            
+            let programPath = FinderItem(at: Bundle.main.bundlePath + "/Contents/Resources/realsr-ncnn-vulkan-20210210-macos")
+            
+            print(shell(["cd \(programPath.shellPath)", "./realsr-ncnn-vulkan -i \(FinderItem(at: path!).shellPath) -o \(FinderItem(at: outputPath).shellPath) -s 4 -m models-\(model.name) \(ttaEnabled ? "-x" : "")"])!)
+            let image = FinderItem(at: outputPath).image
+            do {
+                if isGenerated {
+                    try FinderItem(at: path!).removeFile()
+                }
+                try FinderItem(at: outputPath).removeFile()
+            } catch { }
+            return image
+        }
+        
+        
         guard model != nil else {
             callback("finished")
             return image

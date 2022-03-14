@@ -12,6 +12,7 @@ struct ConfigurationView: View {
     @State var isLogEnabled = Configuration.main.isLogEnabled
     @State var saveFolder = Configuration.main.saveFolderText
     @State var isDevEnabled = Configuration.main.isDevEnabled
+    @State var isVideoLogEnabled = Configuration.main.isVideoLogEnabled
     
     var body: some View {
         
@@ -19,12 +20,21 @@ struct ConfigurationView: View {
             HStack {
                 Toggle(isOn: $isLogEnabled) {
                     Text("Enable Log")
+                        .help("Debug use")
                 }
                 .padding(.trailing)
                 
                 Toggle(isOn: $isDevEnabled) {
                     Text("Enable Dev")
+                        .help("Debug use")
                 }
+                .padding(.trailing)
+                
+                Toggle(isOn: $isVideoLogEnabled) {
+                    Text("Enable Video Log")
+                        .help("Debug use")
+                }
+                .padding(.trailing)
                 
                 Spacer()
             }
@@ -60,6 +70,9 @@ struct ConfigurationView: View {
         .onChange(of: isDevEnabled, perform: { newValue in
             Configuration.main.isDevEnabled = newValue
         })
+        .onChange(of: isVideoLogEnabled, perform: { newValue in
+            Configuration.main.isVideoLogEnabled = newValue
+        })
         .onChange(of: saveFolder) { newValue in
             Configuration.main.saveFolder = saveFolder
             Configuration.main.getFolder = {()-> String in
@@ -88,6 +101,7 @@ struct Configuration: Codable {
     
     var isLogEnabled = false
     var isDevEnabled = false
+    var isVideoLogEnabled = false
     
     var gridNumber = 1.6
     var aspectRatio = true
@@ -151,7 +165,7 @@ struct Configuration: Codable {
     }
     
     func saveLog(_ value: String) {
-        guard self.isLogEnabled else { return }
+        guard self.isVideoLogEnabled else { return }
         let path = self.saveFolder + "/log.txt"
         var content = ""
         if let previousLog = try? String(contentsOfFile: path) {
