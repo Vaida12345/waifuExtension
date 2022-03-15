@@ -1,8 +1,9 @@
 //
 //  Int10.swift
-//  cmd
+//
 //
 //  Created by Vaida on 11/8/21.
+//  Copyright © 2022 Vaida. All rights reserved.
 //
 
 import Foundation
@@ -99,7 +100,7 @@ struct UInt10: Arithmetical {
     }
     
     /// Creates an instance with an `BinaryInteger`.
-    init<T>(_ value: T) where T : BinaryInteger {
+    init<T>(_ value: T) where T: BinaryInteger {
         self.init(UInt(value))
     }
     
@@ -111,7 +112,11 @@ struct UInt10: Arithmetical {
     ///    - value: The string as an argument.
     init?(_ value: String) {
         var words: [Word] = []
-        for i in value {
+        var index = -1
+        while index + 1 < value.count {
+            index += 1
+            let i = value[value.index(value.startIndex, offsetBy: index)]
+            
             guard let value = UInt8(String(i)) else { return nil }
             words.append(UInt10.Word(value))
         }
@@ -126,7 +131,12 @@ struct UInt10: Arithmetical {
     ///    - value: The string as an argument.
     init?(_ value: Substring) {
         var words: [Word] = []
-        for i in value {
+        
+        var index = -1
+        while index + 1 < value.count {
+            index += 1
+            let i = value[value.index(value.startIndex, offsetBy: index)]
+            
             guard let value = UInt8(String(i)) else { return nil }
             words.append(UInt10.Word(value))
         }
@@ -271,7 +281,11 @@ struct UInt10: Arithmetical {
         while index < lhs.words.count && remainders >= rhs {
             let lhsSmall = UInt10(reversedWords: Array(remainders.words.reversed()[0...index]))
             //            print(lhsSmall, rhs)
-            guard lhsSmall >= rhs else { index += 1; quotients.words.append(0); continue }
+            guard lhsSmall >= rhs else {
+                index += 1
+                quotients.words.append(0)
+                continue
+            }
             
             var result: Word = 0
             while (Self(words: [result]) + 1) * rhs <= lhsSmall { result += 1 }
@@ -406,9 +420,9 @@ struct UInt10: Arithmetical {
         guard lhs.normalized().words.count == rhs.normalized().words.count else { return lhs.normalized().words.count < rhs.normalized().words.count }
         var index = lhs.normalized().words.count - 1
         while true {
-            if lhs[index] < rhs[index]  {
+            if lhs[index] < rhs[index] {
                 return true
-            } else if lhs[index] > rhs[index]  {
+            } else if lhs[index] > rhs[index] {
                 return false
             }
             
@@ -420,7 +434,6 @@ struct UInt10: Arithmetical {
     static func == (_ lhs: Self, _ rhs: Self) -> Bool {
         return lhs.normalized().words == rhs.normalized().words
     }
-    
     
     
     //MARK: - Substructures
@@ -455,7 +468,7 @@ struct UInt10: Arithmetical {
             self.content = value
         }
         
-        init<T>(_ value: T) where T : BinaryInteger {
+        init<T>(_ value: T) where T: BinaryInteger {
             self.init(UInt8(value))
         }
         
@@ -741,12 +754,6 @@ struct Int10: SignedArithmetical {
         return self * self
     }
     
-    /// Returns the square root of the value, if possible.
-    func squareRoot() -> Int10? {
-        guard let dictionary = try? FinderItem.loadJSON(from: "/Users/vaida/Data Base/Static/sqrtTable.json", type: [Int10: Int10].self) else { return nil }
-        return dictionary[self]
-    }
-    
     /// Returns the value with same magnitude, but different sign.
     func opposite() -> Self {
         return Self(isPositive: !self.isPositive, magnitude: inventory)
@@ -931,5 +938,4 @@ extension BinaryFloatingPoint where Self: LosslessStringConvertible {
 func abs(_ value: Int10) -> Int10 {
     return Int10(isPositive: true, magnitude: value.inventory)
 }
-
 

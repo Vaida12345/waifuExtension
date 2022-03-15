@@ -24,6 +24,14 @@ If the app crashes, please choose not to share crash log with Apple.
 ## Models
 The models where obtained from [waifu2x-caffe](https://github.com/lltcggie/waifu2x-caffe), and translated to coreML via [coremltools](https://github.com/apple/coremltools).
 
+Other models are:
+ - [dain-ncnn-vulkan](https://github.com/nihui/dain-ncnn-vulkan)
+ - [realsr-ncnn-vulkan](https://github.com/nihui/realsr-ncnn-vulkan)
+ - [cain-ncnn-vulkan](https://github.com/nihui/cain-ncnn-vulkan)
+ - [realcugan-ncnn-vulkan](https://github.com/nihui/realcugan-ncnn-vulkan)
+ - [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN)
+ - [rife-ncnn-vulkan](https://github.com/nihui/rife-ncnn-vulkan)
+
 ## Note
 This app was based on the work of [waifu2x-ios](https://github.com/imxieyi/waifu2x-ios). Nearly all the files in the folder "waifu2x-mac" were created by him. However, modifications were done to improve speed.
 
@@ -50,5 +58,9 @@ You can compare results from different model by choosing Compare > Compare Model
  - [waifu2x-ios](https://github.com/imxieyi/waifu2x-ios) for nearly all the algorithms used to enlarge images.
  - [waifu2x-caffe](https://github.com/lltcggie/waifu2x-caffe) for all the models.
  - [stack overflow](https://stackoverflow.com) for all the solutions.
- - [dain-ncnn-vulkan](https://github.com/nihui/dain-ncnn-vulkan) for frame implemented AI.
+ - [dain-ncnn-vulkan](https://github.com/nihui/dain-ncnn-vulkan) for dain-ncnn-vulkan.
  - [realsr-ncnn-vulkan](https://github.com/nihui/realsr-ncnn-vulkan) for realsr-ncnn-vulkan.
+ - [cain-ncnn-vulkan](https://github.com/nihui/cain-ncnn-vulkan) for cain-ncnn-vulkan.
+ - [realcugan-ncnn-vulkan](https://github.com/nihui/realcugan-ncnn-vulkan) for realcugan-ncnn-vulkan.
+ - [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) for Real-ESRGAN.
+ - [rife-ncnn-vulkan](https://github.com/nihui/rife-ncnn-vulkan) for rife-ncnn-vulkan.

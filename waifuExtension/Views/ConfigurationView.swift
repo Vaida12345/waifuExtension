@@ -7,6 +7,78 @@
 
 import SwiftUI
 
+struct DoubleText: View {
+    
+    let lhsIndent: CGFloat = 150
+    
+    let lhs: String
+    let rhs: String
+    
+    var body: some View {
+        HStack {
+            HStack {
+                Spacer()
+                
+                Text(lhs)
+            }
+            .frame(width: lhsIndent)
+            
+            Text(rhs)
+            
+            Spacer()
+        }
+    }
+}
+
+struct ModelView<T>: View where T: InstalledModel {
+    
+    @State var showImportCatalog = false
+    let model: T
+    
+    var body: some View {
+        Section(model.name) {
+            
+            DoubleText(lhs: "Installed: ", rhs: model.programItem.isExistence.description)
+            
+            if model.programItem.isExistence {
+                DoubleText(lhs: "Size: ", rhs: model.programItem.fileSize?.expressAsFileSize() ?? "0")
+                HStack {
+                    Button("Remove Model") {
+                        do {
+                            try model.programItem.removeFile()
+                        } catch { print(error) }
+                    }
+                    Button("Update Model") {
+                        showImportCatalog = true
+                    }
+                    Button("Show In Finder") {
+                        model.programItem.revealInFinder()
+                    }
+                    
+                    Spacer()
+                }
+                .padding()
+            } else {
+                Button("Choose Model") {
+                    showImportCatalog = true
+                }
+            }
+            
+        }
+        .fileImporter(isPresented: $showImportCatalog, allowedContentTypes: [.folder]) { result in
+            guard let result = try? result.get() else { return }
+            let item = FinderItem(at: result)
+            guard item.isDirectory else { return }
+            guard item.name.contains(model.name) else { return }
+            
+            do {
+                try model.programItem.removeFile()
+                try item.copy(to: model.programItem.path)
+            } catch { print(error) }
+        }
+    }
+}
+
 struct ConfigurationView: View {
     
     @State var isLogEnabled = Configuration.main.isLogEnabled
@@ -62,7 +134,33 @@ struct ConfigurationView: View {
                     }
                 }
             }
-            .padding([.leading, .bottom, .trailing])
+            .padding()
+            
+            HStack {
+                Spacer()
+                
+                Button("Delete Cache") {
+                    do {
+                        try FinderItem(at: "\(NSHomeDirectory())/tmp").removeFile()
+                    } catch {  }
+                }
+                
+                Text("Cache: \(FinderItem(at: "\(NSHomeDirectory())/tmp").fileSize?.expressAsFileSize() ?? "Empty")")
+                    .foregroundColor(.secondary)
+            }
+            .padding()
+            
+//            Divider()
+//            
+//            List {
+//                ModelView(model: Model_realsr_ncnn_vulkan())
+//                Divider()
+//                ModelView(model: Model_realcugan_ncnn_vulkan())
+//                Divider()
+//                ModelView(model: Model_realesrgan_ncnn_vulkan())
+//            }
+//            .padding()
+            
         }
         .onChange(of: isLogEnabled) { newValue in
             Configuration.main.isLogEnabled = newValue
@@ -81,7 +179,7 @@ struct ConfigurationView: View {
                 }
                 let item = FinderItem(at: Configuration.main.privateSaveFolder)
                 guard item.isExistence else {
-                    item.generateDirectory()
+                    try! item.generateDirectory()
                     return Configuration.main.privateSaveFolder
                 }
                 return Configuration.main.privateSaveFolder
@@ -132,7 +230,7 @@ struct Configuration: Codable {
                 }
                 let item = FinderItem(at: configuration.privateSaveFolder)
                 guard item.isExistence else {
-                    item.generateDirectory()
+                    try! item.generateDirectory()
                     return configuration.privateSaveFolder
                 }
                 return configuration.privateSaveFolder
@@ -147,7 +245,7 @@ struct Configuration: Codable {
                 }
                 let item = FinderItem(at: configuration.privateSaveFolder)
                 guard item.isExistence else {
-                    item.generateDirectory()
+                    try! item.generateDirectory()
                     return configuration.privateSaveFolder
                 }
                 return configuration.privateSaveFolder

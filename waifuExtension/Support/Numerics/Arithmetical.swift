@@ -1,8 +1,9 @@
 //
 //  Arithmetical.swift
-//  cmd
+//
 //
 //  Created by Vaida on 10/25/21.
+//  Copyright © 2022 Vaida. All rights reserved.
 //
 
 import Foundation

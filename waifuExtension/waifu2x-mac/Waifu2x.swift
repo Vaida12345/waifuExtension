@@ -34,46 +34,17 @@ public class Waifu2x {
     
     var didFinishedOneBlock: (( _ total: Int)->Void)? = nil
     
-    func run(_ image: NSImage!, model: Waifu2xModel!, concurrentCount: Int = 10, scaleLevel: Int? = nil, denoiseLevel: Int? = nil, path: String? = nil, ttaEnabled: Bool = false, _ callback: @escaping (String) -> Void = { _ in }) -> NSImage? {
+    func run(_ image: NSImage!, model: ModelCoordinator, _ callback: @escaping (String) -> Void = { _ in }) -> NSImage? {
         guard image != nil else {
             return nil
-        }
-        
-        if model.class == "realsr-ncnn-vulkan" {
-            var path = path
-            var isGenerated = false
-            if path == nil {
-                path = FinderItem(at: "\(NSHomeDirectory())/tmp/vulkan/input/file.png").generateOutputPath()
-                image.write(to: path!)
-                isGenerated = true
-            }
-            let outputPath = FinderItem(at: "\(NSHomeDirectory())/tmp/vulkan/output/file.png").generateOutputPath()
-            
-            let programPath = FinderItem(at: Bundle.main.bundlePath + "/Contents/Resources/realsr-ncnn-vulkan-20210210-macos")
-            
-            print(shell(["cd \(programPath.shellPath)", "./realsr-ncnn-vulkan -i \(FinderItem(at: path!).shellPath) -o \(FinderItem(at: outputPath).shellPath) -s 4 -m models-\(model.name) \(ttaEnabled ? "-x" : "")"])!)
-            let image = FinderItem(at: outputPath).image
-            do {
-                if isGenerated {
-                    try FinderItem(at: path!).removeFile()
-                }
-                try FinderItem(at: outputPath).removeFile()
-            } catch { }
-            return image
-        }
-        
-        
-        guard model != nil else {
-            callback("finished")
-            return image
         }
         
         let fullDate = Date()
         var logger = Logger(path: "\(Configuration.main.saveFolder)/logs/log.txt")
         
         self.interrupt = false
-        self.block_size = model.block_size
-        let out_scale = model.scale
+        self.block_size = model.caffe.block_size
+        let out_scale = model.caffe.scale
         
         let width = Int(image.representations[0].pixelsWide)
         let height = Int(image.representations[0].pixelsHigh)
@@ -364,7 +335,7 @@ public class Waifu2x {
         
         // Prepare for model pipeline
         // Run prediction on each block
-        let mlmodel = model.model
+        let mlmodel = model.caffe.model
         var index = 0
         while index < rects.count {
             let array = mlArray[index]

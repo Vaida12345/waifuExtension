@@ -34,18 +34,18 @@ class EstimateSizeMLFeature: MLFeatureProvider {
     }
 }
 
-func estimateSize(finderItems: [FinderItem], frames: Int, scale: String) -> String? {
-    guard let scaleP = Int(scale) else { return nil }
+func estimateSize(finderItems: [FinderItem], frames: Int, scale: Int) -> String? {
+    let scaleP = Int(scale)
     let scale = pow(2, scaleP)
     var values: [Double] = []
-    let model = try! PNGImageSizeRegressor(configuration: Waifu2xModel.configuration).model
+    let model = try! PNGImageSizeRegressor(configuration: Model_Caffe.configuration).model
     for i in finderItems.filter({ $0.avAsset != nil }) {
-        let cgImage = i.firstFrame!.cgImage(forProposedRect: nil, context: nil, hints: nil)!
-        let output = try! model.prediction(from: EstimateSizeMLFeature(width: Double(cgImage.width * scale), height: Double(cgImage.height * scale)))
+        guard let cgImage = i.avAsset?.firstFrame?.cgImage(forProposedRect: nil, context: nil, hints: nil) else { continue }
+        guard let output = try? model.prediction(from: EstimateSizeMLFeature(width: Double(cgImage.width * scale), height: Double(cgImage.height * scale))) else { continue }
         let size = output.featureValue(for: "Size")!.doubleValue
-        let framesCount = min(Double(i.frameRate!) * i.avAsset!.duration.seconds, Double(frames))
+        let framesCount = min(Double(i.avAsset!.frameRate!) * i.avAsset!.duration.seconds, Double(frames))
         values.append(size * framesCount)
     }
     guard !values.isEmpty else { return nil }
-    return (values.max()!).expressAsFileSize()
+    return Int(values.max()!).expressAsFileSize()
 }

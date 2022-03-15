@@ -19,7 +19,7 @@ struct waifuExtensionApp: App {
         }
         .commands {
             CommandMenu("Compare") {
-                Button("Compare Models") {
+                Button("Compare Waifu2x") {
                     ComparisonView()
                         .frame(minWidth: 800, maxWidth: .infinity, minHeight: 400, maxHeight: .infinity)
                         .openInWindow(title: "Comparison", sender: self)
@@ -29,22 +29,8 @@ struct waifuExtensionApp: App {
         
         Settings {
             ConfigurationView()
-                .frame(width: 600, height: 100)
+                .frame(width: 600, height: 200)
         }
-    }
-    
-}
-
-extension View {
-    
-    @discardableResult
-    func openInWindow(title: String, sender: Any?) -> NSWindow {
-        let controller = NSHostingController(rootView: self)
-        let win = NSWindow(contentViewController: controller)
-        win.contentViewController = controller
-        win.title = title
-        win.makeKeyAndOrderFront(sender)
-        return win
     }
     
 }

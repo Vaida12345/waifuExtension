@@ -1,16 +1,16 @@
 //
 //  Fraction.swift
-//  cmd
+//
 //
 //  Created by Vaida on 10/4/21.
+//  Copyright © 2022 Vaida. All rights reserved.
 //
 
-import Foundation
 import CoreMedia
-
+import Foundation
 
 /// The fraction in the form of `a / b` where `a`, `b` in `R`.
-struct Fraction: SignedArithmetical, ExpressibleByFloatLiteral {
+struct Fraction: ExpressibleByFloatLiteral, SignedArithmetical {
     
     //MARK: - Type Alias
     
@@ -68,13 +68,14 @@ struct Fraction: SignedArithmetical, ExpressibleByFloatLiteral {
         if self.sign == .plus { return .positiveNormal }
         if self.sign == .minus { return .negativeNormal }
         
-        fatalError("""
-        unexpected.
-        It may have result in one of the ignored values.
-        negativeSubnormal: A negative, nonzero number that does not use the full precision of the floating-point type.
-        positiveSubnormal: A positive, nonzero number that does not use the full precision of the floating-point type.
-        quietNaN: A silent NaN (“not a number”) value.
-        """)
+        fatalError(
+            """
+            unexpected.
+            It may have result in one of the ignored values.
+            negativeSubnormal: A negative, nonzero number that does not use the full precision of the floating-point type.
+            positiveSubnormal: A positive, nonzero number that does not use the full precision of the floating-point type.
+            quietNaN: A silent NaN (“not a number”) value.
+            """)
     }
     
     /// The absolute value.
@@ -104,7 +105,7 @@ struct Fraction: SignedArithmetical, ExpressibleByFloatLiteral {
     /// Determine whether the `Fraction` is *not a number*.
     ///
     /// This is defined as the same as `undefined`.
-    var isNaN: Bool  {
+    var isNaN: Bool {
         return self.numerator.isZero && self.denominator.isZero
     }
     
@@ -289,22 +290,22 @@ struct Fraction: SignedArithmetical, ExpressibleByFloatLiteral {
         self.init(numerator: Integer(value), denominator: 1)
     }
     
-//    /// Initialize with a `Int10`.
-//    init(exactly value: PreciseFloat) {
-//        self.init(numerator: Fraction.Integer(value.coefficient), denominator: Int10(1).pow10(abs(value.exponent)))
-//    }
-//
-//    /// Initialize with a `BinaryFloatingPoint`.
-//    init<T>(exactly value: T) where T: BinaryFloatingPoint {
-//        self.init(PreciseFloat(value))
-//    }
-//
-//    /// Initialize with a `Int10`.
-//    ///
-//    /// If the length of decimal part of the float is less or equal to 10 or it is a recruiting decimal, a precise fraction would be produced. Otherwise, approximate x.
-//    init(_ value: PreciseFloat) {
-//        self.init(value.fraction())
-//    }
+    //    /// Initialize with a `Int10`.
+    //    init(exactly value: PreciseFloat) {
+    //        self.init(numerator: Fraction.Integer(value.coefficient), denominator: Int10(1).pow10(abs(value.exponent)))
+    //    }
+    //
+    //    /// Initialize with a `BinaryFloatingPoint`.
+    //    init<T>(exactly value: T) where T: BinaryFloatingPoint {
+    //        self.init(PreciseFloat(value))
+    //    }
+    //
+    //    /// Initialize with a `Int10`.
+    //    ///
+    //    /// If the length of decimal part of the float is less or equal to 10 or it is a recruiting decimal, a precise fraction would be produced. Otherwise, approximate x.
+    //    init(_ value: PreciseFloat) {
+    //        self.init(value.fraction())
+    //    }
     
     /// Initialize with a `BinaryFloatingPoint`.
     ///
@@ -549,7 +550,7 @@ struct Fraction: SignedArithmetical, ExpressibleByFloatLiteral {
     
     /// Calculate the common denominator of two fractions.
     static func commonDenominator(_ lhs: Fraction, _ rhs: Fraction) -> (lhsNumerator: Integer, rhsNumerator: Integer, denominator: Integer) {
-        if lhs.denominator == rhs.denominator { return (lhs.numerator, rhs.numerator, lhs.denominator)}
+        if lhs.denominator == rhs.denominator { return (lhs.numerator, rhs.numerator, lhs.denominator) }
         
         let denominator = leastCommonMultiple(lhs.denominator, rhs.denominator)
         
@@ -741,27 +742,27 @@ extension BinaryFloatingPoint where Self: LosslessStringConvertible {
         
         // if simple
         if !forceApproximate && self.decimalPart.count <= 10 {
-            let fraction = Fraction(numerator: Fraction.Integer(Fraction.FloatingPoint(self)*Fraction.FloatingPoint(pow(10, self.decimalPart.count))), denominator: Fraction.Integer(pow(10, self.decimalPart.count)))
+            let fraction = Fraction(numerator: Fraction.Integer(Fraction.FloatingPoint(self) * Fraction.FloatingPoint(pow(10, self.decimalPart.count))), denominator: Fraction.Integer(pow(10, self.decimalPart.count)))
             return fraction
         }
         
-        // if repeating
-        if !forceApproximate && String(self).count > 10 {
-            let contentString = String([Character](String(self))[0...10])
-            if let repeatingElements = [Character](contentString).findRepeatedElements() {
-                let leadingItems = [Character](contentString).firstIndex(of: repeatingElements)!.first! - 2
-                let value2 = Fraction.FloatingPoint(contentString)! * Fraction.FloatingPoint(pow(10, leadingItems))
-                let value2Mag = pow(10, leadingItems)
-                let value3 = value2 * Fraction.FloatingPoint(pow(10, repeatingElements.count))
-                let value3Mag = pow(10, repeatingElements.count)
-                
-                let value = (value3 - Fraction.FloatingPoint(contentString)!).rounded(toDigit: 5)
-                if value.isWholeNumber {
-                    let fraction =  Fraction(numerator: Fraction.Integer(value), denominator: Fraction.Integer((value3Mag-1)*value2Mag))
-                    return fraction
-                }
-            }
-        }
+        //        // if repeating
+        //        if !forceApproximate && String(self).count > 10 {
+        //            let contentString = String([Character](String(self))[0...10])
+        //            if let repeatingElements = [Character](contentString).findRepeatedElements() {
+        //                let leadingItems = [Character](contentString).firstIndex(of: repeatingElements)!.first! - 2
+        //                let value2 = Fraction.FloatingPoint(contentString)! * Fraction.FloatingPoint(pow(10, leadingItems))
+        //                let value2Mag = pow(10, leadingItems)
+        //                let value3 = value2 * Fraction.FloatingPoint(pow(10, repeatingElements.count))
+        //                let value3Mag = pow(10, repeatingElements.count)
+        //
+        //                let value = (value3 - Fraction.FloatingPoint(contentString)!).rounded(toDigit: 5)
+        //                if value.isWholeNumber {
+        //                    let fraction =  Fraction(numerator: Fraction.Integer(value), denominator: Fraction.Integer((value3Mag-1)*value2Mag))
+        //                    return fraction
+        //                }
+        //            }
+        //        }
         
         // Approximate x
         var content = Fraction.FloatingPoint(self)
@@ -780,7 +781,10 @@ extension BinaryFloatingPoint where Self: LosslessStringConvertible {
         var numerator: Fraction.Integer = 1
         var denominator: Fraction.Integer = dList.last!
         
-        for i in 1..<dList.count {
+        var i = 0
+        while i + 1 < dList.count {
+            i += 1
+            
             let index = dList.count - 1 - i
             
             // add content

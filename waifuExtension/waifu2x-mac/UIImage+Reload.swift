@@ -17,7 +17,7 @@ extension NSImage {
     public func reload(withIndex: String? = nil) -> NSImage {
         
         let tempfile = "\(NSHomeDirectory())/tmp/\(withIndex ?? "file").png"
-        FinderItem(at: tempfile).generateDirectory()
+        try! FinderItem(at: tempfile).generateDirectory()
         self.write(to: tempfile)
         let image = NSImage(contentsOf: URL(fileURLWithPath: tempfile))!
         try! FinderItem(at: tempfile).removeFile()

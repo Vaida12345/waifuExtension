@@ -15,17 +15,57 @@ struct ComparisonView: View {
             //render anime
             DispatchQueue(label: "background").async {
                 let waifu2x = Waifu2x()
-                self.animeScale2DenoiseNone = waifu2x.run(self.finderItemImage, model: .waifu2x_upconv_7_anime_style_art_rgb_scale2)
-                self.animeScale2Denoise0 = waifu2x.run(self.finderItemImage, model: .waifu2x_upconv_7_anime_style_art_rgb_noise0_scale2)
-                self.animeScale2Denoise1 = waifu2x.run(self.finderItemImage, model: .waifu2x_upconv_7_anime_style_art_rgb_noise1_scale2)
-                self.animeScale2Denoise2 = waifu2x.run(self.finderItemImage, model: .waifu2x_upconv_7_anime_style_art_rgb_noise2_scale2)
-                self.animeScale2Denoise3 = waifu2x.run(self.finderItemImage, model: .waifu2x_upconv_7_anime_style_art_rgb_noise3_scale2)
+                self.animeScale2DenoiseNone = waifu2x.run(self.finderItemImage, model: { ()-> ModelCoordinator in
+                    var coordinator = ModelCoordinator(imageModel: .caffe, frameModel: .dain_ncnn_vulkan)
+                    coordinator.caffe = .waifu2x_upconv_7_anime_style_art_rgb_scale2
+                    return coordinator
+                }())
+                self.animeScale2Denoise0 = waifu2x.run(self.finderItemImage, model: { ()-> ModelCoordinator in
+                    var coordinator = ModelCoordinator(imageModel: .caffe, frameModel: .dain_ncnn_vulkan)
+                    coordinator.caffe = .waifu2x_upconv_7_anime_style_art_rgb_noise0_scale2
+                    return coordinator
+                }())
+                self.animeScale2Denoise1 = waifu2x.run(self.finderItemImage, model: { ()-> ModelCoordinator in
+                    var coordinator = ModelCoordinator(imageModel: .caffe, frameModel: .dain_ncnn_vulkan)
+                    coordinator.caffe = .waifu2x_upconv_7_anime_style_art_rgb_noise1_scale2
+                    return coordinator
+                }())
+                self.animeScale2Denoise2 = waifu2x.run(self.finderItemImage, model: { ()-> ModelCoordinator in
+                    var coordinator = ModelCoordinator(imageModel: .caffe, frameModel: .dain_ncnn_vulkan)
+                    coordinator.caffe = .waifu2x_upconv_7_anime_style_art_rgb_noise2_scale2
+                    return coordinator
+                }())
+                self.animeScale2Denoise3 = waifu2x.run(self.finderItemImage, model: { ()-> ModelCoordinator in
+                    var coordinator = ModelCoordinator(imageModel: .caffe, frameModel: .dain_ncnn_vulkan)
+                    coordinator.caffe = .waifu2x_upconv_7_anime_style_art_rgb_noise3_scale2
+                    return coordinator
+                }())
                 
-                self.photoScale2DenoiseNone = waifu2x.run(self.finderItemImage, model: .waifu2x_upconv_7_photo_scale2)
-                self.photoScale2Denoise0 = waifu2x.run(self.finderItemImage, model: .waifu2x_upconv_7_photo_noise0_scale2)
-                self.photoScale2Denoise1 = waifu2x.run(self.finderItemImage, model: .waifu2x_upconv_7_photo_noise1_scale2)
-                self.photoScale2Denoise2 = waifu2x.run(self.finderItemImage, model: .waifu2x_upconv_7_photo_noise2_scale2)
-                self.photoScale2Denoise3 = waifu2x.run(self.finderItemImage, model: .waifu2x_upconv_7_photo_noise3_scale2)
+                self.photoScale2DenoiseNone = waifu2x.run(self.finderItemImage, model: { ()-> ModelCoordinator in
+                    var coordinator = ModelCoordinator(imageModel: .caffe, frameModel: .dain_ncnn_vulkan)
+                    coordinator.caffe = .waifu2x_upconv_7_photo_scale2
+                    return coordinator
+                }())
+                self.photoScale2Denoise0 = waifu2x.run(self.finderItemImage, model: { ()-> ModelCoordinator in
+                    var coordinator = ModelCoordinator(imageModel: .caffe, frameModel: .dain_ncnn_vulkan)
+                    coordinator.caffe = .waifu2x_upconv_7_photo_noise0_scale2
+                    return coordinator
+                }())
+                self.photoScale2Denoise1 = waifu2x.run(self.finderItemImage, model: { ()-> ModelCoordinator in
+                    var coordinator = ModelCoordinator(imageModel: .caffe, frameModel: .dain_ncnn_vulkan)
+                    coordinator.caffe = .waifu2x_upconv_7_photo_noise1_scale2
+                    return coordinator
+                }())
+                self.photoScale2Denoise2 = waifu2x.run(self.finderItemImage, model: { ()-> ModelCoordinator in
+                    var coordinator = ModelCoordinator(imageModel: .caffe, frameModel: .dain_ncnn_vulkan)
+                    coordinator.caffe = .waifu2x_upconv_7_photo_noise2_scale2
+                    return coordinator
+                }())
+                self.photoScale2Denoise3 = waifu2x.run(self.finderItemImage, model: { ()-> ModelCoordinator in
+                    var coordinator = ModelCoordinator(imageModel: .caffe, frameModel: .dain_ncnn_vulkan)
+                    coordinator.caffe = .waifu2x_upconv_7_photo_noise3_scale2
+                    return coordinator
+                }())
             }
         }
     }
@@ -179,7 +219,7 @@ struct ImageView: View {
         formatter.dateStyle = .none
         formatter.timeStyle = .medium
         
-        FinderItem(at: "\(NSHomeDirectory())/tmp").generateDirectory()
+        try! FinderItem(at: "\(NSHomeDirectory())/tmp").generateDirectory()
         
         let path = "\(NSHomeDirectory())/tmp/\(formatter.string(from: Date()))-\(name).png"
         print(path)
