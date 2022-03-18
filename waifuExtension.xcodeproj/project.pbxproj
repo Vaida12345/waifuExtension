@@ -76,6 +76,7 @@
 		B4ACEA9F27DFC47A00FFC577 /* ProcessFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4ACEA9E27DFC47A00FFC577 /* ProcessFile.swift */; };
 		B4B406E1275D103B00E2078D /* PNGImageSizeRegressor.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = B4B406E0275D103B00E2078D /* PNGImageSizeRegressor.mlpackage */; };
 		B4B9EFF0274BC50400A8D380 /* UIImage+Reload.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4B9EFEF274BC50400A8D380 /* UIImage+Reload.swift */; };
+		B4D5166927E435DF00462D84 /* CompareModelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4D5166827E435DF00462D84 /* CompareModelView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -151,6 +152,7 @@
 		B4ACEA9E27DFC47A00FFC577 /* ProcessFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessFile.swift; sourceTree = "<group>"; };
 		B4B406E0275D103B00E2078D /* PNGImageSizeRegressor.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = PNGImageSizeRegressor.mlpackage; sourceTree = "<group>"; };
 		B4B9EFEF274BC50400A8D380 /* UIImage+Reload.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIImage+Reload.swift"; sourceTree = "<group>"; };
+		B4D5166827E435DF00462D84 /* CompareModelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompareModelView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -381,6 +383,7 @@
 				B41C473D274AA7850024ECB7 /* ContentView.swift */,
 				B4ACEA9E27DFC47A00FFC577 /* ProcessFile.swift */,
 				B40B65A72754B95200AB08D2 /* ComparisonView.swift */,
+				B4D5166827E435DF00462D84 /* CompareModelView.swift */,
 				B445F6FF27585906004BAE04 /* ConfigurationView.swift */,
 			);
 			path = Views;
@@ -486,6 +489,7 @@
 				B437F16E275334CB00A1CE41 /* photo_scale2.mlpackage in Sources */,
 				B4ACEA9F27DFC47A00FFC577 /* ProcessFile.swift in Sources */,
 				B41E8A1F275CA5B100611371 /* estimateSize.swift in Sources */,
+				B4D5166927E435DF00462D84 /* CompareModelView.swift in Sources */,
 				B49BFDAD274B4BC50046FDDF /* BackgroundTask.swift in Sources */,
 				B4999EFD27E01D430029B567 /* Support.swift in Sources */,
 				B49BFDB5274B4BC50046FDDF /* MetalBicubic.swift in Sources */,
@@ -654,7 +658,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 4.0.1a;
+				CURRENT_PROJECT_VERSION = 4.1a;
 				DEVELOPMENT_ASSET_PATHS = "\"waifuExtension/Preview Content\"";
 				DEVELOPMENT_TEAM = 3PH93LN984;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -667,7 +671,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0.1;
-				MARKETING_VERSION = 4.0.1;
+				MARKETING_VERSION = 4.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Vaida.waifuExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -685,7 +689,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 4.0.1a;
+				CURRENT_PROJECT_VERSION = 4.1a;
 				DEVELOPMENT_ASSET_PATHS = "\"waifuExtension/Preview Content\"";
 				DEVELOPMENT_TEAM = 3PH93LN984;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -698,7 +702,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0.1;
-				MARKETING_VERSION = 4.0.1;
+				MARKETING_VERSION = 4.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Vaida.waifuExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

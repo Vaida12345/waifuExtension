@@ -35,14 +35,14 @@ Other models are:
 ## Note
 This app was based on the work of [waifu2x-ios](https://github.com/imxieyi/waifu2x-ios). Nearly all the files in the folder "waifu2x-mac" were created by him. However, modifications were done to improve speed.
 
-The files inside the folder of dain-ncnn-vulkan-20210210-macos can be downloaded [here](https://github.com/nihui/dain-ncnn-vulkan/releases/tag/20210210).
-
 ## Speed
-When processing a standard 1080p image (1920 × 1080), MacBook Pro with the M1 Max chip took only 0.7 seconds.
+When processing a standard 1080p image (1920 × 1080) using Waifu2x Caffe, MacBook Pro with the M1 Max chip took only 0.7 seconds.
 
 ## Interface
 This app was written with [SwiftUI](https://developer.apple.com/xcode/swiftui/).
-<img width="2068" alt="Screen Shot 2021-12-12 at 2 53 54 PM" src="https://user-images.githubusercontent.com/91354917/145703436-9c515ff9-a02d-4272-9589-69c9318f8576.png">
+
+<img width="2000" alt="Interface" src="https://user-images.githubusercontent.com/91354917/158416387-74fb8c62-f38a-4814-b992-6706d4747948.png">
+
 
 ## Preview
 <img width="1417" alt="Screen Shot 2021-11-29 at 2 44 41 PM" src="https://user-images.githubusercontent.com/91354917/143820789-45edbf68-a0c5-4478-be80-b26da1a3ce9c.png">
@@ -51,7 +51,7 @@ This app was written with [SwiftUI](https://developer.apple.com/xcode/swiftui/).
 
 
 ## Denoise Level
-You can compare results from different model by choosing Compare > Compare Models. Example:
+You can compare results from different model by choosing Compare > Compare Denoise Levels. Example:
 <img width="1446" alt="Screen Shot 2021-11-29 at 5 58 27 PM" src="https://user-images.githubusercontent.com/91354917/143847147-b6b12fee-9761-4dab-8899-fa49ea02c63f.png">
 
 ## Credits

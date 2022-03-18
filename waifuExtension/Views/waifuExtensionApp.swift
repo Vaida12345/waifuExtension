@@ -19,9 +19,15 @@ struct waifuExtensionApp: App {
         }
         .commands {
             CommandMenu("Compare") {
-                Button("Compare Waifu2x") {
+                Button("Compare Denoise Levels") {
                     ComparisonView()
                         .frame(minWidth: 800, maxWidth: .infinity, minHeight: 400, maxHeight: .infinity)
+                        .openInWindow(title: "Comparison", sender: self)
+                }
+                
+                Button("Compare Models") {
+                    CompareModelView()
+                        .frame(minWidth: 1200, maxWidth: .infinity, minHeight: 700, maxHeight: .infinity)
                         .openInWindow(title: "Comparison", sender: self)
                 }
             }

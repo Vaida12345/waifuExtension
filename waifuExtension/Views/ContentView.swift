@@ -362,7 +362,7 @@ struct Waifu2xModelView: View {
             MenuView(title: "Scale Level:", chosenItem: $chosenScaleLevel, itemOptions: scaleLevels, unit: "x")
                 .help("Choose how much you want to scale.")
             MenuView(title: "Denoise Level:", chosenItem: $chosenNoiseLevel, itemOptions: noiseLevels, unit: "")
-                .help("denoise level 3 recommended.\nHint: Don't know which to choose? go to Compare > Compare Models and try by yourself!")
+                .help("denoise level 3 recommended.\nHint: Don't know which to choose? go to Compare > Compare Denoise Levels and try by yourself!")
             
         }
         

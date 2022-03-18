@@ -8,7 +8,9 @@
 import Foundation
 import AppKit
 
-struct ModelCoordinator {
+struct ModelCoordinator: Identifiable {
+    
+    var id: UUID
     
     enum FileOption {
         case path(_ item: FinderItem)
@@ -96,6 +98,7 @@ struct ModelCoordinator {
     init(imageModel: ImageModel, frameModel: FrameModel) {
         self.imageModel = imageModel
         self.frameModel = frameModel
+        self.id = UUID()
     }
     
     func runImageModel(input: FileOption, outputItem: FinderItem) {
