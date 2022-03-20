@@ -69,6 +69,48 @@ class PanGestureRecognizer: NSPanGestureRecognizer {
     
 }
 
+class ShellManager {
+    
+    var task: Process
+    
+    let pipe: Pipe
+    
+    init() {
+        self.task = Process()
+        self.pipe = Pipe()
+        
+        task.standardOutput = pipe
+        task.standardError = pipe
+    }
+    
+    func run(arguments: String) {
+        let address: URL = URL(fileURLWithPath: "/bin/zsh")
+        do { self.task = try Process.run(address, arguments: ["-c", arguments]) } catch { print("shell run failed with \(address) \(arguments)"); print(error) }
+    }
+    
+    func output() -> String? {
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        return String(data: data, encoding: String.Encoding.utf8)
+    }
+    
+    /// Wait until exit.
+    func wait() {
+        task.waitUntilExit()
+    }
+    
+    func pause() {
+        task.suspend()
+    }
+    
+    func resume() {
+        task.resume()
+    }
+    
+    func terminate() {
+        task.terminate()
+    }
+    
+}
 
 //MARK: - Extensions
 
@@ -1047,148 +1089,6 @@ extension View {
     }
     
     return value
-}
-
-/// Asks for user input.
-///
-/// **Example**
-///
-///     let _ = input("Please enter")
-///     // prints "Please enter: "
-///
-/// - Note: Pass `content` with `""` to prevent displaying anything.
-///
-/// - Attention: The return value is `nil` if the user input cannot be interpreted as `String`.
-///
-/// - Parameters:
-///     - content: The content to be displayed.
-///
-/// - Returns: The `String` version of user input; `nil` otherwise.
-func input(_ content: String) -> String? {
-    if !content.isEmpty { print("\(content): ", terminator: "") }
-    guard let input = readLine() else { return nil }
-    return input
-}
-
-/// Solves an equation with Newton's Method.
-///
-/// **Example**
-///
-///     // solve for 3x == 3
-///     func f(_ x: Double) -> Double {
-///         return 3*x
-///     }
-///
-///     print(solve(f(_:), 3))
-///     // prints "1.0"
-///
-///     // Closure can also be used:
-///     let answer = solve { x in
-///         3 * x
-///     }
-///
-/// - Remark: The function was set to failure after spending more than 2 seconds.
-///
-/// - Remark: By default, the delta was set to:` let delta = 1e-10`
-///
-/// - Note: Due to the limitations of Newton's Method, functions with multiple answers or functions that are not continuous may not be solved.
-///
-/// - Attention: The return value is `nil` if no solutions can be found.
-///
-/// - Parameters:
-///     - lhs: The function to be solved.
-///     - rhs: The y value of the function.
-///
-/// - Returns: The answer to the equation; `nil` otherwise.
-func solve<T>(_ lhs: (_ x: T) -> T, _ rhs: T = 0) -> T? where T: BinaryFloatingPoint {
-    let delta = T(0.0000000001)
-    
-    func f(_ x: T) -> T {
-        return lhs(x) - rhs
-    }
-    
-    func derivative(at x: T, delta: T = delta) -> T? {
-        let content = (f(x + delta) - f(x)) / delta
-        guard content != 0 else {
-            if delta < 1 {
-                return derivative(at: x + delta, delta: delta * 2)
-            } else {
-                return nil
-            }
-        }
-        return content
-    }
-    
-    func mutateX_n1() -> T? {
-        if let value = derivative(at: x_n) {
-            return x_n - (f(x_n)) / (value)
-        } else {
-            guard !initialValues.isEmpty else { return nil }
-            x_n = initialValues.removeFirst()
-            return mutateX_n1()
-        }
-    }
-    
-    let date = Date()
-    var initialValues: [T] = [-1, -10, -100, 1, 10, 100]
-    var x_n = initialValues.removeFirst()
-    var x_n1 = x_n - (f(x_n)) / (derivative(at: x_n) ?? 1)
-    
-    while abs(x_n1 - x_n) >= delta {
-        guard abs(x_n) < T(pow(10.0, 50.0)) else {
-            print("Failed to solve: answer exceeds 10^50")
-            return nil
-        }
-        x_n = x_n1
-        guard let value = mutateX_n1() else { return nil }
-        x_n1 = value
-        
-        if date.distance(to: Date()) > 2 {
-            print("Failed to solve: spent more than 2 seconds")
-            return nil
-        }
-    }
-    
-    return x_n1
-}
-
-/// Determines whether the `lhs` and `rhs` is similar under the threshold.
-///
-/// - Parameters:
-///     - lhs: The `lhs` value.
-///     - rhs: The `rhs` value.
-///     - threshold: The threshold of comparison.
-///
-/// - Returns: `true` if they are proximately equal.
-func proximateEqual<T>(lhs: T, rhs: T, threshold: T) -> Bool where T: Numeric, T: Comparable {
-    if lhs - threshold <= rhs && lhs + threshold >= rhs {
-        return true
-    } else {
-        return false
-    }
-}
-
-/// Runs shell commands.
-///
-/// - Parameters:
-///   - commands: The commands to run. Put each line of command into an array.
-///
-/// - Returns: The result of commands.
-@discardableResult func shell(_ commands: [String]) -> String? {
-    let task = Process()
-    let pipe = Pipe()
-    let command = commands.reduce("", { $0 + "\n" + $1 })
-    
-    task.standardOutput = pipe
-    task.standardError = pipe
-    task.arguments = ["-c", command]
-    task.launchPath = "/bin/zsh"
-    task.launch()
-    
-    let data = pipe.fileHandleForReading.readDataToEndOfFile()
-    let output = String(data: data, encoding: String.Encoding.utf8)
-    
-    return output
 }
 
 /// Raise the power of an int.

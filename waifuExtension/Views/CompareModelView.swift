@@ -105,6 +105,8 @@ struct CompareModelImageView: View {
         return FinderItem(at: "\(NSHomeDirectory())/tmp/\(model.imageModel.rawValue)-\(model.id).png")
     }
     
+    @State var task = ShellManager()
+    
     var body: some View {
         VStack(alignment: .center) {
             if label != "New" {
@@ -184,17 +186,17 @@ struct CompareModelImageView: View {
             let date = Date()
             if model.isCaffe {
                 if model.scaleLevel == 4 {
-                    model.runImageModel(input: .path(inputItem), outputItem: inputItem)
-                    model.runImageModel(input: .path(inputItem), outputItem: outputItem)
+                    model.runImageModel(input: .path(inputItem), outputItem: inputItem, task: task)
+                    model.runImageModel(input: .path(inputItem), outputItem: outputItem, task: task)
                 } else if model.scaleLevel == 8 {
-                    model.runImageModel(input: .path(inputItem), outputItem: inputItem)
-                    model.runImageModel(input: .path(inputItem), outputItem: inputItem)
-                    model.runImageModel(input: .path(inputItem), outputItem: outputItem)
+                    model.runImageModel(input: .path(inputItem), outputItem: inputItem, task: task)
+                    model.runImageModel(input: .path(inputItem), outputItem: inputItem, task: task)
+                    model.runImageModel(input: .path(inputItem), outputItem: outputItem, task: task)
                 } else {
-                    model.runImageModel(input: .path(inputItem), outputItem: outputItem)
+                    model.runImageModel(input: .path(inputItem), outputItem: outputItem, task: task)
                 }
             } else {
-                model.runImageModel(input: .path(inputItem), outputItem: outputItem)
+                model.runImageModel(input: .path(inputItem), outputItem: outputItem, task: task)
             }
             
             if let image = outputItem.image {

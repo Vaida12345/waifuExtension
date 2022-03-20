@@ -8,6 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		B40B65A82754B95200AB08D2 /* ComparisonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B40B65A72754B95200AB08D2 /* ComparisonView.swift */; };
+		B412BADC27E6F1BC00B25626 /* Fraction.swift in Sources */ = {isa = PBXBuildFile; fileRef = B412BAD827E6F1BC00B25626 /* Fraction.swift */; };
+		B412BADD27E6F1BC00B25626 /* Support.swift in Sources */ = {isa = PBXBuildFile; fileRef = B412BAD927E6F1BC00B25626 /* Support.swift */; };
+		B412BADE27E6F1BC00B25626 /* FinderItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = B412BADA27E6F1BC00B25626 /* FinderItem.swift */; };
+		B412BADF27E6F1BC00B25626 /* Arithmetical.swift in Sources */ = {isa = PBXBuildFile; fileRef = B412BADB27E6F1BC00B25626 /* Arithmetical.swift */; };
 		B41527FB27555EC80051CE81 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = B41527FA27555EC80051CE81 /* README.md */; };
 		B41527FD27555ECF0051CE81 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = B41527FC27555ECF0051CE81 /* LICENSE */; };
 		B41C473C274AA7850024ECB7 /* waifuExtensionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C473B274AA7850024ECB7 /* waifuExtensionApp.swift */; };
@@ -45,11 +49,6 @@
 		B46F2AE8275DB02D002D01CB /* estimateTime.swift in Sources */ = {isa = PBXBuildFile; fileRef = B46F2AE7275DB02D002D01CB /* estimateTime.swift */; };
 		B47664D62753056300FD78EA /* Calculation.metal in Sources */ = {isa = PBXBuildFile; fileRef = B47664D52753056300FD78EA /* Calculation.metal */; };
 		B483A9D327633F26007381F6 /* icon.icns in Resources */ = {isa = PBXBuildFile; fileRef = B483A9D227633F26007381F6 /* icon.icns */; };
-		B4999EFA27E01D430029B567 /* Fraction.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4999EF427E01D430029B567 /* Fraction.swift */; };
-		B4999EFB27E01D430029B567 /* Int10.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4999EF527E01D430029B567 /* Int10.swift */; };
-		B4999EFC27E01D430029B567 /* Arithmetical.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4999EF627E01D430029B567 /* Arithmetical.swift */; };
-		B4999EFD27E01D430029B567 /* Support.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4999EF827E01D430029B567 /* Support.swift */; };
-		B4999EFE27E01D430029B567 /* FinderItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4999EF927E01D430029B567 /* FinderItem.swift */; };
 		B49BFD94274B4BC50046FDDF /* BackgroundPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD70274B4BC50046FDDF /* BackgroundPipeline.swift */; };
 		B49BFD96274B4BC50046FDDF /* MLModel+Prediction.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD72274B4BC50046FDDF /* MLModel+Prediction.swift */; };
 		B49BFD97274B4BC50046FDDF /* NSImage+PNG.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD74274B4BC50046FDDF /* NSImage+PNG.swift */; };
@@ -81,6 +80,10 @@
 
 /* Begin PBXFileReference section */
 		B40B65A72754B95200AB08D2 /* ComparisonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComparisonView.swift; sourceTree = "<group>"; };
+		B412BAD827E6F1BC00B25626 /* Fraction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Fraction.swift; sourceTree = "<group>"; };
+		B412BAD927E6F1BC00B25626 /* Support.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Support.swift; sourceTree = "<group>"; };
+		B412BADA27E6F1BC00B25626 /* FinderItem.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FinderItem.swift; sourceTree = "<group>"; };
+		B412BADB27E6F1BC00B25626 /* Arithmetical.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Arithmetical.swift; sourceTree = "<group>"; };
 		B41527FA27555EC80051CE81 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		B41527FC27555ECF0051CE81 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		B41C4738274AA7850024ECB7 /* waifuExtension.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = waifuExtension.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -120,11 +123,6 @@
 		B46F2AE7275DB02D002D01CB /* estimateTime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = estimateTime.swift; sourceTree = "<group>"; };
 		B47664D52753056300FD78EA /* Calculation.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Calculation.metal; sourceTree = "<group>"; };
 		B483A9D227633F26007381F6 /* icon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = icon.icns; sourceTree = "<group>"; };
-		B4999EF427E01D430029B567 /* Fraction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Fraction.swift; sourceTree = "<group>"; };
-		B4999EF527E01D430029B567 /* Int10.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Int10.swift; sourceTree = "<group>"; };
-		B4999EF627E01D430029B567 /* Arithmetical.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Arithmetical.swift; sourceTree = "<group>"; };
-		B4999EF827E01D430029B567 /* Support.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Support.swift; sourceTree = "<group>"; };
-		B4999EF927E01D430029B567 /* FinderItem.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FinderItem.swift; sourceTree = "<group>"; };
 		B49BFD70274B4BC50046FDDF /* BackgroundPipeline.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BackgroundPipeline.swift; sourceTree = "<group>"; };
 		B49BFD72274B4BC50046FDDF /* MLModel+Prediction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "MLModel+Prediction.swift"; sourceTree = "<group>"; };
 		B49BFD73274B4BC50046FDDF /* waifu2x_mac.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = waifu2x_mac.h; sourceTree = "<group>"; };
@@ -166,6 +164,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		B412BAD727E6F1BC00B25626 /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				B412BAD827E6F1BC00B25626 /* Fraction.swift */,
+				B412BAD927E6F1BC00B25626 /* Support.swift */,
+				B412BADA27E6F1BC00B25626 /* FinderItem.swift */,
+				B412BADB27E6F1BC00B25626 /* Arithmetical.swift */,
+			);
+			name = Support;
+			path = ../../../../Swift/testRoom/testRoom/Source/Support;
+			sourceTree = "<group>";
+		};
 		B41C472F274AA7850024ECB7 = {
 			isa = PBXGroup;
 			children = (
@@ -189,7 +199,7 @@
 				B4B406E3275D105F00E2078D /* Views */,
 				B4B406DF275D101500E2078D /* SuppportingFiles */,
 				B437F140275334CB00A1CE41 /* Models */,
-				B4999EF227E01D430029B567 /* Support */,
+				B412BAD727E6F1BC00B25626 /* Support */,
 				B49BFD6F274B4BC50046FDDF /* waifu2x-mac */,
 				B4ACEA8B27DFBDCC00FFC577 /* cain-ncnn-vulkan */,
 				B4ACEA8A27DFBDCC00FFC577 /* dain-ncnn-vulkan */,
@@ -300,34 +310,6 @@
 				B41527FC27555ECF0051CE81 /* LICENSE */,
 			);
 			name = Assets;
-			sourceTree = "<group>";
-		};
-		B4999EF227E01D430029B567 /* Support */ = {
-			isa = PBXGroup;
-			children = (
-				B4999EF327E01D430029B567 /* Numerics */,
-				B4999EF727E01D430029B567 /* Support */,
-			);
-			path = Support;
-			sourceTree = "<group>";
-		};
-		B4999EF327E01D430029B567 /* Numerics */ = {
-			isa = PBXGroup;
-			children = (
-				B4999EF427E01D430029B567 /* Fraction.swift */,
-				B4999EF527E01D430029B567 /* Int10.swift */,
-				B4999EF627E01D430029B567 /* Arithmetical.swift */,
-			);
-			path = Numerics;
-			sourceTree = "<group>";
-		};
-		B4999EF727E01D430029B567 /* Support */ = {
-			isa = PBXGroup;
-			children = (
-				B4999EF827E01D430029B567 /* Support.swift */,
-				B4999EF927E01D430029B567 /* FinderItem.swift */,
-			);
-			path = Support;
 			sourceTree = "<group>";
 		};
 		B49BFD6F274B4BC50046FDDF /* waifu2x-mac */ = {
@@ -469,7 +451,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B4999EFB27E01D430029B567 /* Int10.swift in Sources */,
 				B46F2AE8275DB02D002D01CB /* estimateTime.swift in Sources */,
 				B437F174275334DB00A1CE41 /* Model_Caffe.swift in Sources */,
 				B49BFDAE274B4BC50046FDDF /* NSImage+Crop.swift in Sources */,
@@ -481,17 +462,19 @@
 				B437F15A275334CB00A1CE41 /* anime_style_art_rgb_noise3_model.mlpackage in Sources */,
 				B4ACEA7A27DFB79D00FFC577 /* ModelCoordinator.swift in Sources */,
 				B49BFD97274B4BC50046FDDF /* NSImage+PNG.swift in Sources */,
+				B412BADD27E6F1BC00B25626 /* Support.swift in Sources */,
 				B437F169275334CB00A1CE41 /* upconv_7_photo_noise1_scale2.mlpackage in Sources */,
 				B437F162275334CB00A1CE41 /* photo_noise3_model.mlpackage in Sources */,
 				B4B9EFF0274BC50400A8D380 /* UIImage+Reload.swift in Sources */,
 				B445F70027585906004BAE04 /* ConfigurationView.swift in Sources */,
+				B412BADC27E6F1BC00B25626 /* Fraction.swift in Sources */,
 				B437F171275334CB00A1CE41 /* photo_noise0_model.mlpackage in Sources */,
 				B437F16E275334CB00A1CE41 /* photo_scale2.mlpackage in Sources */,
+				B412BADF27E6F1BC00B25626 /* Arithmetical.swift in Sources */,
 				B4ACEA9F27DFC47A00FFC577 /* ProcessFile.swift in Sources */,
 				B41E8A1F275CA5B100611371 /* estimateSize.swift in Sources */,
 				B4D5166927E435DF00462D84 /* CompareModelView.swift in Sources */,
 				B49BFDAD274B4BC50046FDDF /* BackgroundTask.swift in Sources */,
-				B4999EFD27E01D430029B567 /* Support.swift in Sources */,
 				B49BFDB5274B4BC50046FDDF /* MetalBicubic.swift in Sources */,
 				B437F164275334CB00A1CE41 /* anime_style_art_rgb_noise2_model.mlpackage in Sources */,
 				B49BFD96274B4BC50046FDDF /* MLModel+Prediction.swift in Sources */,
@@ -499,14 +482,13 @@
 				B437F170275334CB00A1CE41 /* upconv_7_photo_noise0_scale2.mlpackage in Sources */,
 				B437F166275334CB00A1CE41 /* anime_style_art_noise1_model.mlpackage in Sources */,
 				B49BFDAA274B4BC50046FDDF /* CGImage+Crop.swift in Sources */,
-				B4999EFC27E01D430029B567 /* Arithmetical.swift in Sources */,
 				B49BFD94274B4BC50046FDDF /* BackgroundPipeline.swift in Sources */,
 				B41C473E274AA7850024ECB7 /* ContentView.swift in Sources */,
 				B437F16F275334CB00A1CE41 /* anime_style_art_rgb_noise1_model.mlpackage in Sources */,
 				B437F16B275334CB00A1CE41 /* anime_style_art_rgb_noise0_model.mlpackage in Sources */,
+				B412BADE27E6F1BC00B25626 /* FinderItem.swift in Sources */,
 				B437F15F275334CB00A1CE41 /* anime_style_art_noise2_model.mlpackage in Sources */,
 				B49BFDB1274B4BC50046FDDF /* CGImage+Expand.swift in Sources */,
-				B4999EFA27E01D430029B567 /* Fraction.swift in Sources */,
 				B437F172275334CB00A1CE41 /* upconv_7_anime_style_art_rgb_noise0_scale2.mlpackage in Sources */,
 				B49BFDB0274B4BC50046FDDF /* NSImage+Alpha.swift in Sources */,
 				B437F15B275334CB00A1CE41 /* upconv_7_photo_noise3_scale2.mlpackage in Sources */,
@@ -515,7 +497,6 @@
 				B49BFDAC274B4BC50046FDDF /* Waifu2x.swift in Sources */,
 				B47664D62753056300FD78EA /* Calculation.metal in Sources */,
 				B437F16C275334CB00A1CE41 /* upconv_7_anime_style_art_rgb_noise1_scale2.mlpackage in Sources */,
-				B4999EFE27E01D430029B567 /* FinderItem.swift in Sources */,
 				B41C473C274AA7850024ECB7 /* waifuExtensionApp.swift in Sources */,
 				B4ACEA7C27DFB85E00FFC577 /* Models.swift in Sources */,
 				B437F16D275334CB00A1CE41 /* upconv_7_anime_style_art_rgb_scale2.mlpackage in Sources */,
@@ -658,7 +639,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 4.1a;
+				CURRENT_PROJECT_VERSION = 4.1.1a;
 				DEVELOPMENT_ASSET_PATHS = "\"waifuExtension/Preview Content\"";
 				DEVELOPMENT_TEAM = 3PH93LN984;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -671,7 +652,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0.1;
-				MARKETING_VERSION = 4.1;
+				MARKETING_VERSION = 4.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Vaida.waifuExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -689,7 +670,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 4.1a;
+				CURRENT_PROJECT_VERSION = 4.1.1a;
 				DEVELOPMENT_ASSET_PATHS = "\"waifuExtension/Preview Content\"";
 				DEVELOPMENT_TEAM = 3PH93LN984;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -702,7 +683,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0.1;
-				MARKETING_VERSION = 4.1;
+				MARKETING_VERSION = 4.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Vaida.waifuExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

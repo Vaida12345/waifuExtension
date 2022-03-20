@@ -10,6 +10,7 @@ import AVFoundation
 import Cocoa
 import Foundation
 
+/// A representable of files / folders.
 struct FinderItem: Codable, Copyable, CustomStringConvertible, Equatable, Hashable, Identifiable {
     
     //MARK: - Basic Properties
@@ -317,6 +318,8 @@ struct FinderItem: Codable, Copyable, CustomStringConvertible, Equatable, Hashab
         self.id = UUID()
     }
     
+    static let downloadsItem = FinderItem(at: "\(NSHomeDirectory())/Downloads")
+    
     
     //MARK: - Instance Methods
     
@@ -384,28 +387,23 @@ struct FinderItem: Codable, Copyable, CustomStringConvertible, Equatable, Hashab
     /// - Note: This method was designed to fit the situation when there are multiple files of the same name at a location.
     ///
     /// - Returns: A path adjusted when there has already been a file there with the same name.
-    func generateOutputPath() -> String {
+    mutating func generateOutputPath() {
         do {
             try self.generateDirectory()
-        } catch {
-            
-        }
+        } catch { print(error) }
         
-        if !self.isExistence {
-            return path
-        } else {
+        if self.isExistence {
             if self.name.contains(".") {
                 var counter = 2
                 let filePathWithoutExtension = self.extensionName
                 let fileExtension = self.extensionName
                 while FileManager.default.fileExists(atPath: "\(filePathWithoutExtension) \(counter)\(fileExtension)") { counter += 1 }
-                
-                return "\(filePathWithoutExtension) \(counter)\(fileExtension)"
+                self.path = "\(filePathWithoutExtension) \(counter)\(fileExtension)"
             } else {
                 var counter = 2
                 while FileManager.default.fileExists(atPath: "\(self.pathArray.dropLast().reduce("", { $0 + "/" + $1 }))/\(self.fileName) \(counter)") { counter += 1 }
                 
-                return "\(self.pathArray.dropLast().reduce("", { $0 + "/" + $1 }))/\(self.fileName) \(counter)"
+                self.path = "\(self.pathArray.dropLast().reduce("", { $0 + "/" + $1 }))/\(self.fileName) \(counter)"
             }
         }
     }
@@ -464,6 +462,7 @@ struct FinderItem: Codable, Copyable, CustomStringConvertible, Equatable, Hashab
     
     /// Remove the file.
     func removeFile() throws {
+        guard self.isExistence else { return }
         try FileManager.default.removeItem(atPath: self.path)
     }
     
@@ -565,18 +564,22 @@ extension Array where Element == FinderItem {
     }
     
     /// Append the file or its children to the array which satisfies `condition`.
-    mutating func append(from url: URL, condition: (_ item: FinderItem) -> Bool) {
+    mutating func append(from url: URL, condition: ((_ item: FinderItem) -> Bool)? = nil) {
         let item = FinderItem(at: url)
         if item.isDirectory {
-            self.append(contentsOf: item.allChildren!.filter({ condition($0) }))
+            var children = item.allChildren!.filter({ (condition ?? {_ in true})($0) })
+            for i in 0..<children.count {
+                children[i].relativePath = children[i].relativePath(to: item)
+            }
+            self.append(contentsOf: children)
         } else {
-            guard condition(item) else { return }
+            guard (condition ?? {_ in true})(item) else { return }
             self.append(item)
         }
     }
     
     /// Append the files or their children to the array which satisfies `condition`.
-    mutating func append(from urls: [URL], condition: (_ item: FinderItem) -> Bool) {
+    mutating func append(from urls: [URL], condition: ((_ item: FinderItem) -> Bool)? = nil) {
         var index = 0
         while index < urls.count {
             self.append(from: urls[index], condition: condition)
@@ -586,7 +589,7 @@ extension Array where Element == FinderItem {
     }
     
     /// Append the files or their children in the provider to the array which satisfies `condition`.
-    mutating func append(from provider: NSItemProvider, condition: (_ item: FinderItem) -> Bool) async {
+    mutating func append(from provider: NSItemProvider, condition: ((_ item: FinderItem) -> Bool)? = nil) async {
         guard let result = try? await provider.loadItem(forTypeIdentifier: "public.file-url", options: nil) else { return }
         guard let urlData = result as? Data else { return }
         guard let url = URL(dataRepresentation: urlData, relativeTo: nil) else { return }
@@ -595,7 +598,7 @@ extension Array where Element == FinderItem {
     }
     
     /// Append the files or their children in providers to the array which satisfies `condition`.
-    mutating func append(from providers: [NSItemProvider], condition: (_ item: FinderItem) -> Bool) async {
+    mutating func append(from providers: [NSItemProvider], condition: ((_ item: FinderItem) -> Bool)? = nil) async {
         var index = 0
         while index < providers.count {
             await self.append(from: providers[index], condition: condition)
@@ -626,21 +629,6 @@ extension AVAsset {
     /// The audio track of the video file.
     var audioTrack: AVAssetTrack? {
         return self.tracks(withMediaType: AVMediaType.audio).first
-    }
-    
-    /// Returns the first frame rate of the video.
-    ///
-    /// - Attention: The return value is `nil` if the file doesn't exist or not a video.
-    var firstFrame: NSImage? {
-        let asset = self
-        let vidLength: CMTime = asset.duration
-        
-        let imageGenerator = AVAssetImageGenerator(asset: asset)
-        imageGenerator.requestedTimeToleranceAfter = CMTime.zero
-        imageGenerator.requestedTimeToleranceBefore = CMTime.zero
-        let time: CMTime = CMTimeMake(value: Int64(0), timescale: vidLength.timescale)
-        guard let ref = try? imageGenerator.copyCGImage(at: time, actualTime: nil) else { return nil }
-        return NSImage(cgImage: ref, size: NSSize(width: ref.width, height: ref.height))
     }
     
     /// Returns all the frames of the video.

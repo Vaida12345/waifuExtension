@@ -85,7 +85,7 @@ struct ModelCoordinator: Identifiable {
     
     var cain_ncnn_vulkan: Model_cain_ncnn_vulkan = Model_cain_ncnn_vulkan()
     var dain_ncnn_vulkan: Model_dain_ncnn_vulkan = Model_dain_ncnn_vulkan()
-    var rife_dain_ncnn_vulkan: Model_rife_dain_ncnn_vulkan = Model_rife_dain_ncnn_vulkan()
+    var rife_dain_ncnn_vulkan: Model_rife_ncnn_vulkan = Model_rife_ncnn_vulkan()
     
     var enableFrameInterpolation = false
     
@@ -101,30 +101,28 @@ struct ModelCoordinator: Identifiable {
         self.id = UUID()
     }
     
-    func runImageModel(input: FileOption, outputItem: FinderItem) {
+    func runImageModel(input: FileOption, outputItem: FinderItem, task: ShellManager) {
         
         func applyInstalledModel<T>(input: NSImage, model: T) where T: InstalledImageModel {
-            let path = FinderItem(at: "\(NSHomeDirectory())/tmp/vulkan/input/file.png").generateOutputPath()
-            input.write(to: path)
+            let item = FinderItem(at: "\(NSHomeDirectory())/tmp/vulkan/input/\(UUID()).png")
+            try! item.generateDirectory()
+            input.write(to: item.path)
             
-            model.run(inputItem: FinderItem(at: path), outputItem: outputItem)
-            do {
-                try FinderItem(at: path).removeFile()
-            } catch { }
+            model.run(inputItem: item, outputItem: outputItem, task: task)
         }
         
         switch (input, self.imageModel) {
         case (.image(let image), .caffe):
-            Waifu2x().run(image, model: self)?.write(to: outputItem.path)
+            Waifu2x().run(image.reload(), model: self)?.write(to: outputItem.path)
         case (.path(let path), .caffe):
             Waifu2x().run(path.image!, model: self)?.write(to: outputItem.path)
             
         case (.path(let path), .realcugan_ncnn_vulkan):
-            self.realcugan_ncnn_vulkan.run(inputItem: path, outputItem: outputItem)
+            self.realcugan_ncnn_vulkan.run(inputItem: path, outputItem: outputItem, task: task)
         case (.path(let path), .realesrgan_ncnn_vulkan):
-            self.realesrgan_ncnn_vulkan.run(inputItem: path, outputItem: outputItem)
+            self.realesrgan_ncnn_vulkan.run(inputItem: path, outputItem: outputItem, task: task)
         case (.path(let path), .realsr_ncnn_vulkan):
-            self.realsr_ncnn_vulkan.run(inputItem: path, outputItem: outputItem)
+            self.realsr_ncnn_vulkan.run(inputItem: path, outputItem: outputItem, task: task)
             
         case (.image(let image), .realcugan_ncnn_vulkan):
             applyInstalledModel(input: image, model: self.realcugan_ncnn_vulkan)
@@ -135,7 +133,14 @@ struct ModelCoordinator: Identifiable {
         }
     }
     
-    func runFrameModel(input1: FileOption, input2: FileOption, outputPath: String) {
-        
+    func runFrameModel(input1: String, input2: String, outputPath: String, task: ShellManager) {
+        switch self.frameModel {
+        case .cain_ncnn_vulkan:
+            self.cain_ncnn_vulkan.run(input1Item: FinderItem(at: input1), input2Item: FinderItem(at: input2), outputItem: FinderItem(at: outputPath), task: task)
+        case .dain_ncnn_vulkan:
+            self.dain_ncnn_vulkan.run(input1Item: FinderItem(at: input1), input2Item: FinderItem(at: input2), outputItem: FinderItem(at: outputPath), task: task)
+        case .rife_dain_ncnn_vulkan:
+            self.rife_dain_ncnn_vulkan.run(input1Item: FinderItem(at: input1), input2Item: FinderItem(at: input2), outputItem: FinderItem(at: outputPath), task: task)
+        }
     }
 }

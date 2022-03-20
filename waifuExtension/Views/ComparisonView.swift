@@ -222,9 +222,8 @@ struct ImageView: View {
         try! FinderItem(at: "\(NSHomeDirectory())/tmp").generateDirectory()
         
         let path = "\(NSHomeDirectory())/tmp/\(formatter.string(from: Date()))-\(name).png"
-        print(path)
         image.write(to: path)
-        _ = shell(["open \(path.replacingOccurrences(of: " ", with: "\\ "))"])
+        FinderItem(at: path).open()
     }
     
     var body: some View {

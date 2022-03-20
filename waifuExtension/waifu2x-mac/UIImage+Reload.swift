@@ -14,9 +14,9 @@ extension NSImage {
     /// Workaround: Apply two ML filters sequently will break the image
     ///
     /// - Returns: the reloaded image
-    public func reload(withIndex: String? = nil) -> NSImage {
+    public func reload() -> NSImage {
         
-        let tempfile = "\(NSHomeDirectory())/tmp/\(withIndex ?? "file").png"
+        let tempfile = "\(NSHomeDirectory())/tmp/\(UUID()).png"
         try! FinderItem(at: tempfile).generateDirectory()
         self.write(to: tempfile)
         let image = NSImage(contentsOf: URL(fileURLWithPath: tempfile))!

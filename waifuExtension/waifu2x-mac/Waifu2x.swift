@@ -392,7 +392,9 @@ struct Logger {
     
     init?(path: String) {
         guard Configuration.main.isLogEnabled else { return nil }
-        self.path = FinderItem(at: path).generateOutputPath()
+        var item = FinderItem(at: path)
+        item.generateOutputPath()
+        self.path = item.path
     }
     
     mutating func addItem<T>(_ item: [T]) where T: CustomStringConvertible {

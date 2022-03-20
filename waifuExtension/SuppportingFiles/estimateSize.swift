@@ -7,6 +7,8 @@
 
 import Foundation
 import CoreML
+import AVFoundation
+import AppKit
 
 class EstimateSizeMLFeature: MLFeatureProvider {
     
@@ -48,4 +50,38 @@ func estimateSize(finderItems: [FinderItem], frames: Int, scale: Int) -> String?
     }
     guard !values.isEmpty else { return nil }
     return Int(values.max()!).expressAsFileSize()
+}
+
+extension AVAsset {
+    
+    /// Returns all the frames of the video.
+    ///
+    /// - Attention: The return value is `nil` if the file does not exist, or `avAsset` not found.
+    var firstFrame: NSImage? {
+        let asset = self
+        let vidLength: CMTime = asset.duration
+        let seconds: Double = CMTimeGetSeconds(vidLength)
+        let frameRate = Double(asset.tracks(withMediaType: .video).first!.nominalFrameRate)
+        
+        var requiredFramesCount = Int(seconds * frameRate)
+        
+        if requiredFramesCount == 0 {
+            requiredFramesCount = 1
+        }
+        
+        let imageGenerator = AVAssetImageGenerator(asset: asset)
+        imageGenerator.requestedTimeToleranceAfter = CMTime.zero
+        imageGenerator.requestedTimeToleranceBefore = CMTime.zero
+        let time: CMTime = CMTimeMake(value: 0, timescale: vidLength.timescale)
+        var imageRef: CGImage?
+        do {
+            imageRef = try imageGenerator.copyCGImage(at: time, actualTime: nil)
+        } catch {
+            print(error)
+        }
+        guard let ref = imageRef else { return nil }
+        let thumbnail = NSImage(cgImage: ref, size: NSSize(width: ref.width, height: ref.height))
+        return thumbnail
+    }
+    
 }

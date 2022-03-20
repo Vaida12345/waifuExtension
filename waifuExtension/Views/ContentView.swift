@@ -241,7 +241,7 @@ struct GridItemView: View {
                 item.finderItem.open()
             }
             Button("Show in Finder") {
-                shell(["open \(item.finderItem.shellPath) -R"])
+                item.finderItem.revealInFinder()
             }
             Button("Delete") {
                 withAnimation {
@@ -435,14 +435,17 @@ struct SpecificationsView: View {
                     MenuView(title: "Model Name:", chosenItem: $model.realcugan_ncnn_vulkan.modelName, itemOptions: model.realcugan_ncnn_vulkan.modelNameOptions, unit: "")
                     MenuView(title: "Scale Level:", chosenItem: $model.realcugan_ncnn_vulkan.scaleLevel, itemOptions: model.realcugan_ncnn_vulkan.scaleLevelOptions, unit: "x")
                     MenuView(title: "Denoise Level:", chosenItem: $model.realcugan_ncnn_vulkan.denoiseLevel, itemOptions: model.realcugan_ncnn_vulkan.denoiseLevelOption, unit: "")
+                    MenuView(title: "Enable TTA", chosenItem: $model.realcugan_ncnn_vulkan.enableTTA, itemOptions: [true, false], unit: "")
                 } else if model.imageModel == .realesrgan_ncnn_vulkan {
                     MenuView(title: "Model Name:", chosenItem: $model.realesrgan_ncnn_vulkan.modelName, itemOptions: model.realesrgan_ncnn_vulkan.modelNameOptions, unit: "")
                     MenuView(title: "Scale Level:", chosenItem: $model.realesrgan_ncnn_vulkan.scaleLevel, itemOptions: model.realesrgan_ncnn_vulkan.scaleLevelOptions, unit: "x")
                     MenuView(title: "Denoise Level:", chosenItem: $model.realesrgan_ncnn_vulkan.denoiseLevel, itemOptions: model.realesrgan_ncnn_vulkan.denoiseLevelOption, unit: "")
+                    MenuView(title: "Enable TTA", chosenItem: $model.realesrgan_ncnn_vulkan.enableTTA, itemOptions: [true, false], unit: "")
                 } else if model.imageModel == .realsr_ncnn_vulkan {
                     MenuView(title: "Model Name:", chosenItem: $model.realsr_ncnn_vulkan.modelName, itemOptions: model.realsr_ncnn_vulkan.modelNameOptions, unit: "")
                     MenuView(title: "Scale Level:", chosenItem: $model.realsr_ncnn_vulkan.scaleLevel, itemOptions: model.realsr_ncnn_vulkan.scaleLevelOptions, unit: "x")
                     MenuView(title: "Denoise Level:", chosenItem: $model.realsr_ncnn_vulkan.denoiseLevel, itemOptions: model.realsr_ncnn_vulkan.denoiseLevelOption, unit: "")
+                    MenuView(title: "Enable TTA", chosenItem: $model.realsr_ncnn_vulkan.enableTTA, itemOptions: [true, false], unit: "")
                 }
             }
             
@@ -479,9 +482,13 @@ struct SpecificationsView: View {
                 .disabled(!model.enableFrameInterpolation)
                 
                 if model.frameModel == .rife_dain_ncnn_vulkan {
-                    MenuView(title: "Model Name:", chosenItem: $model.rife_dain_ncnn_vulkan.modelName, itemOptions: model.rife_dain_ncnn_vulkan.modelNameOptions, unit: "")
-                        .disabled(!model.enableFrameInterpolation)
-                        .foregroundColor(model.enableFrameInterpolation ? .primary : .secondary)
+                    VStack {
+                        MenuView(title: "Model Name:", chosenItem: $model.rife_dain_ncnn_vulkan.modelName, itemOptions: model.rife_dain_ncnn_vulkan.modelNameOptions, unit: "")
+                        MenuView(title: "Enable TTA", chosenItem: $model.rife_dain_ncnn_vulkan.enableTTA, itemOptions: [true, false], unit: "")
+                        MenuView(title: "Enable UHD", chosenItem: $model.rife_dain_ncnn_vulkan.enableUHD, itemOptions: [true, false], unit: "")
+                    }
+                    .disabled(!model.enableFrameInterpolation)
+                    .foregroundColor(model.enableFrameInterpolation ? .primary : .secondary)
                 }
                 
                 MenuView(title: "Frame Interpolation:", chosenItem: $model.frameInterpolation, itemOptions: [2, 4], unit: "x")
@@ -550,7 +557,23 @@ struct SpecificationsView: View {
             DispatchQueue(label: "background").async {
                 self.storageRequired = estimateSize(finderItems: finderItems.map({ $0.finderItem }), frames: model.videoSegmentFrames, scale: model.scaleLevel)
             }
-            frameHeight = finderItems.contains(where: { $0.type == .video }) ? 400 : 250
+            
+            if finderItems.contains(where: { $0.type == .video }) {
+                frameHeight = 400
+            } else {
+                frameHeight = 280
+            }
+        }
+        .onChange(of: model.frameModel) { newValue in
+            if newValue == .rife_dain_ncnn_vulkan {
+                frameHeight = 480
+            } else {
+                if finderItems.contains(where: { $0.type == .video }) {
+                    frameHeight = 400
+                } else {
+                    frameHeight = 280
+                }
+            }
         }
         
     }
@@ -578,6 +601,8 @@ struct ProcessingView: View {
     @State var workItem: DispatchWorkItem? = nil
     @State var isShowingQuitConfirmation = false
     @State var isShowingReplace = false
+    
+    @State var task = ShellManager()
     
     var background: DispatchQueue = DispatchQueue(label: "background", qos: .utility)
     
@@ -706,6 +731,12 @@ struct ProcessingView: View {
                     .help("Cancel and quit.")
                     
                     Button() {
+                        if !isPaused {
+                            task.pause()
+                        } else {
+                            task.resume()
+                        }
+                        
                         isPaused.toggle()
                     } label: {
                         Text(isPaused ? "Resume" : "Pause")
@@ -725,7 +756,7 @@ struct ProcessingView: View {
                     .padding(.trailing)
                     
                     Button("Show in Finder") {
-                        shell(["open \(FinderItem(at: Configuration.main.saveFolder).shellPath)"])
+                        FinderItem(at: Configuration.main.saveFolder).open()
                     }
                     .padding(.trailing)
                     
@@ -751,7 +782,7 @@ struct ProcessingView: View {
                         }
                     }
                     
-                    finderItems.work(model: model) { status in
+                    finderItems.work(model: model, task: task) { status in
                         self.status = status
                     } onStatusProgressChanged: { progress,total in
                         if progress != nil {
@@ -789,6 +820,7 @@ struct ProcessingView: View {
             }
             .confirmationDialog("Quit the app?", isPresented: $isShowingQuitConfirmation) {
                 Button("Quit", role: .destructive) {
+                    task.terminate()
                     exit(0)
                 }
                 
@@ -821,7 +853,7 @@ struct ProcessingView: View {
                                 isShowingReplace = false
                                 
                                 background.async {
-                                    finderItems.work(model: model) { status in
+                                    finderItems.work(model: model, task: task) { status in
                                         self.status = status
                                     } onStatusProgressChanged: { progress,total in
                                         if progress != nil {
@@ -846,7 +878,7 @@ struct ProcessingView: View {
                                 isShowingReplace = false
                                 
                                 background.async {
-                                    finderItems.work(model: model) { status in
+                                    finderItems.work(model: model, task: task) { status in
                                         self.status = status
                                     } onStatusProgressChanged: { progress,total in
                                         if progress != nil {
@@ -930,7 +962,7 @@ struct ProcessingPDFView: View {
                 Spacer()
                 
                 Button("Show in Finder") {
-                    shell(["open \(FinderItem(at: "\(NSHomeDirectory())/Downloads/PDF output").shellPath)"])
+                    FinderItem(at: "\(NSHomeDirectory())/Downloads/PDF output").open()
                 }
                 .padding(.trailing)
                 

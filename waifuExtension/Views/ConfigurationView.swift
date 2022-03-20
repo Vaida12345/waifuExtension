@@ -9,19 +9,13 @@ import SwiftUI
 
 struct DoubleText: View {
     
-    let lhsIndent: CGFloat = 150
-    
     let lhs: String
     let rhs: String
     
     var body: some View {
         HStack {
-            HStack {
-                Spacer()
-                
-                Text(lhs)
-            }
-            .frame(width: lhsIndent)
+            Text(lhs)
+                .padding(.horizontal)
             
             Text(rhs)
             
@@ -36,34 +30,62 @@ struct ModelView<T>: View where T: InstalledModel {
     let model: T
     
     var body: some View {
-        Section(model.name) {
+        VStack(alignment: .leading) {
+            Text(model.name)
+                .font(.title)
+                .padding()
             
-            DoubleText(lhs: "Installed: ", rhs: model.programItem.isExistence.description)
+            HStack {
+                DoubleText(lhs: "Installed: ", rhs: model.programFolderItem.isExistence.description)
+                    .padding(.trailing)
+                
+                if model.programItem.isExistence {
+                    DoubleText(lhs: "Size: ", rhs: model.programFolderItem.fileSize?.expressAsFileSize() ?? "unkown")
+                }
+                
+                Spacer()
+            }
             
             if model.programItem.isExistence {
-                DoubleText(lhs: "Size: ", rhs: model.programItem.fileSize?.expressAsFileSize() ?? "0")
                 HStack {
-                    Button("Remove Model") {
-                        do {
-                            try model.programItem.removeFile()
-                        } catch { print(error) }
-                    }
-                    Button("Update Model") {
-                        showImportCatalog = true
-                    }
-                    Button("Show In Finder") {
+//                    Button("Remove Model") {
+//                        do {
+//                            try model.programItem.removeFile()
+//                        } catch { print(error) }
+//                    }
+//                    Button("Update Model") {
+//                        showImportCatalog = true
+//                    }
+                    Button("Show in Finder") {
                         model.programItem.revealInFinder()
                     }
+                    
+                    Button("Show on Github") {
+                        NSWorkspace.shared.open(model.source)
+                    }
+                    .padding(.horizontal)
                     
                     Spacer()
                 }
                 .padding()
             } else {
-                Button("Choose Model") {
-                    showImportCatalog = true
+                HStack {
+                    Button("Choose Model") {
+                        showImportCatalog = true
+                    }
+                    .padding(.horizontal)
+                    
+                    Button("Download from Github") {
+                        NSWorkspace.shared.open(model.source)
+                    }
+                    .padding(.horizontal)
+                    
+                    Spacer()
                 }
             }
             
+            Divider()
+                .padding(.vertical)
         }
         .fileImporter(isPresented: $showImportCatalog, allowedContentTypes: [.folder]) { result in
             guard let result = try? result.get() else { return }
@@ -88,79 +110,79 @@ struct ConfigurationView: View {
     
     var body: some View {
         
-        VStack {
-            HStack {
-                Toggle(isOn: $isLogEnabled) {
-                    Text("Enable Log")
-                        .help("Debug use")
-                }
-                .padding(.trailing)
-                
-                Toggle(isOn: $isDevEnabled) {
-                    Text("Enable Dev")
-                        .help("Debug use")
-                }
-                .padding(.trailing)
-                
-                Toggle(isOn: $isVideoLogEnabled) {
-                    Text("Enable Video Log")
-                        .help("Debug use")
-                }
-                .padding(.trailing)
-                
-                Spacer()
-            }
-            .padding()
-            
-            HStack {
-                Text("Save Folder")
-                
-                Menu(saveFolder) {
-                    Button("/Downloads/Waifu Output") {
-                        saveFolder = "/Downloads/Waifu Output"
+        ScrollView {
+            VStack {
+                HStack {
+                    Toggle(isOn: $isLogEnabled) {
+                        Text("Enable Log")
+                            .help("Debug use")
                     }
-                    Button("Other...") {
-                        let panel = NSOpenPanel()
-                        panel.allowsMultipleSelection = false
-                        panel.canChooseDirectories = true
-                        panel.canChooseFiles = false
-                        panel.canCreateDirectories = true
-                        if panel.runModal() == .OK {
-                            for i in panel.urls {
-                                let item = FinderItem(at: i)
-                                saveFolder = item.path
+                    .padding(.trailing)
+                    
+                    Toggle(isOn: $isDevEnabled) {
+                        Text("Enable Dev")
+                            .help("Debug use")
+                    }
+                    .padding(.trailing)
+                    
+                    Toggle(isOn: $isVideoLogEnabled) {
+                        Text("Enable Video Log")
+                            .help("Debug use")
+                    }
+                    .padding(.trailing)
+                    
+                    Spacer()
+                }
+                .padding()
+                
+                HStack {
+                    Text("Save Folder")
+                    
+                    Menu(saveFolder) {
+                        Button("/Downloads/Waifu Output") {
+                            saveFolder = "/Downloads/Waifu Output"
+                        }
+                        Button("Other...") {
+                            let panel = NSOpenPanel()
+                            panel.allowsMultipleSelection = false
+                            panel.canChooseDirectories = true
+                            panel.canChooseFiles = false
+                            panel.canCreateDirectories = true
+                            if panel.runModal() == .OK {
+                                for i in panel.urls {
+                                    let item = FinderItem(at: i)
+                                    saveFolder = item.path
+                                }
                             }
                         }
                     }
                 }
-            }
-            .padding()
-            
-            HStack {
-                Spacer()
+                .padding()
                 
-                Button("Delete Cache") {
-                    do {
-                        try FinderItem(at: "\(NSHomeDirectory())/tmp").removeFile()
-                    } catch {  }
+                HStack {
+                    Spacer()
+                    
+                    Button("Delete Cache") {
+                        do {
+                            try FinderItem(at: "\(NSHomeDirectory())/tmp").removeFile()
+                        } catch {  }
+                    }
+                    
+                    Text("Cache: \(FinderItem(at: "\(NSHomeDirectory())/tmp").fileSize?.expressAsFileSize() ?? "Empty")")
+                        .foregroundColor(.secondary)
                 }
+                .padding()
                 
-                Text("Cache: \(FinderItem(at: "\(NSHomeDirectory())/tmp").fileSize?.expressAsFileSize() ?? "Empty")")
-                    .foregroundColor(.secondary)
+                Divider()
+                
+                ModelView(model: Model_realsr_ncnn_vulkan())
+                ModelView(model: Model_realcugan_ncnn_vulkan())
+                ModelView(model: Model_realesrgan_ncnn_vulkan())
+                ModelView(model: Model_cain_ncnn_vulkan())
+                ModelView(model: Model_dain_ncnn_vulkan())
+                ModelView(model: Model_rife_ncnn_vulkan())
+                
             }
-            .padding()
-            
-//            Divider()
-//            
-//            List {
-//                ModelView(model: Model_realsr_ncnn_vulkan())
-//                Divider()
-//                ModelView(model: Model_realcugan_ncnn_vulkan())
-//                Divider()
-//                ModelView(model: Model_realesrgan_ncnn_vulkan())
-//            }
-//            .padding()
-            
         }
         .onChange(of: isLogEnabled) { newValue in
             Configuration.main.isLogEnabled = newValue

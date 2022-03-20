@@ -56,23 +56,23 @@ extension Array where Element == WorkItem {
         return self.contains(WorkItem(at: finderItem, type: .image))
     }
     
-    func work(model: ModelCoordinator, status: @escaping ((_ status: String)->()), onStatusProgressChanged: @escaping ((_ progress: Int?, _ total: Int?)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
+    func work(model: ModelCoordinator, task: ShellManager, status: @escaping ((_ status: String)->()), onStatusProgressChanged: @escaping ((_ progress: Int?, _ total: Int?)->()), onProgressChanged: @escaping ((_ progress: Double) -> ()), didFinishOneItem: @escaping ((_ finished: Int, _ total: Int)->()), completion: @escaping (() -> ())) {
         
         func runImageModel(inputItem: FinderItem, outputItem: FinderItem) {
             
             if model.isCaffe {
                 if model.scaleLevel == 4 {
-                    model.runImageModel(input: .path(inputItem), outputItem: inputItem)
-                    model.runImageModel(input: .path(inputItem), outputItem: outputItem)
+                    model.runImageModel(input: .path(inputItem), outputItem: inputItem, task: task)
+                    model.runImageModel(input: .path(inputItem), outputItem: outputItem, task: task)
                 } else if model.scaleLevel == 8 {
-                    model.runImageModel(input: .path(inputItem), outputItem: inputItem)
-                    model.runImageModel(input: .path(inputItem), outputItem: inputItem)
-                    model.runImageModel(input: .path(inputItem), outputItem: outputItem)
+                    model.runImageModel(input: .path(inputItem), outputItem: inputItem, task: task)
+                    model.runImageModel(input: .path(inputItem), outputItem: inputItem, task: task)
+                    model.runImageModel(input: .path(inputItem), outputItem: outputItem, task: task)
                 } else {
-                    model.runImageModel(input: .path(inputItem), outputItem: outputItem)
+                    model.runImageModel(input: .path(inputItem), outputItem: outputItem, task: task)
                 }
             } else {
-                model.runImageModel(input: .path(inputItem), outputItem: outputItem)
+                model.runImageModel(input: .path(inputItem), outputItem: outputItem, task: task)
             }
         }
         
@@ -102,6 +102,7 @@ extension Array where Element == WorkItem {
                 try! finderItemAtImageOutputPath.generateDirectory()
                 
                 runImageModel(inputItem: currentImage.finderItem, outputItem: finderItemAtImageOutputPath)
+                task.wait()
                 
                 backgroundQueue.async {
                     currentImage.progress = 1
@@ -128,7 +129,7 @@ extension Array where Element == WorkItem {
         if !images.isEmpty {
             status("processing images")
             
-            if model.enableConcurrent {
+            if model.enableConcurrent && model.isCaffe {
                 DispatchQueue.concurrentPerform(iterations: images.count) { imageIndex in
                     processImage(imageIndex: imageIndex)
                 }
@@ -136,8 +137,8 @@ extension Array where Element == WorkItem {
                 var imageIndex = 0
                 while imageIndex < images.count {
                     processImage(imageIndex: imageIndex)
-                    
                     imageIndex += 1
+                    onProgressChanged(Double(imageIndex) / Double(images.count))
                 }
             }
             
@@ -247,7 +248,7 @@ extension Array where Element == WorkItem {
                     let factor: Double = model.enableFrameInterpolation ? 2 : 1
                     var colorSpace: CGColorSpace? = nil
                     
-                    DispatchQueue.concurrentPerform(iterations: requiredFramesCount) { frameCounter in
+                    for frameCounter in 0..<requiredFramesCount {
                         autoreleasepool {
                             
                             var sequence = String(frameCounter)
@@ -255,7 +256,7 @@ extension Array where Element == WorkItem {
                             
                             // generate frames
                             guard FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/\(sequence).png").image == nil else {
-                                currentVideo.progress += 1
+                                currentVideo.progress += 1 / factor
                                 onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / totalFrames)
                                 return
                             }
@@ -277,7 +278,13 @@ extension Array where Element == WorkItem {
                                 colorSpace = imageRef?.colorSpace
                             }
                             let thumbnail = NSImage(cgImage: imageRef!, size: NSSize(width: imageRef!.width, height: imageRef!.height))
-                            model.runImageModel(input: .image(thumbnail), outputItem: FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/\(sequence).png"))
+                            model.runImageModel(input: .image(thumbnail), outputItem: FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/\(sequence).png"), task: task)
+                            task.wait()
+                            print("waited")
+                            
+                            do { try FinderItem(at: "\(NSHomeDirectory())/tmp/vulkan/input").removeFile() } catch { print(error) }
+                            currentVideo.progress += 1 / factor
+                            onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / totalFrames)
                         }
                     }
                     
@@ -285,7 +292,7 @@ extension Array where Element == WorkItem {
                         onStatusProgressChanged(nil, nil)
                         var frameCounter = 0
                         
-                        while frameCounter < requiredFramesCount {
+                        while frameCounter < FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames").children!.count {
                             autoreleasepool {
                                 
                                 var sequence = String(frameCounter)
@@ -319,7 +326,16 @@ extension Array where Element == WorkItem {
                                 try! FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/\(sequence).png").copy(to: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(processedSequence).png")
                                 
                                 if FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(intermediateSequence).png").image == nil {
-                                    model.runFrameModel(input1: .path(FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/\(previousSequence).png")), input2: .path(FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/\(sequence).png")), outputPath: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(intermediateSequence).png")
+                                    let item1 = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/\(previousSequence).png")
+                                    let item2 = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/\(sequence).png")
+                                    let output = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(intermediateSequence).png")
+                                    
+                                    if item1.image?.tiffRepresentation == item2.image?.tiffRepresentation {
+                                        try! item1.copy(to: output.path)
+                                    } else {
+                                        model.runFrameModel(input1: item1.path, input2: item2.path, outputPath: output.path, task: task)
+                                        task.wait()
+                                    }
                                 }
                                 
                                 var intermediateSequence1 = String(frameCounter * model.frameInterpolation - model.frameInterpolation / 2 - 1)
@@ -329,15 +345,33 @@ extension Array where Element == WorkItem {
                                 while intermediateSequence3.count < 6 { intermediateSequence3.insert("0", at: intermediateSequence3.startIndex) }
                                 
                                 if model.frameInterpolation == 4 && (FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(intermediateSequence1).png").image == nil || FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(intermediateSequence3).png").image == nil) {
+                                    let item1 = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/\(previousSequence).png")
+                                    let item2 = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(intermediateSequence).png")
+                                    let output = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(intermediateSequence1).png")
+                                    
+                                    if item1.image?.tiffRepresentation == item2.image?.tiffRepresentation {
+                                        try! item1.copy(to: output.path)
+                                    } else {
+                                        model.runFrameModel(input1: item1.path, input2: item2.path, outputPath: output.path, task: task)
+                                        task.wait()
+                                    }
+                                    
+                                    let item3 = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(intermediateSequence).png")
+                                    let item4 = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(processedSequence).png")
+                                    let output2 = FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(intermediateSequence3).png")
+                                    
+                                    if item3.image?.tiffRepresentation == item4.image?.tiffRepresentation {
+                                        try! item3.copy(to: output2.path)
+                                    } else {
+                                        model.runFrameModel(input1: item3.path, input2: item4.path, outputPath: output2.path, task: task)
+                                        task.wait()
+                                    }
                                     
                                     
-                                    model.runFrameModel(input1: .path(FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/splitVideo frames/\(previousSequence).png")), input2: .path(FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(intermediateSequence).png")), outputPath: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(intermediateSequence1).png")
-                                    model.runFrameModel(input1: .path(FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(intermediateSequence).png")), input2: .path(FinderItem(at: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(processedSequence).png")), outputPath: "\(Configuration.main.saveFolder)/tmp/\(filePath)/processed/\(indexSequence)/interpolated frames/\(intermediateSequence3).png")
                                 }
                                 
                                 currentVideo.progress += 1 / Double(requiredFramesCount) / factor / totalSegmentsCount
                                 onProgressChanged(self.reduce(0.0, { $0 + $1.progress }) / Double(totalItemCounter))
-                                
                                 
                                 frameCounter += 1
                             }
@@ -527,44 +561,6 @@ extension FinderItem {
         }
     }
     
-    /// Creates icon at the `folderPath`.
-    static func createIcon(at file: FinderItem) {
-        file.iterated { child in
-            guard child.isFile else { return }
-            var child = child
-            guard (try? child.saveToPNG()) != nil else { return }
-            let absolutePath = child.path
-            
-            let file = absolutePath.split(separator: "/").last!.replacingOccurrences(of: " ", with: "\\ ")
-            let fileName = file[file.startIndex..<file.lastIndex(of: ".")!]
-            let path2 = absolutePath.replacingOccurrences(of: " ", with: "\\ ")
-            
-            _ = shell([
-            """
-            cd \(path2[path2.startIndex..<path2.lastIndex(of: "/")!])
-            mkdir tmp.iconset
-            
-            sips -z 16 16       \(file) --out tmp.iconset/icon_16x16.png
-            sips -z 32 32       \(file) --out tmp.iconset/icon_16x16@2x.png
-            sips -z 32 32       \(file) --out tmp.iconset/icon_32x32.png
-            sips -z 64 64       \(file) --out tmp.iconset/icon_32x32@2x.png
-            sips -z 64 64       \(file) --out tmp.iconset/icon_64x64.png
-            sips -z 128 128     \(file) --out tmp.iconset/icon_64x64@2x.png
-            sips -z 128 128     \(file) --out tmp.iconset/icon_128x128.png
-            sips -z 256 256     \(file) --out tmp.iconset/icon_128x128@2x.png
-            sips -z 256 256     \(file) --out tmp.iconset/icon_256x256.png
-            sips -z 512 512     \(file) --out tmp.iconset/icon_256x256@2x.png
-            sips -z 512 512     \(file) --out tmp.iconset/icon_512x512.png
-            sips -z 1024 1024   \(file) --out tmp.iconset/icon_512x512@2x.png
-            sips -z 1024 1024   \(file) --out tmp.iconset/icon_1024x1024.png
-            
-            iconutil -c icns tmp.iconset -o \(fileName).icns
-            rm -rf tmp.iconset
-            """
-            ])
-        }
-    }
-    
     /// Creates PDF from images in folders.
     static func createPDF(fromFolder folder: FinderItem, outputPath: String = "\(NSHomeDirectory())/Downloads/PDF Output", onChangingItem: ((_ item: FinderItem)->())? = nil) {
         
@@ -603,19 +599,13 @@ extension FinderItem {
         guard document.pageCount != 0  else { return }
         
         let pastePath = outputPath + "/" + folder.fileName + ".pdf"
-        document.write(toFile: FinderItem(at: pastePath).generateOutputPath())
+        
+        var item = FinderItem(at: pastePath)
+        item.generateOutputPath()
+        
+        document.write(toFile: item.path)
         
 //        FinderItem(at: outputPath).setIcon(image: NSImage(named: "pdf icon")!)
-    }
-    
-    /// Put all files in different folders into one folder.
-    static func putFilesToOneFolder(from folder: FinderItem) {
-        folder.iterated { child in
-            guard child.isFile else { return }
-            let newPath = child.relativePath(to: folder)!.replacingOccurrences(of: "/", with: " - ")
-            let pastePath = folder.path + "/" + newPath
-            try! child.copy(to: FinderItem(at: pastePath).generateOutputPath())
-        }
     }
     
     /// Merges video and sound while keeping sound of the video too
