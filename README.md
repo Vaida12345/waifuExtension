@@ -1,8 +1,6 @@
 # waifuExtension
 The waifu2x on Mac.
 
-The Waifu2x Model is capable of taking advantages of CPU, GPU, and [ANE](https://github.com/hollance/neural-engine).
-
 ## Usage
 - Enlarge videos or images with machine learning on Mac.
 - Interpolate frames for videos.
@@ -33,7 +31,7 @@ Other models are:
  - [rife-ncnn-vulkan](https://github.com/nihui/rife-ncnn-vulkan)
 
 ## Note
-This app was based on the work of [waifu2x-ios](https://github.com/imxieyi/waifu2x-ios). Nearly all the files in the folder "waifu2x-mac" were created by him. However, modifications were done to improve speed.
+This app was based on the work of [waifu2x-ios](https://github.com/imxieyi/waifu2x-ios). Nearly all the files in the folder "waifu2x-mac" were created by him. Nevertheless, modifications were done to improve speed.
 
 ## Speed
 When processing a standard 1080p image (1920 × 1080) using Waifu2x Caffe, MacBook Pro with the M1 Max chip took only 0.7 seconds.
