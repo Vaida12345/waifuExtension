@@ -1,7 +1,7 @@
 # waifuExtension
 The waifu2x on Mac.
 
-The new version is capable of taking advantages of CPU, GPU, and [ANE](https://github.com/hollance/neural-engine).
+The Waifu2x Model is capable of taking advantages of CPU, GPU, and [ANE](https://github.com/hollance/neural-engine).
 
 ## Usage
 - Enlarge videos or images with machine learning on Mac.
