@@ -31,10 +31,12 @@ Other models are:
  - [rife-ncnn-vulkan](https://github.com/nihui/rife-ncnn-vulkan)
 
 ## Note
-This app was based on the work of [waifu2x-ios](https://github.com/imxieyi/waifu2x-ios). Nearly all the files in the folder "waifu2x-mac" were created by him. Nevertheless, modifications were done to improve speed.
+The waifu2x model of this app was based on the work of [waifu2x-ios](https://github.com/imxieyi/waifu2x-ios). Nearly all the files in the folder "waifu2x-mac" were created by him. Nevertheless, modifications were done to improve speed.
+
+The other models are simply executable file releases from their authors.
 
 ## Speed
-When processing a standard 1080p image (1920 × 1080) using Waifu2x Caffe, MacBook Pro with the M1 Max chip took only 0.7 seconds.
+When processing a standard 1080p image (1920 × 1080) using Waifu2x, MacBook Pro with the M1 Max chip took only 0.7 seconds.
 
 ## Interface
 This app was written with [SwiftUI](https://developer.apple.com/xcode/swiftui/).
