@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import AppKit
 
 protocol InstalledModel: Hashable {
     
@@ -17,13 +18,19 @@ protocol InstalledModel: Hashable {
 
 extension InstalledModel {
     
+    var rootPath: String {
+        var manager = StorageManager(path: NSHomeDirectory() + "/recorderData.json")
+        manager.decode()
+        return manager[rawName] ?? ""
+    }
+    
     /// The finderItem which determines where the program is.
     var programFolderItem: FinderItem {
-        FinderItem(at: Bundle.main.bundlePath + "/Contents/Resources/\(self.rawName)")
+        FinderItem(at: "\(rootPath)")
     }
     
     var programItem: FinderItem {
-        return FinderItem(at: Bundle.main.bundlePath + "/Contents/Resources/\(self.rawName)/\(self.rawName)")
+        return FinderItem(at: "\(rootPath)/\(self.rawName)")
     }
     
 }
@@ -78,7 +85,7 @@ struct Model_rife_ncnn_vulkan: InstalledFrameModel {
     var modelNameOptions: [String] {
         ["rife", "rife-HD", "rife-UHD", "rife-anime", "rife-v2", "rife-v2.3", "rife-v2.4", "rife-v3.0", "rife-v3.1", "rife-v4"]
     }
- 
+    
     var enableTTA: Bool = true
     var enableUHD: Bool = true
     

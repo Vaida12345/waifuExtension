@@ -47,26 +47,20 @@ struct ContentView: View {
                 }
             }
         }
-        .onDrop(of: [.fileURL], isTargeted: nil) { providers in
-            isShowingLoadingView = true
-            DispatchQueue(label: "background", qos: .userInitiated).async {
-                for i in providers {
-                    i.loadItem(forTypeIdentifier: "public.file-url", options: nil) { urlData, error in
-                        guard error == nil else { return }
-                        guard let urlData = urlData as? Data else { return }
-                        guard let url = URL(dataRepresentation: urlData, relativeTo: nil) else { return }
-                        
-                        let item = FinderItem(at: url)
-                        finderItems = addItemIfPossible(of: item, to: finderItems)
-                        
-                        if i == providers.last {
-                            isShowingLoadingView = false
-                        }
-                    }
+        .onDrop(of: [.fileURL], isTargeted: nil, perform: { providers in
+            Task {
+                isShowingLoadingView = true
+                var items: [FinderItem] = []
+                await items.append(from: providers) {
+                    $0.image != nil || $0.avAsset != nil
                 }
+                self.finderItems.append(contentsOf: items.map{ WorkItem(at: $0, type: $0.image != nil ? .image : .video) })
+                
+                isShowingLoadingView = false
             }
+            
             return true
-        }
+        })
         .onChange(of: gridNumber, perform: { newValue in
             Configuration.main.gridNumber = newValue
             Configuration.main.write()
@@ -110,16 +104,20 @@ struct ContentView: View {
                     value: $gridNumber,
                     in: 1...8,
                     minimumValueLabel:
-                        Text("􀏅")
-                        .font(.system(size: 8))
+                        Image(systemName: "photo.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 12)
                         .onTapGesture(perform: {
                             withAnimation {
                                 gridNumber = 1.6
                             }
                         }),
                     maximumValueLabel:
-                        Text("􀏅")
-                        .font(.system(size: 16))
+                        Image(systemName: "photo.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 20)
                         .onTapGesture(perform: {
                             withAnimation {
                                 gridNumber = 1.6
@@ -138,9 +136,12 @@ struct ContentView: View {
                     if panel.runModal() == .OK {
                         isShowingLoadingView = true
                         DispatchQueue(label: "background", qos: .userInitiated).async {
-                            for i in panel.urls {
-                                finderItems = addItemIfPossible(of: FinderItem(at: i), to: finderItems)
+                            var items: [FinderItem] = []
+                            items.append(from: panel.urls) {
+                                $0.image != nil || $0.avAsset != nil
                             }
+                            self.finderItems.append(contentsOf: items.map{ WorkItem(at: $0, type: $0.image != nil ? .image : .video) })
+                            
                             isShowingLoadingView = false
                         }
                     }
@@ -190,9 +191,12 @@ struct welcomeView: View {
             if panel.runModal() == .OK {
                 isShowingLoadingView = true
                 DispatchQueue(label: "background", qos: .userInitiated).async {
-                    for i in panel.urls {
-                        finderItems = addItemIfPossible(of: FinderItem(at: i), to: finderItems)
+                    var items: [FinderItem] = []
+                    items.append(from: panel.urls) {
+                        $0.image != nil || $0.avAsset != nil
                     }
+                    self.finderItems.append(contentsOf: items.map{ WorkItem(at: $0, type: $0.image != nil ? .image : .video) })
+                    
                     isShowingLoadingView = false
                 }
             }
@@ -516,11 +520,18 @@ struct SpecificationsView: View {
                 
                 Spacer()
                 
-                if let storageRequired = storageRequired, !finderItems.allSatisfy({ $0.type == .image }) {
-                    Text("Estimated Storage required: \(storageRequired)")
+                if let storageRequired = storageRequired, !finderItems.allSatisfy({ $0.type == .image }) && !model.enableMemoryOnly {
+                    Text("Storage: \(storageRequired)")
                         .foregroundColor(.secondary)
                         .padding(.trailing)
                         .help("Storage required when processing the videos.\nIf you can not afford, lower the video segment length.")
+                }
+                
+                if model.imageModel == .caffe && model.scaleLevel == 2 && !model.enableFrameInterpolation && finderItems.contains{ $0.type == .video } {
+                    Toggle(isOn: $model.enableMemoryOnly) {
+                        Text("Memory Only")
+                            .help("Use this option only if you are certain it is safe to keep all the intermediate images in the memory.")
+                    }
                 }
                 
                 Button {
@@ -575,6 +586,13 @@ struct SpecificationsView: View {
                 }
             }
         }
+        .onChange(of: model.enableFrameInterpolation) { newValue in
+            if newValue {
+                model.frameInterpolation = 2
+            } else {
+                model.frameInterpolation = 1
+            }
+        }
         
     }
     
@@ -603,6 +621,8 @@ struct ProcessingView: View {
     @State var isShowingReplace = false
     
     @State var task = ShellManager()
+    
+    let progressManager: ProgressManager = .init()
     
     var background: DispatchQueue = DispatchQueue(label: "background", qos: .utility)
     
@@ -772,32 +792,37 @@ struct ProcessingView: View {
         }
             .padding(.all)
             .frame(width: 600, height: 350)
-            .onAppear {
+            .task {
                 
-                background.async {
-                    for i in self.finderItems {
-                        if FinderItem(at: Configuration.main.saveFolder).hasChildren, FinderItem(at: Configuration.main.saveFolder).allChildren!.contains(where: { $0.relativePath == i.finderItem.relativePath || $0.relativePath == i.finderItem.name }) {
-                            isShowingReplace = true
-                            return
-                        }
-                    }
-                    
-                    finderItems.work(model: model, task: task) { status in
-                        self.status = status
-                    } onStatusProgressChanged: { progress,total in
-                        if progress != nil {
-                            self.statusProgress = (progress!, total!)
-                        } else {
-                            self.statusProgress = nil
-                        }
-                    } onProgressChanged: { progress in
-                        self.progress = progress
-                    } didFinishOneItem: { finished,total in
-                        processedItemsCounter = finished
-                    } completion: {
-                        isFinished = true
+                progressManager.status = { status in
+                    self.status = status
+                }
+                
+                progressManager.onStatusProgressChanged = { progress,total in
+                    if progress != nil {
+                        self.statusProgress = (progress!, total!)
+                    } else {
+                        self.statusProgress = nil
                     }
                 }
+                
+                progressManager.onProgressChanged = { progress in
+                    self.progress = progress
+                }
+                
+                progressManager.didFinishOneItem = { finished, total in
+                    processedItemsCounter = finished
+                }
+                
+                for i in self.finderItems {
+                    if FinderItem(at: Configuration.main.saveFolder).hasChildren, FinderItem(at: Configuration.main.saveFolder).allChildren!.contains(where: { $0.relativePath == i.finderItem.relativePath || $0.relativePath == i.finderItem.name }) {
+                        isShowingReplace = true
+                        return
+                    }
+                }
+                
+                await finderItems.work(model: model, task: task, manager: progressManager)
+                isFinished = true
                 
             }
             .onReceive(timer) { timer in
@@ -820,7 +845,9 @@ struct ProcessingView: View {
             }
             .confirmationDialog("Quit the app?", isPresented: $isShowingQuitConfirmation) {
                 Button("Quit", role: .destructive) {
-                    task.terminate()
+                    if task.task.isRunning {
+                        task.terminate()
+                    }
                     exit(0)
                 }
                 
@@ -852,22 +879,9 @@ struct ProcessingView: View {
                                 }
                                 isShowingReplace = false
                                 
-                                background.async {
-                                    finderItems.work(model: model, task: task) { status in
-                                        self.status = status
-                                    } onStatusProgressChanged: { progress,total in
-                                        if progress != nil {
-                                            self.statusProgress = (progress!, total!)
-                                        } else {
-                                            self.statusProgress = nil
-                                        }
-                                    } onProgressChanged: { progress in
-                                        self.progress = progress
-                                    } didFinishOneItem: { finished,total in
-                                        processedItemsCounter = finished
-                                    } completion: {
-                                        isFinished = true
-                                    }
+                                Task {
+                                    await finderItems.work(model: model, task: task, manager: progressManager)
+                                    isFinished = true
                                 }
                             } label: {
                                 Text("Skip")
@@ -877,22 +891,10 @@ struct ProcessingView: View {
                             Button() {
                                 isShowingReplace = false
                                 
-                                background.async {
-                                    finderItems.work(model: model, task: task) { status in
-                                        self.status = status
-                                    } onStatusProgressChanged: { progress,total in
-                                        if progress != nil {
-                                            self.statusProgress = (progress!, total!)
-                                        } else {
-                                            self.statusProgress = nil
-                                        }
-                                    } onProgressChanged: { progress in
-                                        self.progress = progress
-                                    } didFinishOneItem: { finished,total in
-                                        processedItemsCounter = finished
-                                    } completion: {
-                                        isFinished = true
-                                    }
+                                Task {
+                                    await finderItems.work(model: model, task: task, manager: progressManager)
+                                    
+                                    isFinished = true
                                 }
                             } label: {
                                 Text("Replace")
@@ -981,7 +983,6 @@ struct ProcessingPDFView: View {
         .onAppear {
             
             DispatchQueue(label: "background").async {
-                isProcessingCancelled = false
                 
                 FinderItem.createPDF(fromFolder: FinderItem(at: "\(Configuration.main.saveFolder)")) { item in
                     currentProcessingItem = item

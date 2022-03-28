@@ -40,7 +40,7 @@ public class Waifu2x {
         }
         
         let fullDate = Date()
-        var logger = Logger(path: "\(Configuration.main.saveFolder)/logs/log.txt")
+        var MyLogger = MyLogger(path: "\(Configuration.main.saveFolder)/logs/log.txt")
         
         self.interrupt = false
         self.block_size = model.caffe.block_size
@@ -180,7 +180,7 @@ public class Waifu2x {
             }
         }
         
-        logger?.addItem(["initial date:", fullDate.distance(to: Date()).description])
+        MyLogger?.addItem(["initial date:", fullDate.distance(to: Date()).description])
         let preparePipeDate = Date()
         
         // Output, takes no time
@@ -220,7 +220,7 @@ public class Waifu2x {
             }
         }
         
-        logger?.addItem(["prepare:", preparePipeDate.distance(to: Date()).description])
+        MyLogger?.addItem(["prepare:", preparePipeDate.distance(to: Date()).description])
         var mlArray: [MLMultiArray] = []
         
         // Start running model
@@ -229,7 +229,7 @@ public class Waifu2x {
         var expheight = fullHeight + 2 * self.shrink_size
         let expanded = fullCG.expand(withAlpha: hasalpha, in: self)
         callback("processing")
-        logger?.addItem(["expendImage:", expendImageDate.distance(to: Date()).description])
+        MyLogger?.addItem(["expendImage:", expendImageDate.distance(to: Date()).description])
         
         let in_pipeDate = Date()
         
@@ -329,7 +329,7 @@ public class Waifu2x {
             mlArray = in_pipeResults.sorted(by: { $0.index < $1.index }).map({ $0.value })
         }
         
-        logger?.addItem(["In Pipe:", in_pipeDate.distance(to: Date()).description])
+        MyLogger?.addItem(["In Pipe:", in_pipeDate.distance(to: Date()).description])
         
         let model_pipelineDate = Date()
         
@@ -348,13 +348,13 @@ public class Waifu2x {
             index += 1
         }
         
-        logger?.addItem("ML:", model_pipelineDate.distance(to: Date()).description)
+        MyLogger?.addItem("ML:", model_pipelineDate.distance(to: Date()).description)
         
         let out_pipelineDate = Date()
         callback("wait_alpha")
         alpha_task?.wait()
         self.out_pipeline.wait()
-        logger?.addItem("outpipe:", out_pipelineDate.distance(to: Date()).description)
+        MyLogger?.addItem("outpipe:", out_pipelineDate.distance(to: Date()).description)
         
         self.model_pipeline = nil
         self.out_pipeline = nil
@@ -374,17 +374,17 @@ public class Waifu2x {
         let cgImage = CGImage(width: out_width, height: out_height, bitsPerComponent: 8, bitsPerPixel: 8 * channels, bytesPerRow: out_width * channels, space: colorSpace, bitmapInfo: CGBitmapInfo.init(rawValue: bitmapInfo), provider: dataProvider, decode: nil, shouldInterpolate: true, intent: CGColorRenderingIntent.defaultIntent)
         let outImage = NSImage(cgImage: cgImage!, size: CGSize(width: out_width, height: out_height))
         callback("finished")
-        logger?.addItem("generateImage:", generateImageDate.distance(to: Date()).description)
+        MyLogger?.addItem("generateImage:", generateImageDate.distance(to: Date()).description)
         
-        logger?.addItem("waifu2x finished with time:", fullDate.distance(to: Date()).description)
-        if Configuration.main.isLogEnabled { logger?.log() }
+        MyLogger?.addItem("waifu2x finished with time:", fullDate.distance(to: Date()).description)
+        if Configuration.main.isLogEnabled { MyLogger?.log() }
         
         return outImage
     }
     
 }
 
-struct Logger {
+struct MyLogger {
     
     let path: String
     

@@ -8,10 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		B40B65A82754B95200AB08D2 /* ComparisonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B40B65A72754B95200AB08D2 /* ComparisonView.swift */; };
-		B412BADC27E6F1BC00B25626 /* Fraction.swift in Sources */ = {isa = PBXBuildFile; fileRef = B412BAD827E6F1BC00B25626 /* Fraction.swift */; };
-		B412BADD27E6F1BC00B25626 /* Support.swift in Sources */ = {isa = PBXBuildFile; fileRef = B412BAD927E6F1BC00B25626 /* Support.swift */; };
-		B412BADE27E6F1BC00B25626 /* FinderItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = B412BADA27E6F1BC00B25626 /* FinderItem.swift */; };
-		B412BADF27E6F1BC00B25626 /* Arithmetical.swift in Sources */ = {isa = PBXBuildFile; fileRef = B412BADB27E6F1BC00B25626 /* Arithmetical.swift */; };
 		B41527FB27555EC80051CE81 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = B41527FA27555EC80051CE81 /* README.md */; };
 		B41527FD27555ECF0051CE81 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = B41527FC27555ECF0051CE81 /* LICENSE */; };
 		B41C473C274AA7850024ECB7 /* waifuExtensionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41C473B274AA7850024ECB7 /* waifuExtensionApp.swift */; };
@@ -45,6 +41,7 @@
 		B437F171275334CB00A1CE41 /* photo_noise0_model.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = B437F158275334CB00A1CE41 /* photo_noise0_model.mlpackage */; };
 		B437F172275334CB00A1CE41 /* upconv_7_anime_style_art_rgb_noise0_scale2.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = B437F159275334CB00A1CE41 /* upconv_7_anime_style_art_rgb_noise0_scale2.mlpackage */; };
 		B437F174275334DB00A1CE41 /* Model_Caffe.swift in Sources */ = {isa = PBXBuildFile; fileRef = B437F173275334DB00A1CE41 /* Model_Caffe.swift */; };
+		B443CBD427F1F8AD00CDA470 /* SetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B443CBD327F1F8AD00CDA470 /* SetupView.swift */; };
 		B445F70027585906004BAE04 /* ConfigurationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B445F6FF27585906004BAE04 /* ConfigurationView.swift */; };
 		B46F2AE8275DB02D002D01CB /* estimateTime.swift in Sources */ = {isa = PBXBuildFile; fileRef = B46F2AE7275DB02D002D01CB /* estimateTime.swift */; };
 		B47664D62753056300FD78EA /* Calculation.metal in Sources */ = {isa = PBXBuildFile; fileRef = B47664D52753056300FD78EA /* Calculation.metal */; };
@@ -66,24 +63,19 @@
 		B49BFDB5274B4BC50046FDDF /* MetalBicubic.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BFD93274B4BC50046FDDF /* MetalBicubic.swift */; };
 		B4ACEA7A27DFB79D00FFC577 /* ModelCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4ACEA7927DFB79D00FFC577 /* ModelCoordinator.swift */; };
 		B4ACEA7C27DFB85E00FFC577 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4ACEA7B27DFB85E00FFC577 /* Models.swift */; };
-		B4ACEA8D27DFBDCC00FFC577 /* dain-ncnn-vulkan in Resources */ = {isa = PBXBuildFile; fileRef = B4ACEA8A27DFBDCC00FFC577 /* dain-ncnn-vulkan */; };
-		B4ACEA8E27DFBDCC00FFC577 /* cain-ncnn-vulkan in Resources */ = {isa = PBXBuildFile; fileRef = B4ACEA8B27DFBDCC00FFC577 /* cain-ncnn-vulkan */; };
-		B4ACEA9727DFC3A700FFC577 /* realsr-ncnn-vulkan in Resources */ = {isa = PBXBuildFile; fileRef = B4ACEA9027DFC3A700FFC577 /* realsr-ncnn-vulkan */; };
-		B4ACEA9927DFC3A700FFC577 /* realesrgan-ncnn-vulkan in Resources */ = {isa = PBXBuildFile; fileRef = B4ACEA9227DFC3A700FFC577 /* realesrgan-ncnn-vulkan */; };
-		B4ACEA9B27DFC3A700FFC577 /* rife-ncnn-vulkan in Resources */ = {isa = PBXBuildFile; fileRef = B4ACEA9427DFC3A700FFC577 /* rife-ncnn-vulkan */; };
-		B4ACEA9C27DFC3A700FFC577 /* realcugan-ncnn-vulkan in Resources */ = {isa = PBXBuildFile; fileRef = B4ACEA9527DFC3A700FFC577 /* realcugan-ncnn-vulkan */; };
 		B4ACEA9F27DFC47A00FFC577 /* ProcessFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4ACEA9E27DFC47A00FFC577 /* ProcessFile.swift */; };
 		B4B406E1275D103B00E2078D /* PNGImageSizeRegressor.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = B4B406E0275D103B00E2078D /* PNGImageSizeRegressor.mlpackage */; };
 		B4B9EFF0274BC50400A8D380 /* UIImage+Reload.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4B9EFEF274BC50400A8D380 /* UIImage+Reload.swift */; };
+		B4C0ECC727F06524000D7665 /* Fraction.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4C0ECC327F06524000D7665 /* Fraction.swift */; };
+		B4C0ECC827F06524000D7665 /* Support.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4C0ECC427F06524000D7665 /* Support.swift */; };
+		B4C0ECC927F06524000D7665 /* FinderItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4C0ECC527F06524000D7665 /* FinderItem.swift */; };
+		B4C0ECCA27F06524000D7665 /* Arithmetical.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4C0ECC627F06524000D7665 /* Arithmetical.swift */; };
 		B4D5166927E435DF00462D84 /* CompareModelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4D5166827E435DF00462D84 /* CompareModelView.swift */; };
+		B4E96BC627EF6CFD00A2D4B1 /* InstalledModelManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4E96BC527EF6CFD00A2D4B1 /* InstalledModelManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		B40B65A72754B95200AB08D2 /* ComparisonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComparisonView.swift; sourceTree = "<group>"; };
-		B412BAD827E6F1BC00B25626 /* Fraction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Fraction.swift; sourceTree = "<group>"; };
-		B412BAD927E6F1BC00B25626 /* Support.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Support.swift; sourceTree = "<group>"; };
-		B412BADA27E6F1BC00B25626 /* FinderItem.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FinderItem.swift; sourceTree = "<group>"; };
-		B412BADB27E6F1BC00B25626 /* Arithmetical.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Arithmetical.swift; sourceTree = "<group>"; };
 		B41527FA27555EC80051CE81 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		B41527FC27555ECF0051CE81 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		B41C4738274AA7850024ECB7 /* waifuExtension.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = waifuExtension.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -119,6 +111,7 @@
 		B437F158275334CB00A1CE41 /* photo_noise0_model.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = photo_noise0_model.mlpackage; sourceTree = "<group>"; };
 		B437F159275334CB00A1CE41 /* upconv_7_anime_style_art_rgb_noise0_scale2.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = upconv_7_anime_style_art_rgb_noise0_scale2.mlpackage; sourceTree = "<group>"; };
 		B437F173275334DB00A1CE41 /* Model_Caffe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Model_Caffe.swift; sourceTree = "<group>"; };
+		B443CBD327F1F8AD00CDA470 /* SetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupView.swift; sourceTree = "<group>"; };
 		B445F6FF27585906004BAE04 /* ConfigurationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationView.swift; sourceTree = "<group>"; };
 		B46F2AE7275DB02D002D01CB /* estimateTime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = estimateTime.swift; sourceTree = "<group>"; };
 		B47664D52753056300FD78EA /* Calculation.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Calculation.metal; sourceTree = "<group>"; };
@@ -141,16 +134,15 @@
 		B49BFD93274B4BC50046FDDF /* MetalBicubic.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MetalBicubic.swift; sourceTree = "<group>"; };
 		B4ACEA7927DFB79D00FFC577 /* ModelCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelCoordinator.swift; sourceTree = "<group>"; };
 		B4ACEA7B27DFB85E00FFC577 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
-		B4ACEA8A27DFBDCC00FFC577 /* dain-ncnn-vulkan */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "dain-ncnn-vulkan"; path = "Installed Models/dain-ncnn-vulkan"; sourceTree = "<group>"; };
-		B4ACEA8B27DFBDCC00FFC577 /* cain-ncnn-vulkan */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "cain-ncnn-vulkan"; path = "Installed Models/cain-ncnn-vulkan"; sourceTree = "<group>"; };
-		B4ACEA9027DFC3A700FFC577 /* realsr-ncnn-vulkan */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "realsr-ncnn-vulkan"; path = "Installed Models/realsr-ncnn-vulkan"; sourceTree = "<group>"; };
-		B4ACEA9227DFC3A700FFC577 /* realesrgan-ncnn-vulkan */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "realesrgan-ncnn-vulkan"; path = "Installed Models/realesrgan-ncnn-vulkan"; sourceTree = "<group>"; };
-		B4ACEA9427DFC3A700FFC577 /* rife-ncnn-vulkan */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "rife-ncnn-vulkan"; path = "Installed Models/rife-ncnn-vulkan"; sourceTree = "<group>"; };
-		B4ACEA9527DFC3A700FFC577 /* realcugan-ncnn-vulkan */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "realcugan-ncnn-vulkan"; path = "Installed Models/realcugan-ncnn-vulkan"; sourceTree = "<group>"; };
 		B4ACEA9E27DFC47A00FFC577 /* ProcessFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessFile.swift; sourceTree = "<group>"; };
 		B4B406E0275D103B00E2078D /* PNGImageSizeRegressor.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = PNGImageSizeRegressor.mlpackage; sourceTree = "<group>"; };
 		B4B9EFEF274BC50400A8D380 /* UIImage+Reload.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIImage+Reload.swift"; sourceTree = "<group>"; };
+		B4C0ECC327F06524000D7665 /* Fraction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Fraction.swift; sourceTree = "<group>"; };
+		B4C0ECC427F06524000D7665 /* Support.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Support.swift; sourceTree = "<group>"; };
+		B4C0ECC527F06524000D7665 /* FinderItem.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FinderItem.swift; sourceTree = "<group>"; };
+		B4C0ECC627F06524000D7665 /* Arithmetical.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Arithmetical.swift; sourceTree = "<group>"; };
 		B4D5166827E435DF00462D84 /* CompareModelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompareModelView.swift; sourceTree = "<group>"; };
+		B4E96BC527EF6CFD00A2D4B1 /* InstalledModelManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstalledModelManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -164,18 +156,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		B412BAD727E6F1BC00B25626 /* Support */ = {
-			isa = PBXGroup;
-			children = (
-				B412BAD827E6F1BC00B25626 /* Fraction.swift */,
-				B412BAD927E6F1BC00B25626 /* Support.swift */,
-				B412BADA27E6F1BC00B25626 /* FinderItem.swift */,
-				B412BADB27E6F1BC00B25626 /* Arithmetical.swift */,
-			);
-			name = Support;
-			path = ../../../../Swift/testRoom/testRoom/Source/Support;
-			sourceTree = "<group>";
-		};
 		B41C472F274AA7850024ECB7 = {
 			isa = PBXGroup;
 			children = (
@@ -199,14 +179,8 @@
 				B4B406E3275D105F00E2078D /* Views */,
 				B4B406DF275D101500E2078D /* SuppportingFiles */,
 				B437F140275334CB00A1CE41 /* Models */,
-				B412BAD727E6F1BC00B25626 /* Support */,
+				B4C0ECC227F06524000D7665 /* Support */,
 				B49BFD6F274B4BC50046FDDF /* waifu2x-mac */,
-				B4ACEA8B27DFBDCC00FFC577 /* cain-ncnn-vulkan */,
-				B4ACEA8A27DFBDCC00FFC577 /* dain-ncnn-vulkan */,
-				B4ACEA9527DFC3A700FFC577 /* realcugan-ncnn-vulkan */,
-				B4ACEA9227DFC3A700FFC577 /* realesrgan-ncnn-vulkan */,
-				B4ACEA9027DFC3A700FFC577 /* realsr-ncnn-vulkan */,
-				B4ACEA9427DFC3A700FFC577 /* rife-ncnn-vulkan */,
 				B4B406E2275D104400E2078D /* Assets */,
 			);
 			path = waifuExtension;
@@ -363,12 +337,26 @@
 			children = (
 				B41C473B274AA7850024ECB7 /* waifuExtensionApp.swift */,
 				B41C473D274AA7850024ECB7 /* ContentView.swift */,
+				B443CBD327F1F8AD00CDA470 /* SetupView.swift */,
 				B4ACEA9E27DFC47A00FFC577 /* ProcessFile.swift */,
 				B40B65A72754B95200AB08D2 /* ComparisonView.swift */,
 				B4D5166827E435DF00462D84 /* CompareModelView.swift */,
 				B445F6FF27585906004BAE04 /* ConfigurationView.swift */,
+				B4E96BC527EF6CFD00A2D4B1 /* InstalledModelManager.swift */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		B4C0ECC227F06524000D7665 /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				B4C0ECC327F06524000D7665 /* Fraction.swift */,
+				B4C0ECC427F06524000D7665 /* Support.swift */,
+				B4C0ECC527F06524000D7665 /* FinderItem.swift */,
+				B4C0ECC627F06524000D7665 /* Arithmetical.swift */,
+			);
+			name = Support;
+			path = ../../../../Swift/testRoom/testRoom/Source/Support;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -432,15 +420,9 @@
 				B483A9D327633F26007381F6 /* icon.icns in Resources */,
 				B41C4743274AA7850024ECB7 /* Preview Assets.xcassets in Resources */,
 				B41C4740274AA7850024ECB7 /* Assets.xcassets in Resources */,
-				B4ACEA9927DFC3A700FFC577 /* realesrgan-ncnn-vulkan in Resources */,
-				B4ACEA9B27DFC3A700FFC577 /* rife-ncnn-vulkan in Resources */,
-				B4ACEA8D27DFBDCC00FFC577 /* dain-ncnn-vulkan in Resources */,
 				B41527FB27555EC80051CE81 /* README.md in Resources */,
-				B4ACEA8E27DFBDCC00FFC577 /* cain-ncnn-vulkan in Resources */,
-				B4ACEA9727DFC3A700FFC577 /* realsr-ncnn-vulkan in Resources */,
 				B49BFDB3274B4BC50046FDDF /* Info.plist in Resources */,
 				B41527FD27555ECF0051CE81 /* LICENSE in Resources */,
-				B4ACEA9C27DFC3A700FFC577 /* realcugan-ncnn-vulkan in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -451,42 +433,44 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B4C0ECC927F06524000D7665 /* FinderItem.swift in Sources */,
 				B46F2AE8275DB02D002D01CB /* estimateTime.swift in Sources */,
 				B437F174275334DB00A1CE41 /* Model_Caffe.swift in Sources */,
 				B49BFDAE274B4BC50046FDDF /* NSImage+Crop.swift in Sources */,
 				B437F165275334CB00A1CE41 /* upconv_7_anime_style_art_rgb_noise2_scale2.mlpackage in Sources */,
 				B40B65A82754B95200AB08D2 /* ComparisonView.swift in Sources */,
 				B437F168275334CB00A1CE41 /* upconv_7_photo_scale2.mlpackage in Sources */,
+				B4E96BC627EF6CFD00A2D4B1 /* InstalledModelManager.swift in Sources */,
 				B437F15E275334CB00A1CE41 /* upconv_7_anime_style_art_rgb_noise3_scale2.mlpackage in Sources */,
 				B437F15C275334CB00A1CE41 /* photo_noise2_model.mlpackage in Sources */,
 				B437F15A275334CB00A1CE41 /* anime_style_art_rgb_noise3_model.mlpackage in Sources */,
 				B4ACEA7A27DFB79D00FFC577 /* ModelCoordinator.swift in Sources */,
 				B49BFD97274B4BC50046FDDF /* NSImage+PNG.swift in Sources */,
-				B412BADD27E6F1BC00B25626 /* Support.swift in Sources */,
 				B437F169275334CB00A1CE41 /* upconv_7_photo_noise1_scale2.mlpackage in Sources */,
 				B437F162275334CB00A1CE41 /* photo_noise3_model.mlpackage in Sources */,
 				B4B9EFF0274BC50400A8D380 /* UIImage+Reload.swift in Sources */,
 				B445F70027585906004BAE04 /* ConfigurationView.swift in Sources */,
-				B412BADC27E6F1BC00B25626 /* Fraction.swift in Sources */,
 				B437F171275334CB00A1CE41 /* photo_noise0_model.mlpackage in Sources */,
 				B437F16E275334CB00A1CE41 /* photo_scale2.mlpackage in Sources */,
-				B412BADF27E6F1BC00B25626 /* Arithmetical.swift in Sources */,
 				B4ACEA9F27DFC47A00FFC577 /* ProcessFile.swift in Sources */,
 				B41E8A1F275CA5B100611371 /* estimateSize.swift in Sources */,
 				B4D5166927E435DF00462D84 /* CompareModelView.swift in Sources */,
 				B49BFDAD274B4BC50046FDDF /* BackgroundTask.swift in Sources */,
 				B49BFDB5274B4BC50046FDDF /* MetalBicubic.swift in Sources */,
+				B4C0ECC827F06524000D7665 /* Support.swift in Sources */,
+				B4C0ECCA27F06524000D7665 /* Arithmetical.swift in Sources */,
 				B437F164275334CB00A1CE41 /* anime_style_art_rgb_noise2_model.mlpackage in Sources */,
 				B49BFD96274B4BC50046FDDF /* MLModel+Prediction.swift in Sources */,
 				B49BFDAB274B4BC50046FDDF /* Bicubic.swift in Sources */,
 				B437F170275334CB00A1CE41 /* upconv_7_photo_noise0_scale2.mlpackage in Sources */,
 				B437F166275334CB00A1CE41 /* anime_style_art_noise1_model.mlpackage in Sources */,
 				B49BFDAA274B4BC50046FDDF /* CGImage+Crop.swift in Sources */,
+				B443CBD427F1F8AD00CDA470 /* SetupView.swift in Sources */,
 				B49BFD94274B4BC50046FDDF /* BackgroundPipeline.swift in Sources */,
 				B41C473E274AA7850024ECB7 /* ContentView.swift in Sources */,
+				B4C0ECC727F06524000D7665 /* Fraction.swift in Sources */,
 				B437F16F275334CB00A1CE41 /* anime_style_art_rgb_noise1_model.mlpackage in Sources */,
 				B437F16B275334CB00A1CE41 /* anime_style_art_rgb_noise0_model.mlpackage in Sources */,
-				B412BADE27E6F1BC00B25626 /* FinderItem.swift in Sources */,
 				B437F15F275334CB00A1CE41 /* anime_style_art_noise2_model.mlpackage in Sources */,
 				B49BFDB1274B4BC50046FDDF /* CGImage+Expand.swift in Sources */,
 				B437F172275334CB00A1CE41 /* upconv_7_anime_style_art_rgb_noise0_scale2.mlpackage in Sources */,
@@ -636,10 +620,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = waifuExtension/waifuExtension.entitlements;
-				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 4.1.1a;
+				CURRENT_PROJECT_VERSION = 4.1.3;
 				DEVELOPMENT_ASSET_PATHS = "\"waifuExtension/Preview Content\"";
 				DEVELOPMENT_TEAM = 3PH93LN984;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -652,7 +636,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0.1;
-				MARKETING_VERSION = 4.1.1;
+				MARKETING_VERSION = 4.1.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Vaida.waifuExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -667,10 +651,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = waifuExtension/waifuExtension.entitlements;
-				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 4.1.1a;
+				CURRENT_PROJECT_VERSION = 4.1.3;
 				DEVELOPMENT_ASSET_PATHS = "\"waifuExtension/Preview Content\"";
 				DEVELOPMENT_TEAM = 3PH93LN984;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -683,7 +667,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0.1;
-				MARKETING_VERSION = 4.1.1;
+				MARKETING_VERSION = 4.1.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Vaida.waifuExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

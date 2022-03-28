@@ -1,0 +1,58 @@
+[
+  {
+    "metadataOutputVersion" : "3.0",
+    "storagePrecision" : "Float32",
+    "outputSchema" : [
+      {
+        "hasShapeFlexibility" : "0",
+        "isOptional" : "0",
+        "dataType" : "Double",
+        "formattedType" : "MultiArray (Double)",
+        "shortDescription" : "",
+        "shape" : "[]",
+        "name" : "conv7",
+        "type" : "MultiArray"
+      }
+    ],
+    "modelParameters" : [
+
+    ],
+    "author" : "lltcggie, Vaida",
+    "specificationVersion" : 1,
+    "license" : "model converted by coremltools from the works of lltcggie",
+    "computePrecision" : "Float16",
+    "isUpdatable" : "0",
+    "availability" : {
+      "macOS" : "10.13",
+      "tvOS" : "11.0",
+      "watchOS" : "4.0",
+      "iOS" : "11.0",
+      "macCatalyst" : "11.0"
+    },
+    "modelType" : {
+      "name" : "MLModelType_neuralNetwork"
+    },
+    "inputSchema" : [
+      {
+        "hasShapeFlexibility" : "0",
+        "isOptional" : "0",
+        "dataType" : "Double",
+        "formattedType" : "MultiArray (Double 3 × 156 × 156)",
+        "shortDescription" : "",
+        "shape" : "[3, 156, 156]",
+        "name" : "input",
+        "type" : "MultiArray"
+      }
+    ],
+    "userDefinedMetadata" : {
+
+    },
+    "generatedClassName" : "upconv_7_photo_noise3_scale2",
+    "neuralNetworkLayerTypeHistogram" : {
+      "Deconvolution" : 1,
+      "ActivationLeakyReLU" : 6,
+      "Convolution" : 6
+    },
+    "method" : "predict"
+  }
+]

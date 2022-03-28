@@ -11,11 +11,27 @@ import SwiftUI
 struct waifuExtensionApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
+    @State var setupManager = StorageManager(path: NSHomeDirectory() + "/setup.plist")
+    @State var isShowingSetup = false
+    
+    var hasSetup: Bool {
+        setupManager.decode()
+        return setupManager["setup"] == "true"
+    }
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .frame(minWidth: 620, idealWidth: 900, maxWidth: .infinity, minHeight: 360, idealHeight: 450, maxHeight: .infinity)
                 .navigationTitle("")
+                .sheet(isPresented: $isShowingSetup) {
+                    SetupView(isShown: $isShowingSetup)
+                }
+                .onAppear {
+                    if !hasSetup {
+                        isShowingSetup = true
+                    }
+                }
         }
         .commands {
             CommandMenu("Compare") {
@@ -28,6 +44,14 @@ struct waifuExtensionApp: App {
                 Button("Compare Models") {
                     CompareModelView()
                         .frame(minWidth: 1200, maxWidth: .infinity, minHeight: 700, maxHeight: .infinity)
+                        .openInWindow(title: "Comparison", sender: self)
+                }
+            }
+            
+            CommandGroup(after: .appSettings) {
+                Button("Model Manager") {
+                    ModelManager()
+                        .frame(minWidth: 800, maxWidth: .infinity, minHeight: 400, maxHeight: .infinity)
                         .openInWindow(title: "Comparison", sender: self)
                 }
             }
@@ -50,14 +74,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         let finderItem = FinderItem(at: "\(NSHomeDirectory())/tmp")
         if finderItem.isExistence {
-            try! finderItem.removeFile()
+            finderItem.removeFile()
         }
     }
     
     func applicationWillTerminate(_ notification: Notification) {
         let finderItem = FinderItem(at: "\(NSHomeDirectory())/tmp")
         if finderItem.isExistence {
-            try! finderItem.removeFile()
+            finderItem.removeFile()
         }
     }
     

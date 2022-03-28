@@ -168,9 +168,7 @@ struct CompareModelImageView: View {
         })
         .onAppear {
             if model != nil {
-                do {
-                    try outputItem!.generateDirectory(isFolder: false)
-                } catch { print(error) }
+                outputItem!.generateDirectory(isFolder: false)
                 runImageModel(inputItem: item, outputItem: outputItem!)
             } else {
                 image = item.image!
@@ -184,22 +182,28 @@ struct CompareModelImageView: View {
         }
         DispatchQueue(label: "CompareModel").async {
             let date = Date()
+            var output: NSImage? = nil
             if model.isCaffe {
+                guard let image = inputItem.image else { return }
+                let waifu2x = Waifu2x()
                 if model.scaleLevel == 4 {
-                    model.runImageModel(input: .path(inputItem), outputItem: inputItem, task: task)
-                    model.runImageModel(input: .path(inputItem), outputItem: outputItem, task: task)
+                    output = waifu2x.run(image, model: model)
+                    output = waifu2x.run(output!.reload(), model: model)
                 } else if model.scaleLevel == 8 {
-                    model.runImageModel(input: .path(inputItem), outputItem: inputItem, task: task)
-                    model.runImageModel(input: .path(inputItem), outputItem: inputItem, task: task)
-                    model.runImageModel(input: .path(inputItem), outputItem: outputItem, task: task)
+                    output = waifu2x.run(image, model: model)
+                    output = waifu2x.run(output!.reload(), model: model)
+                    output = waifu2x.run(output!.reload(), model: model)
                 } else {
-                    model.runImageModel(input: .path(inputItem), outputItem: outputItem, task: task)
+                    output = waifu2x.run(image, model: model)
                 }
             } else {
-                model.runImageModel(input: .path(inputItem), outputItem: outputItem, task: task)
+                model.runImageModel(input: inputItem, outputItem: outputItem, task: task)
+                task.wait()
             }
             
             if let image = outputItem.image {
+                self.image = image
+            } else if let image = output {
                 self.image = image
             }
             self.timeTaken = date.distance(to: Date())

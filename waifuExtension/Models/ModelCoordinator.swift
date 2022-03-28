@@ -8,7 +8,7 @@
 import Foundation
 import AppKit
 
-struct ModelCoordinator: Identifiable {
+struct ModelCoordinator: Identifiable, CustomStringConvertible {
     
     var id: UUID
     
@@ -90,7 +90,7 @@ struct ModelCoordinator: Identifiable {
     var enableFrameInterpolation = false
     
     /// Determines whether interpolate frames, 2 for one time, 4 for two times.
-    var frameInterpolation: Int = 2
+    var frameInterpolation: Int = 1
     
     /// Determines whether `concurrentPerform` is used.
     var enableConcurrent: Bool = true
@@ -101,35 +101,23 @@ struct ModelCoordinator: Identifiable {
         self.id = UUID()
     }
     
-    func runImageModel(input: FileOption, outputItem: FinderItem, task: ShellManager) {
-        
-        func applyInstalledModel<T>(input: NSImage, model: T) where T: InstalledImageModel {
-            let item = FinderItem(at: "\(NSHomeDirectory())/tmp/vulkan/input/\(UUID()).png")
-            try! item.generateDirectory()
-            input.write(to: item.path)
-            
-            model.run(inputItem: item, outputItem: outputItem, task: task)
-        }
-        
-        switch (input, self.imageModel) {
-        case (.image(let image), .caffe):
-            Waifu2x().run(image.reload(), model: self)?.write(to: outputItem.path)
-        case (.path(let path), .caffe):
-            Waifu2x().run(path.image!, model: self)?.write(to: outputItem.path)
-            
-        case (.path(let path), .realcugan_ncnn_vulkan):
-            self.realcugan_ncnn_vulkan.run(inputItem: path, outputItem: outputItem, task: task)
-        case (.path(let path), .realesrgan_ncnn_vulkan):
-            self.realesrgan_ncnn_vulkan.run(inputItem: path, outputItem: outputItem, task: task)
-        case (.path(let path), .realsr_ncnn_vulkan):
-            self.realsr_ncnn_vulkan.run(inputItem: path, outputItem: outputItem, task: task)
-            
-        case (.image(let image), .realcugan_ncnn_vulkan):
-            applyInstalledModel(input: image, model: self.realcugan_ncnn_vulkan)
-        case (.image(let image), .realesrgan_ncnn_vulkan):
-            applyInstalledModel(input: image, model: self.realesrgan_ncnn_vulkan)
-        case (.image(let image), .realsr_ncnn_vulkan):
-            applyInstalledModel(input: image, model: self.realsr_ncnn_vulkan)
+    var description: String {
+        "ModelCoordinate<imageModel: \(imageModel), frameModel: \(frameModel), frameSegmentFrames: \(videoSegmentFrames), scaleLevel: \(scaleLevel), enableFrameInterpolation: \(enableConcurrent), frameInterpolation: \(frameInterpolation), enableConcurrent: \(enableConcurrent)>"
+    }
+    
+    var enableMemoryOnly: Bool = false
+    
+    /// Waifu2x Excluded.
+    func runImageModel(input: FinderItem, outputItem: FinderItem, task: ShellManager) {
+        switch self.imageModel {
+        case .realcugan_ncnn_vulkan:
+            self.realcugan_ncnn_vulkan.run(inputItem: input, outputItem: outputItem, task: task)
+        case .realesrgan_ncnn_vulkan:
+            self.realesrgan_ncnn_vulkan.run(inputItem: input, outputItem: outputItem, task: task)
+        case .realsr_ncnn_vulkan:
+            self.realsr_ncnn_vulkan.run(inputItem: input, outputItem: outputItem, task: task)
+        case .caffe:
+            fatalError("Unexpected, use waifu2x.run instead")
         }
     }
     

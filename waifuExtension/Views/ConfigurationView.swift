@@ -6,100 +6,7 @@
 //
 
 import SwiftUI
-
-struct DoubleText: View {
-    
-    let lhs: String
-    let rhs: String
-    
-    var body: some View {
-        HStack {
-            Text(lhs)
-                .padding(.horizontal)
-            
-            Text(rhs)
-            
-            Spacer()
-        }
-    }
-}
-
-struct ModelView<T>: View where T: InstalledModel {
-    
-    @State var showImportCatalog = false
-    let model: T
-    
-    var body: some View {
-        VStack(alignment: .leading) {
-            Text(model.name)
-                .font(.title)
-                .padding()
-            
-            HStack {
-                DoubleText(lhs: "Installed: ", rhs: model.programFolderItem.isExistence.description)
-                    .padding(.trailing)
-                
-                if model.programItem.isExistence {
-                    DoubleText(lhs: "Size: ", rhs: model.programFolderItem.fileSize?.expressAsFileSize() ?? "unkown")
-                }
-                
-                Spacer()
-            }
-            
-            if model.programItem.isExistence {
-                HStack {
-//                    Button("Remove Model") {
-//                        do {
-//                            try model.programItem.removeFile()
-//                        } catch { print(error) }
-//                    }
-//                    Button("Update Model") {
-//                        showImportCatalog = true
-//                    }
-                    Button("Show in Finder") {
-                        model.programItem.revealInFinder()
-                    }
-                    
-                    Button("Show on Github") {
-                        NSWorkspace.shared.open(model.source)
-                    }
-                    .padding(.horizontal)
-                    
-                    Spacer()
-                }
-                .padding()
-            } else {
-                HStack {
-                    Button("Choose Model") {
-                        showImportCatalog = true
-                    }
-                    .padding(.horizontal)
-                    
-                    Button("Download from Github") {
-                        NSWorkspace.shared.open(model.source)
-                    }
-                    .padding(.horizontal)
-                    
-                    Spacer()
-                }
-            }
-            
-            Divider()
-                .padding(.vertical)
-        }
-        .fileImporter(isPresented: $showImportCatalog, allowedContentTypes: [.folder]) { result in
-            guard let result = try? result.get() else { return }
-            let item = FinderItem(at: result)
-            guard item.isDirectory else { return }
-            guard item.name.contains(model.name) else { return }
-            
-            do {
-                try model.programItem.removeFile()
-                try item.copy(to: model.programItem.path)
-            } catch { print(error) }
-        }
-    }
-}
+import os
 
 struct ConfigurationView: View {
     
@@ -163,25 +70,13 @@ struct ConfigurationView: View {
                     Spacer()
                     
                     Button("Delete Cache") {
-                        do {
-                            try FinderItem(at: "\(NSHomeDirectory())/tmp").removeFile()
-                        } catch {  }
+                        FinderItem(at: "\(NSHomeDirectory())/tmp").removeFile()
                     }
                     
                     Text("Cache: \(FinderItem(at: "\(NSHomeDirectory())/tmp").fileSize?.expressAsFileSize() ?? "Empty")")
                         .foregroundColor(.secondary)
                 }
                 .padding()
-                
-                Divider()
-                
-                ModelView(model: Model_realsr_ncnn_vulkan())
-                ModelView(model: Model_realcugan_ncnn_vulkan())
-                ModelView(model: Model_realesrgan_ncnn_vulkan())
-                ModelView(model: Model_cain_ncnn_vulkan())
-                ModelView(model: Model_dain_ncnn_vulkan())
-                ModelView(model: Model_rife_ncnn_vulkan())
-                
             }
         }
         .onChange(of: isLogEnabled) { newValue in
@@ -201,7 +96,7 @@ struct ConfigurationView: View {
                 }
                 let item = FinderItem(at: Configuration.main.privateSaveFolder)
                 guard item.isExistence else {
-                    try! item.generateDirectory()
+                    item.generateDirectory()
                     return Configuration.main.privateSaveFolder
                 }
                 return Configuration.main.privateSaveFolder
@@ -245,14 +140,14 @@ struct Configuration: Codable {
     var getFolder = ""
     
     static var main: Configuration = { () -> Configuration in
-        if var configuration = try? FinderItem.loadJSON(from: "\(NSHomeDirectory())/configuration.json", type: Configuration.self) {
+        if var configuration = FinderItem.loadJSON(from: "\(NSHomeDirectory())/configuration.json", type: Configuration.self) {
             configuration.getFolder = {()-> String in
                 guard configuration.privateSaveFolder != "/Downloads/Waifu Output" else {
                     return "\(NSHomeDirectory())/Downloads/Waifu Output"
                 }
                 let item = FinderItem(at: configuration.privateSaveFolder)
                 guard item.isExistence else {
-                    try! item.generateDirectory()
+                    item.generateDirectory()
                     return configuration.privateSaveFolder
                 }
                 return configuration.privateSaveFolder
@@ -267,7 +162,7 @@ struct Configuration: Codable {
                 }
                 let item = FinderItem(at: configuration.privateSaveFolder)
                 guard item.isExistence else {
-                    try! item.generateDirectory()
+                    item.generateDirectory()
                     return configuration.privateSaveFolder
                 }
                 return configuration.privateSaveFolder
@@ -281,27 +176,31 @@ struct Configuration: Codable {
     }
     
     func write() {
-        try! FinderItem.saveJSON(self, to: "\(NSHomeDirectory())/configuration.json")
+        FinderItem.saveJSON(self, to: "\(NSHomeDirectory())/configuration.json")
     }
     
     func saveLog(_ value: String) {
+        let logger = Logger()
+        logger.info("\(value)")
         guard self.isVideoLogEnabled else { return }
         let path = self.saveFolder + "/log.txt"
         var content = ""
         if let previousLog = try? String(contentsOfFile: path) {
             content = previousLog
-            try! FinderItem(at: path).removeFile()
+            FinderItem(at: path).removeFile()
         }
         content += value + "\n"
         try! content.write(to: URL(fileURLWithPath: path), atomically: true, encoding: .utf8)
     }
     
     func saveError(_ value: String) {
+        let logger = Logger()
+        logger.error("\(value)")
         let path = self.saveFolder + "/error.txt"
         var content = ""
         if let previousLog = try? String(contentsOfFile: path) {
             content = previousLog
-            try! FinderItem(at: path).removeFile()
+            FinderItem(at: path).removeFile()
         }
         content += value + "\n"
         try! content.write(to: URL(fileURLWithPath: path), atomically: true, encoding: .utf8)

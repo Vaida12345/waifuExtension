@@ -219,7 +219,7 @@ struct ImageView: View {
         formatter.dateStyle = .none
         formatter.timeStyle = .medium
         
-        try! FinderItem(at: "\(NSHomeDirectory())/tmp").generateDirectory()
+        FinderItem(at: "\(NSHomeDirectory())/tmp").generateDirectory()
         
         let path = "\(NSHomeDirectory())/tmp/\(formatter.string(from: Date()))-\(name).png"
         image.write(to: path)
