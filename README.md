@@ -54,6 +54,12 @@ This app was written with [SwiftUI](https://developer.apple.com/xcode/swiftui/).
 You can compare results from different model by choosing Compare > Compare Denoise Levels. Example:
 <img width="1446" alt="Screen Shot 2021-11-29 at 5 58 27 PM" src="https://user-images.githubusercontent.com/91354917/143847147-b6b12fee-9761-4dab-8899-fa49ea02c63f.png">
 
+## Known bugs
+These are the bugs:
+- Can not convert images in HEVC format via models other than Waift2x.
+- Time remaining would cause crash.
+- TaskManager.
+
 ## Credits
  - [waifu2x-ios](https://github.com/imxieyi/waifu2x-ios) for nearly all the algorithms used to enlarge images.
  - [waifu2x-caffe](https://github.com/lltcggie/waifu2x-caffe) for all the models.
