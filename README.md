@@ -56,9 +56,9 @@ You can compare results from different model by choosing Compare > Compare Denoi
 
 ## Known bugs
 These are the bugs:
-- Can not convert images in HEVC format via models other than Waift2x.
+- Can not convert images in HEVC format via models other than Waift2x. (fix in next version)
 - Time remaining would cause crash.
-- TaskManager.
+- TaskManager (fix in next version).
 
 ## Credits
  - [waifu2x-ios](https://github.com/imxieyi/waifu2x-ios) for nearly all the algorithms used to enlarge images.
