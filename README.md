@@ -15,14 +15,12 @@ Note: If mac says the app was damaged / unknown developer, please go to `System 
 ## Privacy
 This app works completely offline and requires no internet connection. Nothing is collected or stored, expect for:
 - Your settings stored in its [containter](https://developer.apple.com/documentation/foundation/1413045-nshomedirectory/).
-- Temp images in during comparison. (These files will be deleted when the windows is closed.)
-- Temp images during processing in its container, the existance would only last for three lines of code, after which it is deleted.
-- Output files and logs (if you turn on "enable log" or "enable dev" in preference) in its output path.
+- Temp images during processing in its [containter](https://developer.apple.com/documentation/foundation/1413045-nshomedirectory/), the existance would only last for three lines of code, after which it is deleted.
 
 If the app crashes, please choose not to share crash log with Apple.
 
 ## Models
-The models where obtained from [waifu2x-caffe](https://github.com/lltcggie/waifu2x-caffe), and translated to coreML via [coremltools](https://github.com/apple/coremltools).
+The waifu2x models where obtained from [waifu2x-caffe](https://github.com/lltcggie/waifu2x-caffe), and translated to coreML via [coremltools](https://github.com/apple/coremltools).
 
 Other models are:
  - [dain-ncnn-vulkan](https://github.com/nihui/dain-ncnn-vulkan)
@@ -43,10 +41,8 @@ This app was written with [SwiftUI](https://developer.apple.com/xcode/swiftui/).
 
 <img width="2000" alt="Interface" src="https://user-images.githubusercontent.com/91354917/158416387-74fb8c62-f38a-4814-b992-6706d4747948.png">
 
-
 ## Preview
 ![Untitled-1](https://user-images.githubusercontent.com/91354917/177736461-f9a15b8e-fdda-4808-bd28-2c53d16e3b2e.png)
-
 
 ## Credits
  - [waifu2x-ios](https://github.com/imxieyi/waifu2x-ios) for nearly all the algorithms used to enlarge images.
