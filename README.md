@@ -39,7 +39,8 @@ When processing a standard 1080p image (1920 × 1080) using Waifu2x Caffe, MacBo
 ## Interface
 This app was written with [SwiftUI](https://developer.apple.com/xcode/swiftui/).
 
-<img width="2000" alt="Interface" src="https://user-images.githubusercontent.com/91354917/158416387-74fb8c62-f38a-4814-b992-6706d4747948.png">
+<img width="2024" alt="Screen Shot 2022-07-07 at 7 16 07 PM" src="https://user-images.githubusercontent.com/91354917/177738899-7d1848e5-83a3-40f9-be21-4cbee768aa95.png">
+
 
 ## Preview
 ![Untitled-1](https://user-images.githubusercontent.com/91354917/177736461-f9a15b8e-fdda-4808-bd28-2c53d16e3b2e.png)
