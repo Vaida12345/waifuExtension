@@ -45,9 +45,8 @@ This app was written with [SwiftUI](https://developer.apple.com/xcode/swiftui/).
 
 
 ## Preview
-<img width="1417" alt="Screen Shot 2021-11-29 at 2 44 41 PM" src="https://user-images.githubusercontent.com/91354917/143820789-45edbf68-a0c5-4478-be80-b26da1a3ce9c.png">
+![Untitled-1](https://user-images.githubusercontent.com/91354917/177736461-f9a15b8e-fdda-4808-bd28-2c53d16e3b2e.png)
 
-<img width="1013" alt="Screen Shot 2022-02-22 at 6 15 29 PM" src="https://user-images.githubusercontent.com/91354917/155111707-9ceff33a-d786-40a6-be7e-836f9475074f.png">
 
 ## Credits
  - [waifu2x-ios](https://github.com/imxieyi/waifu2x-ios) for nearly all the algorithms used to enlarge images.
