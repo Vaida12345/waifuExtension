@@ -1,6 +1,8 @@
 # waifuExtension
 The waifu2x on Mac.
 
+The new version is capable of taking advantages of CPU, GPU, and [ANE](https://github.com/hollance/neural-engine).
+
 ## Usage
 - Enlarge videos or images with machine learning on Mac.
 - Interpolate frames for videos.
@@ -31,12 +33,10 @@ Other models are:
  - [rife-ncnn-vulkan](https://github.com/nihui/rife-ncnn-vulkan)
 
 ## Note
-The waifu2x model of this app was based on the work of [waifu2x-ios](https://github.com/imxieyi/waifu2x-ios). Nearly all the files in the folder "waifu2x-mac" were created by him. Nevertheless, modifications were done to improve speed.
-
-The other models are simply executable file releases from their authors.
+This app was based on the work of [waifu2x-ios](https://github.com/imxieyi/waifu2x-ios). Nearly all the files in the folder "waifu2x-mac" were created by him. However, modifications were done to improve speed.
 
 ## Speed
-When processing a standard 1080p image (1920 × 1080) using Waifu2x, MacBook Pro with the M1 Max chip took only 0.7 seconds.
+When processing a standard 1080p image (1920 × 1080) using Waifu2x Caffe, MacBook Pro with the M1 Max chip took only 0.7 seconds.
 
 ## Interface
 This app was written with [SwiftUI](https://developer.apple.com/xcode/swiftui/).
@@ -53,7 +53,6 @@ This app was written with [SwiftUI](https://developer.apple.com/xcode/swiftui/).
 ## Denoise Level
 You can compare results from different model by choosing Compare > Compare Denoise Levels. Example:
 <img width="1446" alt="Screen Shot 2021-11-29 at 5 58 27 PM" src="https://user-images.githubusercontent.com/91354917/143847147-b6b12fee-9761-4dab-8899-fa49ea02c63f.png">
-
 
 ## Credits
  - [waifu2x-ios](https://github.com/imxieyi/waifu2x-ios) for nearly all the algorithms used to enlarge images.
