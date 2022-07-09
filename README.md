@@ -15,14 +15,12 @@ Note: If mac says the app was damaged / unknown developer, please go to `System 
 ## Privacy
 This app works completely offline and requires no internet connection. Nothing is collected or stored, expect for:
 - Your settings stored in its [containter](https://developer.apple.com/documentation/foundation/1413045-nshomedirectory/).
-- Temp images in during comparison. (These files will be deleted when the windows is closed.)
-- Temp images during processing in its container, the existance would only last for three lines of code, after which it is deleted.
-- Output files and logs (if you turn on "enable log" or "enable dev" in preference) in its output path.
+- Temp images during processing in its [containter](https://developer.apple.com/documentation/foundation/1413045-nshomedirectory/), the existance would only last for three lines of code, after which it is deleted.
 
 If the app crashes, please choose not to share crash log with Apple.
 
 ## Models
-The models where obtained from [waifu2x-caffe](https://github.com/lltcggie/waifu2x-caffe), and translated to coreML via [coremltools](https://github.com/apple/coremltools).
+The waifu2x models where obtained from [waifu2x-caffe](https://github.com/lltcggie/waifu2x-caffe), and translated to coreML via [coremltools](https://github.com/apple/coremltools).
 
 Other models are:
  - [dain-ncnn-vulkan](https://github.com/nihui/dain-ncnn-vulkan)
@@ -41,18 +39,11 @@ When processing a standard 1080p image (1920 × 1080) using Waifu2x Caffe, MacBo
 ## Interface
 This app was written with [SwiftUI](https://developer.apple.com/xcode/swiftui/).
 
-<img width="2000" alt="Interface" src="https://user-images.githubusercontent.com/91354917/158416387-74fb8c62-f38a-4814-b992-6706d4747948.png">
+<img width="2024" alt="Screen Shot 2022-07-07 at 7 16 07 PM" src="https://user-images.githubusercontent.com/91354917/177738899-7d1848e5-83a3-40f9-be21-4cbee768aa95.png">
 
 
 ## Preview
-<img width="1417" alt="Screen Shot 2021-11-29 at 2 44 41 PM" src="https://user-images.githubusercontent.com/91354917/143820789-45edbf68-a0c5-4478-be80-b26da1a3ce9c.png">
-
-<img width="1013" alt="Screen Shot 2022-02-22 at 6 15 29 PM" src="https://user-images.githubusercontent.com/91354917/155111707-9ceff33a-d786-40a6-be7e-836f9475074f.png">
-
-
-## Denoise Level
-You can compare results from different model by choosing Compare > Compare Denoise Levels. Example:
-<img width="1446" alt="Screen Shot 2021-11-29 at 5 58 27 PM" src="https://user-images.githubusercontent.com/91354917/143847147-b6b12fee-9761-4dab-8899-fa49ea02c63f.png">
+![Untitled-1](https://user-images.githubusercontent.com/91354917/177736461-f9a15b8e-fdda-4808-bd28-2c53d16e3b2e.png)
 
 ## Credits
  - [waifu2x-ios](https://github.com/imxieyi/waifu2x-ios) for nearly all the algorithms used to enlarge images.

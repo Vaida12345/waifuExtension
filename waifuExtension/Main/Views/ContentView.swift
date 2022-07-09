@@ -24,7 +24,7 @@ struct ContentView: View {
     var body: some View {
         VStack {
             if images.items.isEmpty {
-                DropView { resultItems in
+                DropView(prompt: "Drag files or folder.") { resultItems in
                     Task {
                         await self.images.append(from: resultItems)
                     }
@@ -57,10 +57,10 @@ struct ContentView: View {
             return true
         }
         .sheet(isPresented: $isSheetShown) {
-            SpecificationsView(containVideo: self.images.items.contains{ $0.type == .video }, isShown: $isSheetShown, isProcessing: $isProcessing, images: images)
+            SpecificationsView(containVideo: self.images.items.contains{ $0.type == .video }, isProcessing: $isProcessing, images: images)
         }
         .sheet(isPresented: $isProcessing) {
-            ProcessingView(isProcessing: $isProcessing, isSheetShown: $isSheetShown, images: images)
+            ProcessingView(images: images)
         }
         .toolbar {
             ToolbarItem(placement: .navigation) {
@@ -72,14 +72,14 @@ struct ContentView: View {
             }
 
             ToolbarItemGroup {
-                Button(action: {
+                Button {
                     withAnimation(.spring()) {
                         aspectRatio.toggle()
                     }
-                }, label: {
+                } label: {
                     Label("", systemImage: aspectRatio ? "rectangle.arrowtriangle.2.outward" : "rectangle.arrowtriangle.2.inward")
                         .labelStyle(.iconOnly)
-                })
+                }
                 .help("Show thumbnails as square or in full aspect ratio.")
 
                 Slider(
@@ -90,23 +90,23 @@ struct ContentView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 12)
-                        .onTapGesture(perform: {
+                        .onTapGesture {
                             withAnimation {
                                 gridNumber = 1.6
                             }
-                        }),
+                        },
                     maximumValueLabel:
                         Image(systemName: "photo.fill")
                         .resizable()
                         .scaledToFit()
                         .frame(width: 20)
-                        .onTapGesture(perform: {
+                        .onTapGesture {
                             withAnimation {
                                 gridNumber = 1.6
                             }
-                        })
+                        }
                 ) {
-                    Text("Grid Item Count\nTap to restore default.")
+                    Text("Grid Item Count.")
                 }
                 .frame(width: 150)
                 .help("Set the size of each thumbnail.")
@@ -122,9 +122,7 @@ struct ContentView: View {
                     }
                 }
                 .help("Add another item.")
-            }
-
-            ToolbarItem(placement: .confirmationAction) {
+                
                 Button("Done") {
                     isSheetShown = true
                 }

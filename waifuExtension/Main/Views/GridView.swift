@@ -42,7 +42,7 @@ struct GridItemView: View {
                             if item.type == .video {
                                 value += "\nlength: \(item.finderItem.avAsset?.duration.seconds.expressedAsTime() ?? "0s")"
                             }
-                            return value
+                            return .init(value)
                         } else {
                             return """
                         Loading...

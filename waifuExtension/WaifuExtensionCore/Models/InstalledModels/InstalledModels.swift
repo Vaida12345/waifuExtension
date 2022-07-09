@@ -9,6 +9,7 @@ import Foundation
 import AppKit
 import Support
 import UniformTypeIdentifiers
+import os
 
 public protocol InstalledModel: Codable, Hashable {
     
@@ -43,7 +44,7 @@ public extension InstalledModel {
         }
         
         if !isReadable {
-            let destination = FinderItem.temporaryDirectory.with(subPath: "\(UUID()).png")
+            let destination = FinderItem.temporaryDirectory.with(subPath: "\(input.fileName).png")
             destination.data = input.image?.data(with: .png)
             input.path = destination.path
         }
@@ -162,7 +163,6 @@ public struct Model_RealCUGAN: InstalledImageModel {
     public func run(inputItem: FinderItem, outputItem: FinderItem, task: ShellManager) {
         Self.preProsess(input: inputItem)
         task.run(arguments: "cd \(Self.programFolderItem.shellPath); ./\(Self.rawName) -i \(inputItem.shellPath) -o \(outputItem.shellPath) -n \(self.denoiseLevel) -s \(self.scaleLevel) -m \(self.modelName) \(self.enableTTA ? "-x" : "")")
-        
     }
 }
 
@@ -194,7 +194,6 @@ public struct Model_RealESRGAN: InstalledImageModel {
     public func run(inputItem: FinderItem, outputItem: FinderItem, task: ShellManager) {
         Self.preProsess(input: inputItem)
         task.run(arguments: "cd \(Self.programFolderItem.shellPath); ./\(Self.rawName) -i \(inputItem.shellPath) -o \(outputItem.shellPath) -n \(self.denoiseLevel) -s \(self.scaleLevel) -n \(self.modelName) \(self.enableTTA ? "-x" : "")")
-        print( "cd \(Self.programFolderItem.shellPath); ./\(Self.rawName) -i \(inputItem.shellPath) -o \(outputItem.shellPath) -n \(self.denoiseLevel) -s \(self.scaleLevel) -n \(self.modelName) \(self.enableTTA ? "-x" : "")")
     }
 }
 

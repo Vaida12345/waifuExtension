@@ -46,9 +46,6 @@ class BackgroundPipeline <T> {
             
             var index = 0
             while index < self.count {
-                if waifu2x.interrupt {
-                    break
-                }
                 autoreleasepool {
                     self.work_sem.wait()
                     task(index, self.queue.dequeue()!)

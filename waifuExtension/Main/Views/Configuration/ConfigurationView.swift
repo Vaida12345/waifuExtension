@@ -27,6 +27,8 @@ struct ConfigurationView: View {
                         outputPath = .downloadsDirectory.with(subPath: "waifu Output")
                     }
                     
+                    Divider()
+                    
                     Button("Other...") {
                         isShowingImportDialog = true
                     }
@@ -53,7 +55,19 @@ struct ConfigurationView: View {
                 
                 Spacer()
                 
-                Text("Cache: \(FinderItem.temporaryDirectory.hasChildren ? FinderItem.temporaryDirectory.fileSize?.expressAsFileSize() ?? "Empty" : "Empty")")
+//                Button("show bias") {
+//                    for stage in BiasRecorder.Stage.allCases {
+//                        print("\(stage): \(BiasRecorder.bias(of: stage))")
+//                    }
+//                }
+                
+                Text {
+                    if let size = FinderItem.temporaryDirectory.fileSize, size > 0 {
+                        return "Cache: \(size.expressAsFileSize())"
+                    } else {
+                        return "Cache: Empty"
+                    }
+                }
                     .foregroundColor(.secondary)
                 
                 Button("Delete Cache") {

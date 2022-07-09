@@ -10,11 +10,14 @@ import AppKit
 import Support
 import os
 
-@dynamicMemberLookup final public class ModelCoordinator: DataProvider {
+public final class ModelCoordinator: DataProvider {
     
-    @Published public var content = _ModelCoordinator(imageModel: .caffe, frameModel: .cain)
+    public typealias Container = _ModelCoordinator
     
-    public static var main: ModelCoordinator = .decode(from: .preferencesDirectory.with(subPath: "model coordinator.json"))
+    @Published public var container: Container
+    
+    /// The main ``DataProvider`` to work with.
+    public static var main = ModelCoordinator()
     
     public static var allInstalledImageModels: [any InstalledImageModel.Type] {
         [Model_RealSR.self, Model_RealCUGAN.self, Model_RealESRGAN.self]
@@ -28,45 +31,18 @@ import os
         allInstalledFrameModels + allInstalledImageModels
     }
     
-    public init() { }
-    
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(content)
-    }
-    
-    public static func == (lhs: ModelCoordinator, rhs: ModelCoordinator) -> Bool {
-        lhs.content == rhs.content
-    }
-    
-    public subscript<Subject>(dynamicMember keyPath: WritableKeyPath<_ModelCoordinator, Subject>) -> Subject {
-        get { content[keyPath: keyPath] }
-        set { content[keyPath: keyPath] = newValue }
-    }
-    
-    public subscript<Subject>(dynamicMember keyPath: KeyPath<_ModelCoordinator, Subject>) -> Subject {
-        content[keyPath: keyPath]
-    }
-    
-    //MARK: - Codable
-    
-    enum CodingKeys: CodingKey {
-        case content
-    }
-    
-    public init(from decoder: Decoder) throws {
-        let container: KeyedDecodingContainer<ModelCoordinator.CodingKeys> = try decoder.container(keyedBy: ModelCoordinator.CodingKeys.self)
-        
-        self.content = try container.decode(_ModelCoordinator.self, forKey: ModelCoordinator.CodingKeys.content)
-        
-    }
-    
-    final public func encode(to encoder: Encoder) throws {
-        var container: KeyedEncodingContainer<ModelCoordinator.CodingKeys> = encoder.container(keyedBy: ModelCoordinator.CodingKeys.self)
-        
-        try container.encode(self.content, forKey: ModelCoordinator.CodingKeys.content)
+    /// Load contents from disk, otherwise initialize with the default parameters.
+    public init() {
+        if let container = ModelCoordinator.decoded() {
+            self.container = container
+        } else {
+            self.container = Container(imageModel: .caffe, frameModel: .cain)
+            save()
+        }
     }
     
 }
+
 
 public struct _ModelCoordinator: CustomStringConvertible, Codable, Hashable, Equatable {
     
@@ -157,6 +133,17 @@ public struct _ModelCoordinator: CustomStringConvertible, Codable, Hashable, Equ
     public var cain = Model_CAIN()
     public var dain = Model_DAIN()
     public var rife = Model_RIFE()
+    
+    public var chosenFrameModel: (any InstalledFrameModel.Type)? {
+        switch frameModel {
+        case .rife:
+            return Model_RIFE.self
+        case .cain:
+            return Model_CAIN.self
+        case .dain:
+            return Model_DAIN.self
+        }
+    }
     
     public var enableFrameInterpolation = false
     

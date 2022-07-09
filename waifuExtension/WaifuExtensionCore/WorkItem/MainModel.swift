@@ -23,7 +23,7 @@ public final class MainModel: ObservableObject {
                 guard !items.contains(item) else { return nil }
                 if item.image != nil {
                     return WorkItem(at: item, type: .image)
-                } else if item.avAsset != nil {
+                } else if item.avAsset?.videoTrack != nil {
                     return WorkItem(at: item, type: .video)
                 } else {
                     return nil
@@ -69,18 +69,17 @@ public final class MainModel: ObservableObject {
             logger.info("Processing Images")
             
             if model.enableConcurrent && model.isCaffe {
-                await Task {
+                await asyncAutoreleasepool {
                     DispatchQueue.concurrentPerform(iterations: images.count) { imageIndex in
                         processImage(imageIndex: imageIndex)
                     }
-                }.value
+                }
             } else {
                 distributeAssignments(iterations: images.count) { imageIndex in
                     processImage(imageIndex: imageIndex)
                 }
             }
             
-            manager.status("Finished Processing Images")
             logger.info("Finished Processing Images")
         }
         
@@ -91,7 +90,7 @@ public final class MainModel: ObservableObject {
         }
         logger.info("Processing Videos")
         
-        manager.status("processing videos")
+        manager.status("Processing videos")
         
         for currentVideo in videos {
             // Use this to prevent memory leak
@@ -146,12 +145,14 @@ public final class MainModel: ObservableObject {
                 try! output?.write(to: finderItemAtImageOutputPath)
             } else {
                 let newTask = task.addManager()
-                model.content.runImageModel(input: currentImage.finderItem, outputItem: finderItemAtImageOutputPath, task: newTask)
+                model.container.runImageModel(input: currentImage.finderItem, outputItem: finderItemAtImageOutputPath, task: newTask)
                 newTask.onOutputChanged { newLine in
-                    logger.info("\(newLine)")
-                    guard let value = inferenceProgress(newLine) else { return }
-                    guard value <= 1 && value >= 0 else { return }
-                    manager.images[currentImage]?.progress = value
+                    Task { @MainActor  in
+                        print(newLine)
+                        guard let value = inferenceProgress(newLine) else { return }
+                        guard value <= 1 && value >= 0 else { return }
+                        manager.images[currentImage]?.progress = value
+                    }
                 }
                 newTask.wait()
                 logger.info("\(newTask.output() ?? "")")
@@ -170,7 +171,7 @@ public final class MainModel: ObservableObject {
             if model.enableMemoryOnly {
                 // uses only memory
                 
-                manager.status("generating frames")
+                manager.status("Generating frames for \(currentVideo.fileName)")
                 
                 let output = ArrayContainer<NSImage>()
                 var firstFrame: NSImage?
@@ -193,19 +194,19 @@ public final class MainModel: ObservableObject {
                 
                 DispatchQueue(label: "adder").sync { }
                 
-                manager.status("Converting frames to video")
+                manager.status("Converting frames to video for \(currentVideo.fileName)")
                 
                 await FinderItem.convertImageSequenceToVideo(output.contents, videoPath: destinationFinderItem.path, videoSize: output.first!.pixelSize!, videoFPS: currentVideo.finderItem.avAsset!.frameRate!, colorSpace: firstFrame?.cgImage(forProposedRect: nil, context: nil, hints: nil)?.colorSpace)
                 
-                manager.status("Merging video with audio")
+                manager.status("Merging video with audio for \(currentVideo.fileName)")
                 await FinderItem.mergeVideoWithAudio(videoUrl: destinationFinderItem.url, audioUrl: currentVideo.finderItem.url)
                 
-                manager.status("Completed")
+                manager.status("\(currentVideo.fileName) Completed")
                 
                 return
             }
             
-            manager.status("generating audio for \(filePath)")
+            manager.status("Generating audio for \(currentVideo.fileName)")
             outputPath.with(subPath: "tmp/\(filePath)").generateDirectory(isFolder: true)
             let audioPath = outputPath.with(subPath: "tmp/\(filePath)/audio.m4a")
             do {
@@ -218,8 +219,8 @@ public final class MainModel: ObservableObject {
             
             // enter what it used to be splitVideo(duration: Double, filePath: String, currentVideo: WorkItem)
             
-            manager.status("splitting videos")
-            logger.info("splitting videos")
+            manager.status("Splitting videos for \(currentVideo.fileName)")
+            logger.info("Splitting videos  for \(currentVideo.fileName)")
             
             FinderItem(at: "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/splitVideo").generateDirectory(isFolder: true)
             
@@ -269,7 +270,7 @@ public final class MainModel: ObservableObject {
                     
                     let path = "\(NSHomeDirectory())/Downloads/Waifu Output/tmp/\(filePath)/raw/splitVideo/video \(generateFileName(from: index)).m4v"
                     
-                    manager.status("generating images for \(filePath)")
+                    manager.status("Generating images for \(currentVideo.fileName)")
                     logger.info("generating images for \(filePath), \(index) / \(videoSegmentCount)")
                     
                     manager.onStatusProgressChanged(index, videoSegmentCount)
@@ -362,7 +363,7 @@ public final class MainModel: ObservableObject {
                                         item1.copy(to: output)
                                     } else {
                                         let newTask = task.addManager()
-                                        model.content.runFrameModel(input1: item1.path, input2: item2.path, outputPath: output.path, task: newTask)
+                                        model.container.runFrameModel(input1: item1.path, input2: item2.path, outputPath: output.path, task: newTask)
                                         newTask.wait()
                                     }
                                 }
@@ -389,7 +390,7 @@ public final class MainModel: ObservableObject {
                                     item1.copy(to: output)
                                 } else {
                                     let newTask = task.addManager()
-                                    model.content.runFrameModel(input1: item1.path, input2: item2.path, outputPath: output.path, task: newTask)
+                                    model.container.runFrameModel(input1: item1.path, input2: item2.path, outputPath: output.path, task: newTask)
                                     newTask.wait()
                                 }
                                 
@@ -401,7 +402,7 @@ public final class MainModel: ObservableObject {
                                     item3.copy(to: output2)
                                 } else {
                                     let newTask = task.addManager()
-                                    model.content.runFrameModel(input1: item3.path, input2: item4.path, outputPath: output2.path, task: newTask)
+                                    model.container.runFrameModel(input1: item3.path, input2: item4.path, outputPath: output2.path, task: newTask)
                                     newTask.wait()
                                 }
                                 
@@ -485,7 +486,7 @@ public final class MainModel: ObservableObject {
                             
                             autoreleasepool {
                                 let newManager = task.addManager()
-                                model.content.runImageModel(input: imageItem, outputItem: finderItemAtImageOutputPath, task: newManager)
+                                model.container.runImageModel(input: imageItem, outputItem: finderItemAtImageOutputPath, task: newManager)
                                 newManager.wait()
                             }
                             
@@ -518,19 +519,19 @@ public final class MainModel: ObservableObject {
                 let outputPatH = outputPath.with(subPath: "/tmp/\(filePath)/\(currentVideo.finderItem.fileName).m4v")
                 
                 // status: merge videos
-                manager.status("merging video for \(filePath)")
+                manager.status("Merging video for \(currentVideo.fileName)")
                 logger.info("merging video for \(filePath)")
                 
                 await FinderItem.mergeVideos(from: outputPath.with(subPath: "/tmp/\(filePath)/processed/videos").children()!, toPath: outputPatH.path, tempFolder: outputPath.with(subPath: "tmp/\(filePath)/merging video").path, frameRate: currentVideo.finderItem.avAsset!.frameRate! * Float(model.frameInterpolation))
                 
-                manager.status("merging video and audio for \(filePath)")
+                manager.status("Merging video with audio for \(currentVideo.fileName)")
                 logger.info("merging video and audio for \(filePath)")
                 manager.onStatusProgressChanged(nil, nil)
                 
                 await FinderItem.mergeVideoWithAudio(videoUrl: outputPatH.url, audioUrl: audioPath.url)
                 
-                manager.status("Completed")
-                logger.info("merging video and audio fnished for \(filePath)")
+                manager.status("\(currentVideo.fileName) Completed")
+                logger.info("Merging video and audio finished for \(currentVideo.fileName)")
                 
                 if destinationFinderItem.isExistence { destinationFinderItem.removeFile() }
                 outputPatH.copy(to: destinationFinderItem)

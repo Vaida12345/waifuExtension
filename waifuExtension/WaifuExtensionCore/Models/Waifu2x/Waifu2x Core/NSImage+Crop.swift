@@ -23,7 +23,7 @@ extension NSImage {
     }
     
     public func crop(rect: CGRect) -> NSImage {
-        var rect = NSRect.init(origin: .zero, size: self.size)
+        var rect = NSRect(origin: .zero, size: self.size)
         let cgimg = cgImage(forProposedRect: &rect, context: nil, hints: nil)?.cropping(to: rect)
         return NSImage(cgImage: cgimg!, size: rect.size)
     }

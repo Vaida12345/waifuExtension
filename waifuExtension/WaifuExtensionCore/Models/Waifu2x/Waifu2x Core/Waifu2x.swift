@@ -29,34 +29,30 @@ public final class Waifu2x {
     /// https://github.com/nagadomi/self/commit/797b45ae23665a1c5e3c481c018e48e6f0d0e383
     let clip_eta8 = Float(0.00196)
     
-    var interrupt = false
-    
     private var model_pipeline: BackgroundPipeline<MLMultiArray>! = nil
     private var out_pipeline: BackgroundPipeline<MLMultiArray>! = nil
     
-    var didFinishedOneBlock: (( _ total: Int)->Void)? = nil
+    var didFinishedOneBlock: ( _ total: Double) -> Void  = {_ in }
     
-    func run(_ image: NSImage!, model: ModelCoordinator, _ callback: @escaping (String) -> Void = { _ in }) -> NSImage? {
-        guard image != nil else {
-            return nil
-        }
+    func run(_ image: NSImage!, model: ModelCoordinator) -> NSImage? {
+        guard image != nil else { return nil }
         
         let fullDate = Date()
         let logger = Logger()
         
-        self.interrupt = false
         self.block_size = model.caffe.block_size
         let out_scale = model.caffe.scale
+        guard var fullCG = image.cgImage else { return nil }
         
-        let width = Int(image.representations[0].pixelsWide)
-        let height = Int(image.representations[0].pixelsHigh)
+        let width = Int(fullCG.width)
+        let height = Int(fullCG.height)
         var fullWidth = width
         var fullHeight = height
-        guard let cgimg = image.representations[0].cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-            print("Failed to get CGImage")
-            return nil
-        }
-        var fullCG = cgimg
+        let colorSpace = fullCG.colorSpace ?? CGColorSpace(name: CGColorSpace.displayP3) ?? CGColorSpaceCreateDeviceRGB()
+        
+        BiasRecorder.add(bias: .init(stage: .initial0, time: fullDate.distance(to: Date())))
+        didFinishedOneBlock(68540.22)
+        let initial0Date = Date()
         
         // If image is too small, expand it
         if width < block_size || height < block_size {
@@ -66,30 +62,28 @@ public final class Waifu2x {
             if height < block_size {
                 fullHeight = block_size
             }
-            var bitmapInfo = cgimg.bitmapInfo.rawValue
+            var bitmapInfo = fullCG.bitmapInfo.rawValue
             if bitmapInfo & CGBitmapInfo.alphaInfoMask.rawValue == CGImageAlphaInfo.first.rawValue {
                 bitmapInfo = bitmapInfo & ~CGBitmapInfo.alphaInfoMask.rawValue | CGImageAlphaInfo.premultipliedFirst.rawValue
             } else if bitmapInfo & CGBitmapInfo.alphaInfoMask.rawValue == CGImageAlphaInfo.last.rawValue {
                 bitmapInfo = bitmapInfo & ~CGBitmapInfo.alphaInfoMask.rawValue | CGImageAlphaInfo.premultipliedLast.rawValue
             }
-            let context = CGContext(data: nil, width: fullWidth, height: fullHeight, bitsPerComponent: cgimg.bitsPerComponent, bytesPerRow: cgimg.bytesPerRow / width * fullWidth, space: cgimg.colorSpace ?? CGColorSpaceCreateDeviceRGB(), bitmapInfo: bitmapInfo)
+            let context = CGContext(data: nil, width: fullWidth, height: fullHeight, bitsPerComponent: fullCG.bitsPerComponent, bytesPerRow: fullCG.bytesPerRow / width * fullWidth, space: colorSpace, bitmapInfo: bitmapInfo)
             var y = fullHeight - height
             if y < 0 {
                 y = 0
             }
-            context?.draw(cgimg, in: CGRect(x: 0, y: y, width: width, height: height))
-            guard let contextCG = context?.makeImage() else {
-                return nil
-            }
+            context?.draw(fullCG, in: CGRect(x: 0, y: y, width: width, height: height))
+            guard let contextCG = context?.makeImage() else { return nil }
             fullCG = contextCG
         }
         
-        var hasalpha = cgimg.alphaInfo != CGImageAlphaInfo.none
+        var hasalpha = fullCG.alphaInfo != CGImageAlphaInfo.none
         var channels = 3
         var alpha: [UInt8]! = nil
         
         if hasalpha {
-            alpha = image.alpha()
+            alpha = image.alpha(cgImage: fullCG)
             var ralpha = false
             // Check if it really has alpha
             var aIndex = 0
@@ -110,6 +104,10 @@ public final class Waifu2x {
                 hasalpha = false
             }
         }
+        
+        BiasRecorder.add(bias: .init(stage: .initial1, time: initial0Date.distance(to: Date())))
+        didFinishedOneBlock(35.27377)
+        let initial1Date = Date()
         
         let out_width = width * out_scale
         let out_height = height * out_scale
@@ -135,6 +133,10 @@ public final class Waifu2x {
         defer {
             imgData.deallocate()
         }
+        
+        BiasRecorder.add(bias: .init(stage: .initial2, time: initial1Date.distance(to: Date())))
+        didFinishedOneBlock(156912.95)
+        let initial2Date = Date()
         
         // Alpha channel support
         var alpha_task: BackgroundTask? = nil
@@ -182,6 +184,8 @@ public final class Waifu2x {
             }
         }
         
+        BiasRecorder.add(bias: .init(stage: .initial3, time: initial2Date.distance(to: Date())))
+        didFinishedOneBlock(70890.199)
         logger.info("initial date: \(fullDate.distance(to: Date()).expressedAsTime())")
         let preparePipeDate = Date()
         
@@ -222,7 +226,10 @@ public final class Waifu2x {
             }
         }
         
+        BiasRecorder.add(bias: .init(stage: .prepare, time: preparePipeDate.distance(to: Date())))
+        didFinishedOneBlock(22445.20)
         logger.info("prepare: \(preparePipeDate.distance(to: Date()).expressedAsTime())")
+        
         var mlArray: [MLMultiArray] = []
         
         // Start running model
@@ -232,7 +239,9 @@ public final class Waifu2x {
         let expanded = autoreleasepool {
             fullCG.expand(withAlpha: hasalpha, in: self)
         }
-        callback("processing")
+        
+        BiasRecorder.add(bias: .init(stage: .expend, time: expendImageDate.distance(to: Date())))
+        didFinishedOneBlock(8.742)
         logger.info("ExpendImage: \(expendImageDate.distance(to: Date()).expressedAsTime())")
         
         let in_pipeDate = Date()
@@ -290,10 +299,6 @@ public final class Waifu2x {
             
             mlArray = shapedArray.map({ MLMultiArray($0) })
             
-            if let didFinishedOneBlock = self.didFinishedOneBlock {
-                didFinishedOneBlock(4)
-            }
-            
         } else {
             // calculate with CPU
             var in_pipeResults: [(index: Int, value: MLMultiArray)] = []
@@ -324,10 +329,6 @@ public final class Waifu2x {
                 }
                 
                 in_pipeResults.append((index, multi))
-                
-                if let didFinishedOneBlock = self.didFinishedOneBlock {
-                    didFinishedOneBlock(rects.count * 2)
-                }
             }
             
             DispatchQueue.concurrentPerform(iterations: rects.count) { index in
@@ -337,6 +338,8 @@ public final class Waifu2x {
             mlArray = in_pipeResults.sorted(by: { $0.index < $1.index }).map({ $0.value })
         }
         
+        BiasRecorder.add(bias: .init(stage: .inPipe, time: in_pipeDate.distance(to: Date())))
+        didFinishedOneBlock(83.626)
         logger.info("In pipe: \(in_pipeDate.distance(to: Date()).expressedAsTime())")
         
         let model_pipelineDate = Date()
@@ -349,40 +352,45 @@ public final class Waifu2x {
             let array = mlArray[index]
             
             self.out_pipeline.appendObject(try! mlmodel.prediction(input: array))
-            if let didFinishedOneBlock = self.didFinishedOneBlock {
-                didFinishedOneBlock(2 * rects.count)
-            }
+            didFinishedOneBlock(Double(rects.count) * 1.1994)
             
             index += 1
         }
         
+        BiasRecorder.add(bias: .init(stage: .ml, time: model_pipelineDate.distance(to: Date())))
         logger.info("ML: \(model_pipelineDate.distance(to: Date()).expressedAsTime())")
         
         let out_pipelineDate = Date()
-        callback("wait_alpha")
+        
         alpha_task?.wait()
         self.out_pipeline.wait()
+        
+        BiasRecorder.add(bias: .init(stage: .outPipe, time: out_pipelineDate.distance(to: Date())))
+        didFinishedOneBlock(99.895)
         logger.info("Outpipe: \( out_pipelineDate.distance(to: Date()).expressedAsTime())")
         
         self.model_pipeline = nil
         self.out_pipeline = nil
-        if self.interrupt {
-            return nil
-        }
         
-        callback("generate_output")
         let generateImageDate = Date()
         let cfbuffer = CFDataCreate(nil, imgData, out_width * out_height * channels)!
         let dataProvider = CGDataProvider(data: cfbuffer)!
-        let colorSpace = CGColorSpaceCreateDeviceRGB()
         var bitmapInfo = CGBitmapInfo.byteOrder32Big.rawValue
+        print(bitmapInfo, hasalpha)
         if hasalpha {
             bitmapInfo |= CGImageAlphaInfo.last.rawValue
         }
-        let cgImage = CGImage(width: out_width, height: out_height, bitsPerComponent: 8, bitsPerPixel: 8 * channels, bytesPerRow: out_width * channels, space: colorSpace, bitmapInfo: CGBitmapInfo.init(rawValue: bitmapInfo), provider: dataProvider, decode: nil, shouldInterpolate: true, intent: CGColorRenderingIntent.defaultIntent)
+        
+        var cgImage: CGImage? {
+            CGImage(width: out_width, height: out_height, bitsPerComponent: 8, bitsPerPixel: 8 * channels, bytesPerRow: out_width * channels, space: colorSpace, bitmapInfo: CGBitmapInfo.init(rawValue: bitmapInfo), provider: dataProvider, decode: nil, shouldInterpolate: true, intent: CGColorRenderingIntent.defaultIntent)
+            ??
+            CGImage(width: out_width, height: out_height, bitsPerComponent: 8, bitsPerPixel: 8 * channels, bytesPerRow: out_width * channels, space: colorSpace, bitmapInfo: CGBitmapInfo.init(rawValue: 32), provider: dataProvider, decode: nil, shouldInterpolate: true, intent: CGColorRenderingIntent.defaultIntent)
+        }
         let outImage = NSImage(cgImage: cgImage!, size: CGSize(width: out_width, height: out_height))
-        callback("finished")
+        
+        BiasRecorder.add(bias: .init(stage: .generateOutput, time: generateImageDate.distance(to: Date())))
         logger.info("Generate Image: \(generateImageDate.distance(to: Date()).expressedAsTime())")
+        didFinishedOneBlock(686.439)
         logger.info("Waifu2x finished with time: \(fullDate.distance(to: Date()).expressedAsTime())")
         
         return outImage

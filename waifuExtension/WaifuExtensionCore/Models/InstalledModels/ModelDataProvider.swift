@@ -8,37 +8,23 @@
 import Foundation
 import Support
 
-public final class ModelDataProvider: DataProvider {
+final class ModelDataProvider: DataProvider {
     
-    @Published public var location: [String: String] = [:]
+    typealias Container = _ModelDataProvider
     
-    public static var main: ModelDataProvider = .decode(from: .preferencesDirectory.with(subPath: "model.json"))
+    @Published var container: Container
     
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(self.location)
-    }
+    /// The main ``DataProvider`` to work with.
+    static var main = ModelDataProvider()
     
-    required public init() { }
-    
-    public static func == (lhs: ModelDataProvider, rhs: ModelDataProvider) -> Bool {
-        lhs.hashValue == rhs.hashValue
-    }
-    
-    enum CodingKeys: CodingKey {
-        case location
-    }
-    
-    
-    required public init(from decoder: Decoder) throws {
-        let container: KeyedDecodingContainer<ModelDataProvider.CodingKeys> = try decoder.container(keyedBy: ModelDataProvider.CodingKeys.self)
-        
-        self.location = try container.decode([String : String].self, forKey: ModelDataProvider.CodingKeys.location)
-    }
-    
-    public func encode(to encoder: Encoder) throws {
-        var container: KeyedEncodingContainer<ModelDataProvider.CodingKeys> = encoder.container(keyedBy: ModelDataProvider.CodingKeys.self)
-        
-        try container.encode(self.location, forKey: ModelDataProvider.CodingKeys.location)
+    /// Load contents from disk, otherwise initialize with the default parameters.
+    init() {
+        if let container = ModelDataProvider.decoded() {
+            self.container = container
+        } else {
+            self.container = Container()
+            save()
+        }
     }
     
     public func loadModels(from sources: [FinderItem], onNotReadable: @escaping (String) -> Void, onNonAdded: @escaping () -> Void) {
@@ -78,5 +64,13 @@ public final class ModelDataProvider: DataProvider {
             }
         }
     }
+    
+}
+
+
+public struct _ModelDataProvider: Codable, Hashable {
+    
+    public var location: [String: String] = [:]
+    
     
 }

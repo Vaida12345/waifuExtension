@@ -10,6 +10,7 @@ import AVFoundation
 import AppKit
 import os
 import Support
+import SwiftUI
 
 class Counter {
     var concurrentImage: Int = 0
@@ -84,7 +85,7 @@ func inferenceProgress(_ text: String) -> Double? {
     }
 }
 
-public class ProgressManager {
+public class ProgressManager: ObservableObject {
     
     class Image {
         
@@ -93,7 +94,6 @@ public class ProgressManager {
         /// The progress of the image.
         var progress: Double = 0 {
             didSet {
-                print("changed")
                 manager.onProgressChanged(manager.progress)
             }
         }
@@ -143,14 +143,14 @@ public class ProgressManager {
         }
     }
     
-    var videos: [WorkItem: Video] = [:]
-    var images: [WorkItem: Image] = [:]
+    @Published var videos: [WorkItem: Video] = [:]
+    @Published var images: [WorkItem: Image] = [:]
     
     var progress: Double {
         (images.values.reduce(0) {$0 + $1.progress} + videos.values.reduce(0.0) { $0 + $1.progress * $1.totalFrames * $1.interpolationLevel }) / (Double(images.values.count) + videos.values.reduce(0.0) { $0 + $1.totalFrames * $1.interpolationLevel })
     }
     
-    public var status: (_ status: String) -> Void = { _ in }
+    public var status: (_ status: LocalizedStringKey) -> Void = { _ in }
     public var onStatusProgressChanged: (_ progress: Int?, _ total: Int?) -> Void = { _, _ in }
     public var onProgressChanged: (_ progress: Double) -> Void = { _ in }
     public var addCurrentItems: (_ item: WorkItem) -> Void = { _ in }

@@ -16,24 +16,23 @@ struct waifuExtensionApp: App {
     @StateObject private var modelDataProvider = ModelDataProvider.main
     @StateObject private var model = ModelCoordinator.main
     
-    @AppStorage("hasSetup") private var isShowingSetup = true
-    
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .frame(minWidth: 620, idealWidth: 900, maxWidth: .infinity, minHeight: 360, idealHeight: 450, maxHeight: .infinity)
                 .navigationTitle("")
-                .sheet(isPresented: $isShowingSetup) {
-                    WelcomeView()
-                }
                 .environmentObject(modelDataProvider)
                 .environmentObject(model)
+        }
+        .commands {
+            CommandGroup(replacing: .newItem) { }
         }
         
         Settings {
             ConfigurationContainerView()
                 .frame(width: 400)
                 .environmentObject(modelDataProvider)
+                .environmentObject(model)
         }
     }
     
@@ -56,8 +55,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             FinderItem.temporaryDirectory.clear()
         }
         
-        ModelDataProvider.main.encode(to: .preferencesDirectory.with(subPath: "model.json"))
-        ModelCoordinator.main.encode(to: .preferencesDirectory.with(subPath: "model coordinator.json"))
+        ModelDataProvider.main.save()
+        ModelCoordinator.main.save()
     }
     
 }

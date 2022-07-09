@@ -16,7 +16,6 @@ struct Waifu2xModelView: View {
     private let styleNames: [String] = ["anime", "photo"]
     private let noiseLevels: [String] = ["none", "0", "1", "2", "3"]
     
-    @State private var chosenScaleLevel: Int = 2
     @State private var chosenNoiseLevel = "3"
     
     @State private var scaleLevels: [Int] = [1, 2, 4, 8]
@@ -30,22 +29,23 @@ struct Waifu2xModelView: View {
     @AppStorage("Waifu2x Model Style") private var modelStyle = "anime"
     
     func findModelClass() {
-        self.modelClass = Model_Caffe.allModels.filter{ ($0.style == modelStyle ) && ($0.noise == Int(chosenNoiseLevel)) && ($0.scale == ( chosenScaleLevel == 1 ? 1 : 2 )) }.map(\.class).removingRepeatedElements()
-        self.chosenModelClass = modelClass[0]
+        self.modelClass = Model_Caffe.allModels.filter{ ($0.style == modelStyle ) && ($0.noise == Int(chosenNoiseLevel)) && ($0.scale == ( model.scaleLevel == 1 ? 1 : 2 )) }.map(\.class).removingRepeatedElements()
+        guard let value = modelClass.first else {
+            modelStyle = "anime"
+            return
+        }
+        self.chosenModelClass = value
     }
     
     var body: some View {
         VStack {
-            
             DoubleView(label: "Style:", menu: styleNames, selection: $modelStyle)
                 .help("anime: for illustrations or 2D images or CG\nphoto: for photos of real world or 3D images")
-            DoubleView(label: "Scale Level", menu: scaleLevels, selection: $chosenScaleLevel)
+            DoubleView(label: "Scale Level", menu: scaleLevels, selection: $model.scaleLevel)
                 .help("Choose how much you want to scale.")
             DoubleView(label: "Denoise Level:", menu: noiseLevels, selection: $chosenNoiseLevel)
-                .help("denoise level 3 recommended.\nHint: Don't know which to choose? go to Compare > Compare Denoise Levels and try by yourself!")
-            
+                .help("denoise level 3 recommended.")
         }
-
         .onAppear {
             DispatchQueue(label: "background").async {
                 findModelClass()
@@ -56,7 +56,7 @@ struct Waifu2xModelView: View {
         .onChange(of: chosenNoiseLevel) { _ in
             findModelClass()
         }
-        .onChange(of: chosenScaleLevel) { newValue in
+        .onChange(of: model.scaleLevel) { newValue in
             findModelClass()
             if newValue == 8 {
                 model.enableConcurrent = false
@@ -66,7 +66,7 @@ struct Waifu2xModelView: View {
             model.scaleLevel = newValue
         }
         .onChange(of: chosenModelClass) { newValue in
-            model.caffe = Model_Caffe.allModels.filter({ ($0.style == modelStyle) && ($0.noise == Int(chosenNoiseLevel)) && ($0.scale == ( chosenScaleLevel == 1 ? 1 : 2 )) }).first!
+            model.caffe = Model_Caffe.allModels.filter({ ($0.style == modelStyle) && ($0.noise == Int(chosenNoiseLevel)) && ($0.scale == ( model.scaleLevel == 1 ? 1 : 2 )) }).first!
         }
         .onChange(of: dataProvider) { _ in
             findModelClass()
@@ -77,116 +77,135 @@ struct Waifu2xModelView: View {
 
 struct SpecificationsView: View {
     
-    private let pickerOffset: CGFloat = -7
     let containVideo: Bool
-    
-    @Binding var isShown: Bool
     @Binding var isProcessing: Bool
     
     @ObservedObject var images: MainModel
     
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var dataProvider: ModelDataProvider
     @EnvironmentObject private var model: ModelCoordinator
     
-    var modelIsInstalled: Bool {
+    private var imageModelNotInstalled: Bool {
         if let model = model.chosenImageModel {
             return !model.programItem.isExistence
         } else {
             return false
         }
     }
+    private var frameModelNotInstalled: Bool {
+        if let model = model.chosenFrameModel {
+            return !model.programItem.isExistence
+        } else {
+            return false
+        }
+    }
+    private var anyFrameModelNotInstalled: Bool {
+        ModelCoordinator.allInstalledFrameModels.allSatisfy { !$0.programItem.isExistence }
+    }
     
     var body: some View {
         
         VStack {
-            
-            DoubleView(label: "Image Model:") {
-                Picker("", selection: $model.imageModel.animation()) {
-                    ForEach(_ModelCoordinator.ImageModel.allCases, id: \.self) { value in
-                        Text(value.rawValue)
-                    }
-                }
-                .offset(x: pickerOffset)
-                .pickerStyle(.segmented)
-            }
-            
             VStack {
-                if model.imageModel == .caffe {
-                    Waifu2xModelView(containVideo: containVideo)
-                } else if model.imageModel == .realcugan {
-                    DoubleView(label: "Model Name:", menu: model.realcugan.modelNameOptions, selection: $model.realcugan.modelName)
-                    DoubleView(label: "Scale Level:", menu: model.realcugan.scaleLevelOptions, selection: $model.realcugan.scaleLevel)
-                    DoubleView(label: "Denoise Level:", menu: model.realcugan.denoiseLevelOption, selection: $model.realcugan.denoiseLevel)
-                    DoubleView(label: "Enable TTA:", menu: [true, false], selection: $model.realcugan.enableTTA)
-                } else if model.imageModel == .realesrgan {
-                    DoubleView(label: "Model Name:", menu: model.realesrgan.modelNameOptions, selection: $model.realesrgan.modelName)
-                    DoubleView(label: "Scale Level:", menu: model.realesrgan.scaleLevelOptions, selection: $model.realesrgan.scaleLevel)
-                    DoubleView(label: "Denoise Level:", menu: model.realesrgan.denoiseLevelOption, selection: $model.realesrgan.denoiseLevel)
-                    DoubleView(label: "Enable TTA:", menu: [true, false], selection: $model.realesrgan.enableTTA)
-                } else if model.imageModel == .realsr {
-                    DoubleView(label: "Model Name:", menu: model.realsr.modelNameOptions, selection: $model.realsr.modelName)
-                    DoubleView(label: "Scale Level:", menu: model.realsr.scaleLevelOptions, selection: $model.realsr.scaleLevel)
-                    DoubleView(label: "Denoise Level:", menu: model.realsr.denoiseLevelOption, selection: $model.realsr.denoiseLevel)
-                    DoubleView(label: "Enable TTA:", menu: [true, false], selection: $model.realsr.enableTTA)
-                }
-            }
-            .disabled(modelIsInstalled)
-            
-            if self.containVideo {
-                Divider()
-                    .padding(.top)
-
-                HStack {
-                    Toggle(isOn: $model.enableFrameInterpolation) {
-                        Text("Enable video frame interpolation")
-                    }
-                    .padding(.leading)
-
-                    Spacer()
-                }
-
-                DoubleView(label: "Interpolation Model:") {
-                    Picker("", selection: $model.frameModel.animation()) {
-                        ForEach(_ModelCoordinator.FrameModel.allCases, id: \.self) { value in
+                DoubleView(label: "Image Model:") {
+                    Picker("", selection: $model.imageModel) {
+                        ForEach(_ModelCoordinator.ImageModel.allCases, id: \.self) { value in
                             Text(value.rawValue)
                         }
                     }
-                    .offset(x: pickerOffset)
                     .pickerStyle(.segmented)
                 }
-                .disabled(!model.enableFrameInterpolation)
-
-                if model.frameModel == .rife {
-                    VStack {
-                        DoubleView(label: "Model Name:", menu: model.rife.modelNameOptions, selection: $model.rife.modelName)
-                        DoubleView(label: "Enable TTA", menu: [true, false], selection: $model.rife.enableTTA)
-                        DoubleView(label: "Enable UHD", menu: [true, false], selection: $model.rife.enableUHD)
+                .padding(.bottom, 10)
+                
+                VStack {
+                    if model.imageModel == .caffe {
+                        Waifu2xModelView(containVideo: containVideo)
+                    } else if model.imageModel == .realcugan {
+                        DoubleView(label: "Model Name:", menu: model.realcugan.modelNameOptions, selection: $model.realcugan.modelName)
+                        DoubleView(label: "Scale Level:", menu: model.realcugan.scaleLevelOptions, selection: $model.realcugan.scaleLevel)
+                        DoubleView(label: "Denoise Level:", menu: model.realcugan.denoiseLevelOption, selection: $model.realcugan.denoiseLevel)
+                        DoubleView(label: "Enable TTA:", menu: [true, false], selection: $model.realcugan.enableTTA)
+                            .help("In TTA mode, it takes 8 times of time to improve the image quality that is difficult to be detected by naked eye.")
+                    } else if model.imageModel == .realesrgan {
+                        DoubleView(label: "Model Name:", menu: model.realesrgan.modelNameOptions, selection: $model.realesrgan.modelName)
+                        DoubleView(label: "Scale Level:", menu: model.realesrgan.scaleLevelOptions, selection: $model.realesrgan.scaleLevel)
+                        DoubleView(label: "Denoise Level:", menu: model.realesrgan.denoiseLevelOption, selection: $model.realesrgan.denoiseLevel)
+                        DoubleView(label: "Enable TTA:", menu: [true, false], selection: $model.realesrgan.enableTTA)
+                    } else if model.imageModel == .realsr {
+                        DoubleView(label: "Model Name:", menu: model.realsr.modelNameOptions, selection: $model.realsr.modelName)
+                        DoubleView(label: "Scale Level:", menu: model.realsr.scaleLevelOptions, selection: $model.realsr.scaleLevel)
+                        DoubleView(label: "Denoise Level:", menu: model.realsr.denoiseLevelOption, selection: $model.realsr.denoiseLevel)
+                        DoubleView(label: "Enable TTA:", menu: [true, false], selection: $model.realsr.enableTTA)
                     }
-                    .disabled(!model.enableFrameInterpolation)
-                    .foregroundColor(model.enableFrameInterpolation ? .primary : .secondary)
                 }
-
-                DoubleView(label: "Frame Interpolation:", menu: [2, 4], selection: $model.frameInterpolation)
-                    .help("Choose how many times more frames you want the video be.")
-                    .disabled(!model.enableFrameInterpolation)
-                    .foregroundColor(model.enableFrameInterpolation ? .primary : .secondary)
+                .disabled(imageModelNotInstalled)
+                
+                if self.containVideo {
+                    Divider()
+                        .padding(.top)
+                    
+                    HStack {
+                        DoubleView {
+                            Toggle(isOn: $model.enableFrameInterpolation) { }
+                        } rhs: {
+                            Text("Enable video frame interpolation")
+                                .onTapGesture {
+                                    model.enableFrameInterpolation.toggle()
+                                }
+                        }
+                        
+                        Spacer()
+                    }
+                    .disabled(anyFrameModelNotInstalled)
+                    .foregroundColor(anyFrameModelNotInstalled ? .secondary : .primary)
+                    .help {
+                        if anyFrameModelNotInstalled {
+                            return "Please install models in Preferences"
+                        } else {
+                            return "Enable video frame interpolation"
+                        }
+                    }
+                    
+                    if model.enableFrameInterpolation {
+                        DoubleView(label: "Interpolation Model:") {
+                            Picker("", selection: $model.frameModel) {
+                                ForEach(_ModelCoordinator.FrameModel.allCases, id: \.self) { value in
+                                    Text(value.rawValue)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                        }
+                        
+                        Group {
+                            DoubleView(label: "Frame Interpolation:", menu: [2, 4], selection: $model.frameInterpolation)
+                                .help("Choose how many times more frames you want the video be.")
+                            
+                            if model.frameModel == .rife {
+                                VStack {
+                                    DoubleView(label: "Model Name:", menu: model.rife.modelNameOptions, selection: $model.rife.modelName)
+                                    DoubleView(label: "Enable TTA:", menu: [true, false], selection: $model.rife.enableTTA)
+                                        .help("In TTA mode, it takes 8 times of time to improve the image quality that is difficult to be detected by naked eye.")
+                                    DoubleView(label: "Enable UHD:", menu: [true, false], selection: $model.rife.enableUHD)
+                                }
+                            }
+                        }
+                        .disabled(frameModelNotInstalled)
+                        .foregroundColor(frameModelNotInstalled ? .secondary : .primary)
+                        .help {
+                            if frameModelNotInstalled {
+                                return "Please install models in Preferences"
+                            } else {
+                                return ""
+                            }
+                        }
+                    }
+                }
             }
-
-            Divider()
-                .padding(.top)
-
-            if self.containVideo {
-                DoubleView(label: "Video segmentation:", menu: [100, 500, 1000, 2000, 5000], selection: $model.videoSegmentFrames)
-                    .help("During processing, videos will be split into smaller ones, choose how long you want each smaller video be, in frames.")
-            } else {
-                DoubleView(label: "Enable Parallel:", menu: [true, false], selection: $model.enableConcurrent)
-                    .help("Enable this to reduce processing speed in return for better memory performance.")
-            }
-
+            
             Spacer()
 
             HStack {
-
                 Spacer()
 
                 if model.imageModel == .caffe && model.scaleLevel == 2 && !model.enableFrameInterpolation && self.containVideo {
@@ -197,7 +216,7 @@ struct SpecificationsView: View {
                 }
 
                 Button {
-                    isShown = false
+                    dismiss()
                 } label: {
                     Text("Cancel")
                         .frame(width: 80)
@@ -208,16 +227,16 @@ struct SpecificationsView: View {
 
                 Button {
                     isProcessing = true
-                    isShown = false
+                    dismiss()
                 } label: {
-                    Text("OK")
+                    Text("Done")
                         .frame(width: 80)
                 }
                 .keyboardShortcut(.defaultAction)
                 .help("Begin processing.")
-                .disabled(modelIsInstalled)
+                .disabled(imageModelNotInstalled || (model.enableFrameInterpolation && frameModelNotInstalled))
             }
-            .padding([.horizontal, .top])
+            .padding(.horizontal)
         }
         .padding(.all)
         .onChange(of: model.enableFrameInterpolation) { newValue in
@@ -227,7 +246,22 @@ struct SpecificationsView: View {
                 model.frameInterpolation = 1
             }
         }
-        
+        .frame(height: {() -> CGFloat in
+            var height: CGFloat = model.isCaffe ? 200: 230
+            
+            guard self.containVideo else { return height }
+            if !model.enableFrameInterpolation {
+                height += 40
+            } else {
+                if model.frameModel == .rife {
+                    height += 200
+                } else {
+                    height += 110
+                }
+            }
+            
+            return height
+        }())
     }
     
 }

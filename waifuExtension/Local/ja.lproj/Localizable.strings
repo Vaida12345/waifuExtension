@@ -1,0 +1,130 @@
+/* 
+  Localizable.strings
+  waifuExtension
+
+  Created by Vaida on 7/7/22.
+  
+*/
+
+// basic
+"Done" = "完成";
+"Cancel" = "取消";
+"Show in Finder" = "在Finder中显示";
+"Completed" = "完成";
+
+// ContentView
+"Drag files or folder." = "放入文件或文件夹";
+"Cannot read this file" = "无法读取此文件";
+"Remove All" = "去除所有图片";
+"Remove all files." = "去除所有文件。";
+"Show thumbnails as square or in full aspect ratio." = "以正方形或全宽高比显示缩略图。";
+"Grid Item Count." = "网格项目的数量。";
+"Set the size of each thumbnail." = "设置缩略图的大小。";
+"Add Item" = "添加";
+"Add another item." = "添加另一个项目";
+"Begin processing." = "开始处理";
+
+
+// ModelView
+"anime" = "动画";
+"photo" = "照片";
+"none" = "无";
+"Style:" = "样式:";
+"anime: for illustrations or 2D images or CG\nphoto: for photos of real world or 3D images" = "动画: 画作或2D图片/CG\n照片: 现实照片或3D图片";
+"Scale Level" = "放大倍数";
+"Choose how much you want to scale." = "放大的倍数";
+"Denoise Level:" = "降噪参数";
+"denoise level 3 recommended." = "建议三倍降噪";
+
+"Image Model:" = "处理照片的模型";
+"Model Name:" = "模型名称";
+"Enable TTA:" = "开启TTA";
+"Enable video frame interpolation" = "开启视频补帧";
+"Interpolation Model:" = "处理补帧的模型";
+"Enable UHD" = "开启超高清";
+"Frame Interpolation:" = "补帧倍率";
+"Choose how many times more frames you want the video be." = "选择补帧倍率";
+"Video segmentation:" = "视频切割";
+"During processing, videos will be split into smaller ones, choose how long you want each smaller video be, in frames." = "在处理时，视频将被切割成小块，以减少内存使用。选择每个小块的长度，以帧为单位";
+"Enable Parallel:" = "开启多核计算";
+"Disable this to reduce processing speed in return for better memory performance." = "关闭以通过牺牲速度以换取更少的内存使用";
+"Memory Only" = "仅使用内存";
+"Use this option only if you are certain it is safe to keep all the intermediate images in the memory." = "仅在您确定把所有中间的图片存在内存里是安全的时开启";
+"Return to previous page." = "回到上一页";
+"Begin processing." = "开始处理";
+
+
+// ProcessingView
+"Loading..." = "加载中...";
+"Loading.." = "加载中..";
+"Finished" = "完成";
+" in " = "位于";
+"Processing" = "正在处理";
+"images" = "张照片";
+
+"Status:" = "状态";
+"Progress:" = "进度";
+"ML Model:" = "模型";
+"Processed:" = "已处理";
+"To be processed:" = "未处理";
+"0 item" = "无项目";
+"items" = "个项目";
+"items" = "个项目";
+"Time Spent:" = "过去时间";
+"Time Remaining:" = "剩余时间";
+"Paused" = "暂停";
+"Calculating..." = "计算中...";
+
+"Cancel and quit." = "取消并关闭软件";
+"Resume" = "继续";
+"Quit the app?" = "关闭软件?";
+"Quit" = "关闭软件";
+
+// welcome view
+"Welcome to WaifuExtension!" = "欢迎来到WaifuExtension";
+"(Optional) Please download the models and link them." = "（可选）请下载模型";
+"Please keep your file in your disk, as WaifuExtension do not copy your file." = "请保重文件在你的设备上，本软件不会复制您的文件";
+"Skip" = "跳过";
+
+// welcome view grid item
+"Download from Github" = "在Github上下载";
+"Choose Model" = "选择模型";
+"None was added" = "无项目被添加";
+"Please drop in the folder containing the executable file." = "请放入一个含有可执行文件的文件夹";
+"Cannot read " = "无法读取";
+"Please move the model to somewhere else and retry (for example, your downloads folder)\nOtherwise, please ensure you can open the executable in Finder." = "请将模型移到其他地方，然后重试（例如，您的下载文件夹）\n否则，请确保您可以在Finder中可以打开这个可执行文件。";
+
+// ConfigurationContainerView
+"Configuration" = "设置";
+"Models" = "模型";
+
+// ConfigurationView
+"Save Folder" = "保存的文件夹";
+"Downloads/Waifu Output" = "下载/Waifu Output";
+"Other..." = "其他...";
+"Please choose a folder." = "请选择一个文件夹";
+"Show Container" = "现实Container";
+"Cache: " = "缓存: ";
+"Empty" = "空";
+"Delete Cache" = "清楚缓存";
+
+// ModelManager
+"Remove Model" = "去除模型";
+"Update Model" = "更新模型";
+"Show on Github" = "在Github上显示";
+"Size: " = "大小";
+"unknown" = "未知";
+"Not Installed" = "未安装";
+
+// MainModel
+"Processing Images" = "处理照片";
+"Processing videos" = "处理视频";
+"Generating frames for %@" = "为%@处理帧";
+"Converting frames to video for %@" = "为%@生成视频";
+"Merging video with audio for %@" = "为%@合并视频音频";
+"%@ Completed" = "%@ 处理完成";
+"Generating audio for %@" = "为%@生成音频";
+"Splitting videos for %@" = "为%@切割视频";
+"Generating images for %@" = "为%@生成帧";
+"Merging video for %@" = "为%@合并视频";
+

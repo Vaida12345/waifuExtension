@@ -1,0 +1,142 @@
+/*
+ Localizable.strings
+ waifuExtension
+ 
+ Created by Vaida on 7/7/22.
+ 
+ */
+
+// basic
+"Done" = "完成";
+"Cancel" = "取消";
+"Show in Finder" = "在Finder中顯示";
+"Completed" = "完成";
+"Pause" = "暫停";
+
+"true" = "是";
+"false" = "否";
+
+// ContentView
+"Drag files or folder." = "放入文件或文件夾";
+"Cannot read this file" = "無法讀取此文件";
+"Remove All" = "去除所有圖片";
+"Remove all files." = "去除所有文件。";
+"Show thumbnails as square or in full aspect ratio." = "以正方形或全寬高比顯示縮略圖。";
+"Grid Item Count." = "網格項目的數量。";
+"Set the size of each thumbnail." = "設置縮略圖的大小。";
+"Add Item" = "添加";
+"Add another item." = "添加另一個項目";
+"Begin processing." = "開始處理";
+
+
+// ModelView
+"anime" = "動畫";
+"photo" = "照片";
+"none" = "無";
+"Style:" = "樣式";
+"anime: for illustrations or 2D images or CG\nphoto: for photos of real world or 3D images" = "動畫: 畫作或2D圖片/CG\n照片: 現實照片或3D圖片";
+"Scale Level" = "放大倍數";
+"Choose how much you want to scale." = "放大的倍數";
+"Denoise Level:" = "降噪參數";
+"denoise level 3 recommended." = "建議三倍降噪";
+
+"Image Model:" = "處理照片的模型";
+"Model Name:" = "模型名稱";
+"Enable TTA:" = "開啓TTA";
+"In TTA mode, it takes 8 times of time to improve the image quality that is difficult to be detected by naked eye." = "在開啓TTA後，軟件會用更長的時間處理以增加畫質。此效果不明顯。";
+"Enable video frame interpolation" = "開啓視頻補幀";
+"Interpolation Model:" = "處理補幀的模型";
+"Enable UHD:" = "開啓超高清";
+"Frame Interpolation:" = "補幀倍率";
+"Choose how many times more frames you want the video be." = "選擇補幀倍率";
+"Video segmentation:" = "視頻切割";
+"During processing, videos will be split into smaller ones, choose how long you want each smaller video be, in frames." = "在處理時，視頻將被切割成小塊，以減少內存使用。選擇每個小塊的長度，以幀為單位";
+"Enable Parallel" = "開啓多核計算";
+"Disable this to reduce processing speed in return for better memory performance." = "關閉以通過犧牲速度以換取更少的內存使用";
+"Memory Only" = "僅使用內存";
+"Use this option only if you are certain it is safe to keep all the intermediate images in the memory." = "僅在您確定把所有中間的圖片存在內存里是安全的時開啓";
+"Return to previous page." = "回到上一頁";
+"Begin processing." = "開始處理";
+"Please install models in Preferences" = "請在設置中安裝模型";
+
+
+// ProcessingView
+"Loading..." = "加載中...";
+"Loading.." = "加載中..";
+"Finished" = "完成";
+"Processing %@" = "正在處理%@";
+"Processing %@ images in %@" = "正在處理%@張圖片（位於%@）";
+"Processing %@ images" = "正在處理%@張圖片";
+
+"Status:" = "狀態";
+"Progress:" = "進度";
+"ML Model:" = "模型";
+"Processed:" = "已處理";
+"To be processed:" = "未處理";
+"0 item" = "無項目";
+"%@ items" = "%@個項目";
+"%@ item" = "%@個項目";
+"Time Spent:" = "過去時間";
+"Time Remaining:" = "剩餘時間";
+"Paused" = "暫停";
+"Calculating..." = "計算中...";
+"ETA:" = "預計結束時間";
+
+"Cancel and quit." = "取消並關閉軟件";
+"Resume" = "繼續";
+"Quit the app?" = "關閉軟件?";
+"Quit" = "關閉軟件";
+
+// welcome view
+"Welcome to WaifuExtension!" = "歡迎來到WaifuExtension";
+"(Optional) Please download the models and link them." = "（可選）請下載模型";
+"Please keep your file in your disk, as WaifuExtension do not copy your file." = "請保重文件在你的設備上，本軟件不會複製您的文件";
+"Skip" = "跳過";
+
+// welcome view grid item
+"Download from Github" = "在Github上下載";
+"Choose Model" = "選擇模型";
+"None was added" = "無項目被添加";
+"Please drop in the folder containing the executable file." = "請放入一個含有可執行文件的文件夾";
+"Cannot read %@" = "無法讀取%@";
+"Please move the model to somewhere else and retry (for example, your downloads folder)\nOtherwise, please ensure you can open the executable in Finder." = "請將模型移到其他地方，然後重試（例如，您的下載文件夾）\n否則，請確保您可以在Finder中可以打開這個可執行文件。";
+
+// ConfigurationContainerView
+"Config" = "設置";
+"Inference" = "處理";
+"Models" = "模型";
+
+// ConfigurationView
+"Save Folder" = "保存的文件夾";
+"Downloads/Waifu Output" = "下載/Waifu Output";
+"Other..." = "其他...";
+"Please choose a folder." = "請選擇一個文件夾";
+"Show Container" = "現實Container";
+"Cache: %@" = "緩存: %@";
+"Cache: Empty" = "無緩存";
+"Delete Cache" = "清楚緩存";
+
+// Process Config View
+"Video segmentation: %@ frames" = "视频分割大小: %@帧";
+
+// ModelManager
+"Remove Model" = "去除模型";
+"Update Model" = "更新模型";
+"Show on Github" = "在Github上顯示";
+"Size: %@" = "大小: %@";
+"unknown" = "未知";
+"Not Installed" = "未安裝";
+"Drop additional models here\nPlease keep your file in your disk, as executables are not copied." = "請將額外的模型拖拽到此\n請勿文件刪除，文件將不會被複製至其他處。";
+
+// MainModel
+"Processing Images" = "處理照片";
+"Processing videos" = "處理視頻";
+"Generating frames for %@" = "為%@處理幀";
+"Converting frames to video for %@" = "為%@生成視頻";
+"Merging video with audio for %@" = "為%@合併視頻音頻";
+"%@ Completed" = "%@ 處理完成";
+"Generating audio for %@" = "為%@生成音頻";
+"Splitting videos for %@" = "為%@切割視頻";
+"Generating images for %@" = "為%@生成幀";
+"Merging video for %@" = "為%@合併視頻";
+
