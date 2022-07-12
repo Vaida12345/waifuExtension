@@ -115,11 +115,11 @@ public struct _ModelCoordinator: CustomStringConvertible, Codable, Hashable, Equ
             case .caffe:
                 caffeScaleLevel = newValue
             case .realsr:
-                Logger().error("could not set")
+                Logger().error("could not set realsr scaleLevel")
             case .realcugan:
                 realcugan.scaleLevel = newValue
             case .realesrgan:
-                Logger().error("could not set")
+                Logger().error("could not set realesrgan scaleLevel")
             }
         }
     }
@@ -152,6 +152,22 @@ public struct _ModelCoordinator: CustomStringConvertible, Codable, Hashable, Equ
     
     /// Determines whether `concurrentPerform` is used.
     public var enableConcurrent: Bool = true
+    
+    /// The return value is true iff all values are true
+    public var disableTTA: Bool {
+        get {
+            !self.realsr.enableTTA &&
+            !self.realcugan.enableTTA &&
+            !self.realesrgan.enableTTA &&
+            !self.rife.enableTTA
+        }
+        set {
+            self.realsr.enableTTA     = !newValue
+            self.realcugan.enableTTA  = !newValue
+            self.realesrgan.enableTTA = !newValue
+            self.rife.enableTTA       = !newValue
+        }
+    }
     
     init(imageModel: ImageModel, frameModel: FrameModel) {
         self.imageModel = imageModel

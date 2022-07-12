@@ -25,7 +25,7 @@ struct ConfigurationContainerView: View {
             
             ProcessingConfigurationView()
                 .onAppear {
-                    height = 200
+                    height = 280
                 }
                 .tabItem {
                     Image(systemName: "photo.fill")

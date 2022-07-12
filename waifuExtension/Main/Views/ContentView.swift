@@ -12,7 +12,6 @@ struct ContentView: View {
     
     @State private var isSheetShown: Bool = false
     @State private var isProcessing: Bool = false
-    @State private var isShowingCannotReadFile = false
     
     @StateObject private var images = MainModel()
     
@@ -24,7 +23,7 @@ struct ContentView: View {
     var body: some View {
         VStack {
             if images.items.isEmpty {
-                DropView(prompt: "Drag files or folder.") { resultItems in
+                DropView("Drag files or folder.") { resultItems in
                     Task {
                         await self.images.append(from: resultItems)
                     }
@@ -35,14 +34,9 @@ struct ContentView: View {
                         LazyVGrid(columns: Array(repeating: .init(.flexible()), count: Int(8 / gridNumber))) {
                             ForEach(images.items) { item in
                                 GridItemView(item: item, geometry: geometry, images: images)
-                                    .popover(isPresented: .constant(isShowingCannotReadFile && item.finderItem.avAsset == nil && item.finderItem.image == nil)) {
-                                        Text("Cannot read this file")
-                                            .padding()
-                                    }
                             }
                         }
                         .padding()
-                        
                     }
                     .frame(width: geometry.size.width, height: geometry.size.height)
                 }
@@ -58,9 +52,12 @@ struct ContentView: View {
         }
         .sheet(isPresented: $isSheetShown) {
             SpecificationsView(containVideo: self.images.items.contains{ $0.type == .video }, isProcessing: $isProcessing, images: images)
+                .frame(width: 600)
         }
         .sheet(isPresented: $isProcessing) {
             ProcessingView(images: images)
+                .padding()
+                .frame(width: 600, height: 250)
         }
         .toolbar {
             ToolbarItem(placement: .navigation) {
@@ -73,40 +70,31 @@ struct ContentView: View {
 
             ToolbarItemGroup {
                 Button {
-                    withAnimation(.spring()) {
+                    withAnimation {
                         aspectRatio.toggle()
                     }
                 } label: {
-                    Label("", systemImage: aspectRatio ? "rectangle.arrowtriangle.2.outward" : "rectangle.arrowtriangle.2.inward")
-                        .labelStyle(.iconOnly)
+                    Image(systemName: aspectRatio ? "rectangle.arrowtriangle.2.outward" : "rectangle.arrowtriangle.2.inward")
                 }
                 .help("Show thumbnails as square or in full aspect ratio.")
-
-                Slider(
-                    value: $gridNumber,
-                    in: 1...8,
-                    minimumValueLabel:
-                        Image(systemName: "photo.fill")
+                
+                Slider(value: $gridNumber, in: 1...8) {
+                    Text("Grid Item Count.")
+                } minimumValueLabel: {
+                    Image(systemName: "photo.fill")
                         .resizable()
                         .scaledToFit()
                         .frame(width: 12)
-                        .onTapGesture {
-                            withAnimation {
-                                gridNumber = 1.6
-                            }
-                        },
-                    maximumValueLabel:
-                        Image(systemName: "photo.fill")
+                } maximumValueLabel: {
+                    Image(systemName: "photo.fill")
                         .resizable()
                         .scaledToFit()
                         .frame(width: 20)
-                        .onTapGesture {
-                            withAnimation {
-                                gridNumber = 1.6
-                            }
-                        }
-                ) {
-                    Text("Grid Item Count.")
+                }
+                .onTapGesture {
+                    withAnimation {
+                        gridNumber = 1.6
+                    }
                 }
                 .frame(width: 150)
                 .help("Set the size of each thumbnail.")
@@ -127,12 +115,7 @@ struct ContentView: View {
                     isSheetShown = true
                 }
                 .disabled(images.items.isEmpty || isSheetShown)
-                .disabled(!(images.items.allSatisfy{ $0.finderItem.avAsset != nil || $0.finderItem.image != nil }))
                 .help("Begin processing.")
-                .onHover { bool in
-                    guard images.items.allSatisfy({ $0.finderItem.avAsset != nil || $0.finderItem.image != nil }) else { return }
-                    isShowingCannotReadFile = bool
-                }
             }
         }
     }

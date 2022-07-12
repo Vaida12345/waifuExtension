@@ -76,6 +76,9 @@
 "0 item" = "无项目";
 "%@ items" = "%@个项目";
 "%@ item" = "%@个项目";
+"%@ items, %@ items pending" = "%@个项目，待处理%@个项目";
+"%@ item, %@ items pending" = "%@个项目，待处理%@个项目";
+"%@ items, %@ item pending" = "%@个项目，待处理%@个项目";
 "Time Spent:" = "过去时间";
 "Time Remaining:" = "剩余时间";
 "Paused" = "暂停";

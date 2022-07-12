@@ -15,8 +15,22 @@ struct ProcessingConfigurationView: View {
     
     @State private var selectedSegmentation: CGFloat = 3
     
+    @ViewBuilder private var dividingSpacer: some View {
+        Divider()
+        Spacer()
+    }
+    
     var body: some View {
         VStack(alignment: .leading) {
+            Toggle(isOn: $model.disableTTA) {
+                Text("Disable TTA")
+            }
+            Text("In TTA mode, it takes 8 times of time to improve the image quality that is difficult to be detected by naked eye.")
+                .font(.callout)
+                .foregroundColor(.secondary)
+            
+            dividingSpacer
+            
             Toggle(isOn: $model.enableConcurrent) {
                 Text("Enable Parallel")
             }
@@ -24,8 +38,7 @@ struct ProcessingConfigurationView: View {
                 .font(.callout)
                 .foregroundColor(.secondary)
             
-            Divider()
-            Spacer()
+            dividingSpacer
             
             Text("Video segmentation: \(model.videoSegmentFrames.description) frames")
             

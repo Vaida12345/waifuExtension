@@ -16,7 +16,7 @@ struct StatusObserver {
     var isFinished: Bool = false {
         didSet {
             self.progress = 1
-            self.status = updateProgress(from: .finished)
+            self.status = updateProgress()
         }
     }
     var progress: Double = 0
@@ -26,16 +26,15 @@ struct StatusObserver {
     
     var currentItems: [WorkItem] = [] {
         didSet {
-            self.status = updateProgress(from: .currentItems)
+            self.status = updateProgress()
         }
     }
     var coordinator: ModelCoordinator?
     
-    func updateProgress(from source: ProgressProvider) -> LocalizedStringKey {
+    private func updateProgress() -> LocalizedStringKey {
         guard let coordinator else { return "Loading.." }
         
-        switch source {
-        case .currentItems:
+        if !self.isFinished {
             guard !currentItems.isEmpty else { return "Loading..." }
             if coordinator.enableConcurrent && currentItems.count != 1 {
                 var subfix: String {
@@ -48,14 +47,9 @@ struct StatusObserver {
             }
             let firstItem = currentItems.first!
             return "Processing \(firstItem.fileName)"
-        case .finished:
+        } else {
             return "Finished"
         }
-    }
-    
-    enum ProgressProvider {
-        case currentItems
-        case finished
     }
 }
 
@@ -68,6 +62,8 @@ struct ProcessingView: View {
     @State private var task = ShellManagers()
     @State private var status = StatusObserver()
     
+    @State private var isShowingTimeRemaining = true
+    
     @ObservedObject var images: MainModel
     
     @StateObject private var progressManager = ProgressManager()
@@ -78,166 +74,97 @@ struct ProcessingView: View {
     
     @AppStorage("defaultOutputPath") var outputPath: FinderItem = .downloadsDirectory.with(subPath: "waifu Output")
     
-    private var preMacOS13View: some View {
-        VStack(spacing: 10) {
-            Spacer()
-            
-            DoubleView(label: "Status:", text: status.status)
-                .lineLimit(1)
-            
-            if let statusProgress = status.statusProgress, !status.isFinished {
-                DoubleView(label: "Progress:", text: "\(statusProgress.progress) / \(statusProgress.total)")
-            }
-            
-            DoubleView(label: "ML Model:", text: .init(model.imageModel.rawValue))
-                .padding(.bottom)
-            
-            DoubleView(label: "Processed:") {
-                if status.processedItemsCounter >= 2 {
-                    Text("\(status.processedItemsCounter.description) items")
-                } else {
-                    Text("\(status.processedItemsCounter.description) item")
-                }
-            }
-            
-            DoubleView(label: "To be processed:") {
-                if status.isFinished {
-                    Text("0 item")
-                } else if images.items.count - status.processedItemsCounter >= 2 {
-                    Text("\((images.items.count - status.processedItemsCounter).description) items")
-                } else {
-                    Text("\((images.items.count - status.processedItemsCounter).description) item")
-                }
-            }
-            
-            DoubleView(label: "Time Spent:", text: .init(status.pastTimeTaken.expressedAsTime()))
-            
-            DoubleView(label: "Time Remaining:") {
-                Text {
-                    guard !status.isFinished else { return "Finished" }
-                    guard status.progress != 0 else { return "Calculating..." }
-                    
-                    var value = status.pastTimeTaken / status.progress
-                    value -= status.pastTimeTaken
-                    
-                    guard value > 0 else { return "Calculating..." }
-                    
-                    return .init(value.expressedAsTime())
-                }
-            }
-            
-            DoubleView(label: "ETA:") {
-                Text {
-                    guard !status.isFinished else { return "Finished" }
-                    guard status.progress != 0 else { return "Calculating..." }
-                    
-                    var value = (status.pastTimeTaken) / status.progress
-                    value -= status.pastTimeTaken
-                    
-                    guard value > 0 else { return "Calculating..." }
-                    
-                    let date = Date().addingTimeInterval(value)
-                    
-                    let formatter = DateFormatter()
-                    if value < 10 * 60 * 60 {
-                        formatter.dateStyle = .none
-                    } else {
-                        formatter.dateStyle = .medium
-                    }
-                    formatter.timeStyle = .medium
-                    formatter.locale = self.local
-                    
-                    return .init(formatter.string(from: date))
-                }
-            }
-            
-            Spacer()
-        }
-    }
     
-    @available(macOS 13, *)
-    private var postMacOS13View: some View {
-        Form {
-            LabeledContent("Status:") { Text(status.status) }
-                .lineLimit(1)
-            
-            if let statusProgress = status.statusProgress, !status.isFinished {
-                LabeledContent("Progress:", value: "\(statusProgress.progress) / \(statusProgress.total)")
-            }
-            
-            LabeledContent("ML Model:", value: model.imageModel.rawValue)
-            
-            LabeledContent("Processed:") {
-                if status.processedItemsCounter >= 2 {
-                    Text("\(status.processedItemsCounter.description) items")
-                } else {
-                    Text("\(status.processedItemsCounter.description) item")
-                }
-            }
-            
-            LabeledContent("To be processed:") {
-                if status.isFinished {
-                    Text("0 item")
-                } else if images.items.count - status.processedItemsCounter >= 2 {
-                    Text("\((images.items.count - status.processedItemsCounter).description) items")
-                } else {
-                    Text("\((images.items.count - status.processedItemsCounter).description) item")
-                }
-            }
-            
-            LabeledContent("Time Spent:", value: (status.pastTimeTaken).expressedAsTime())
-            
-            LabeledContent("Time Remaining:") {
-                Text {
-                    guard !status.isFinished else { return "Finished" }
-                    guard status.progress != 0 else { return "Calculating..." }
-                    
-                    var value = status.pastTimeTaken / status.progress
-                    value -= status.pastTimeTaken
-                    
-                    guard value > 0 else { return "Calculating..." }
-                    
-                    return .init(value.expressedAsTime())
-                }
-            }
-            
-            LabeledContent("ETA:") {
-                Text {
-                    guard !status.isFinished else { return "Finished" }
-                    guard status.progress != 0 else { return "Calculating..." }
-                    
-                    var value = (status.pastTimeTaken) / status.progress
-                    value -= status.pastTimeTaken
-                    
-                    guard value > 0 else { return "Calculating..." }
-                    
-                    let date = Date().addingTimeInterval(value)
-                    
-                    let formatter = DateFormatter()
-                    if value < 10 * 60 * 60 {
-                        formatter.dateStyle = .none
-                    } else {
-                        formatter.dateStyle = .medium
-                    }
-                    formatter.timeStyle = .medium
-                    formatter.locale = self.local
-                    
-                    return .init(formatter.string(from: date))
-                }
-            }
-            
-        }
-        .formStyle(.grouped)
+    private var pendingCount: Int {
+        images.items.count - status.processedItemsCounter - status.currentItems.count
     }
     
     var body: some View {
         VStack {
             
-            if #available(macOS 13, *) {
-                postMacOS13View
-                    .scrollDisabled(true)
-            } else {
-                preMacOS13View
+            VStack(spacing: 10) {
+                Spacer()
+                
+                DoubleView("Status:", text: status.status)
+                    .lineLimit(1)
+                
+                if let statusProgress = status.statusProgress, !status.isFinished {
+                    DoubleView("Progress:", text: "\(statusProgress.progress) / \(statusProgress.total)")
+                }
+                
+                DoubleView("Processed:") {
+                    if status.processedItemsCounter >= 2 {
+                        if pendingCount >= 2 {
+                            Text("\(status.processedItemsCounter.description) items, \(pendingCount.description) items pending")
+                        } else if pendingCount == 1 {
+                            Text("\(status.processedItemsCounter.description) items, \(pendingCount.description) item pending")
+                        } else {
+                            Text("\(status.processedItemsCounter.description) items")
+                        }
+                    } else {
+                        if pendingCount >= 2 {
+                            Text("\(status.processedItemsCounter.description) item, \(pendingCount.description) items pending")
+                        } else if pendingCount == 1 {
+                            Text("\(status.processedItemsCounter.description) item, \(pendingCount.description) item pending")
+                        } else {
+                            Text("\(status.processedItemsCounter.description) item")
+                        }
+                    }
+                    Spacer()
+                }
+                .padding(.bottom)
+                
+                DoubleView("Time Spent:", text: .init(status.pastTimeTaken.expressedAsTime()))
+                
+                Group {
+                    if isShowingTimeRemaining {
+                        DoubleView("Time Remaining:") {
+                            Text {
+                                guard !status.isFinished else { return "Finished" }
+                                guard status.progress != 0 else { return "Calculating..." }
+                                
+                                var value = status.pastTimeTaken / status.progress
+                                value -= status.pastTimeTaken
+                                
+                                guard value > 0 else { return "Calculating..." }
+                                
+                                return .init(value.expressedAsTime())
+                            }
+                            Spacer()
+                        }
+                    } else {
+                        DoubleView("ETA:") {
+                            Text {
+                                guard !status.isFinished else { return "Finished" }
+                                guard status.progress != 0 else { return "Calculating..." }
+                                
+                                var value = (status.pastTimeTaken) / status.progress
+                                value -= status.pastTimeTaken
+                                
+                                guard value > 0 else { return "Calculating..." }
+                                
+                                let date = Date().addingTimeInterval(value)
+                                
+                                let formatter = DateFormatter()
+                                if value < 10 * 60 * 60 {
+                                    formatter.dateStyle = .none
+                                } else {
+                                    formatter.dateStyle = .medium
+                                }
+                                formatter.timeStyle = .medium
+                                formatter.locale = self.local
+                                
+                                return .init(formatter.string(from: date))
+                            }
+                            Spacer()
+                        }
+                    }
+                }
+                .onTapGesture {
+                    isShowingTimeRemaining.toggle()
+                }
+                
+                Spacer()
             }
             
             ProgressView(value: {()->Double in
@@ -247,7 +174,7 @@ struct ProcessingView: View {
                 return status.progress <= 1 ? status.progress : 1
             }(), total: 1.0)
             .help("\(String(format: "%.2f", status.progress * 100))%")
-            .padding([.bottom])
+            .padding(.bottom)
             
             Spacer()
             
@@ -260,7 +187,6 @@ struct ProcessingView: View {
                             .frame(width: 80)
                     }
                     .padding(.trailing)
-                    .disabled(model.isCaffe)
                 }
                 
                 Spacer()
@@ -281,8 +207,6 @@ struct ProcessingView: View {
                 }
             }
         }
-        .padding(.all)
-        .frame(width: 600, height: 350)
         .task {
             
             progressManager.status = { status in

@@ -22,7 +22,7 @@ struct GridItemView: View {
         VStack(alignment: .center) {
             
             AsyncView {
-                return (item.finderItem.image ?? item.finderItem.avAsset?.firstFrame) ?? NSImage(named: "placeholder")!
+                item.finderItem.image ?? item.finderItem.avAsset?.firstFrame ?? NSImage(named: "placeholder")!
             } content: { result in
                 Image(nsImage: result)
                     .resizable()
@@ -30,7 +30,6 @@ struct GridItemView: View {
                     .aspectRatio(contentMode: aspectRatio ? .fit : .fill)
                     .frame(width: geometry.size.width * gridNumber / 8.5, height: geometry.size.width * gridNumber / 8.5)
                     .clipped()
-                    .cornerRadius(5)
                     .padding([.top, .leading, .trailing])
                     .help {
                         if let size = result.pixelSize {
@@ -45,18 +44,18 @@ struct GridItemView: View {
                             return .init(value)
                         } else {
                             return """
-                        Loading...
-                        name: \(item.finderItem.fileName)
-                        path: \(item.finderItem.path)
-                        (If this continuous, please transcode your video into HEVC and retry)
-                        """
+                            Loading...
+                            name: \(item.finderItem.fileName)
+                            path: \(item.finderItem.path)
+                            (If this continuous, please transcode your video into HEVC and retry)
+                            """
                         }
                     }
             } placeHolderValue: {
                 NSImage(named: "placeholder")!
             }
             
-            Text(item.finderItem.relativePath ?? item.finderItem.fileName)
+            Text(item.finderItem.relativePathWithoutExtension ?? item.finderItem.fileName)
                 .multilineTextAlignment(.center)
                 .lineLimit(1)
                 .padding([.leading, .bottom, .trailing])

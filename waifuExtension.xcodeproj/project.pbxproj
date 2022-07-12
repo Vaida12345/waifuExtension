@@ -184,7 +184,6 @@
 			isa = PBXGroup;
 			children = (
 				B4B406E3275D105F00E2078D /* Main */,
-				B4F1F3722876AB5000D6851F /* Developer Support */,
 				B4D8A3EC2876A13A005E9A37 /* WaifuExtensionCore */,
 				B4B406E2275D104400E2078D /* Assets */,
 			);
@@ -229,8 +228,8 @@
 			children = (
 				B48748D528563CC200ECD00E /* ContainerView.swift */,
 				B445F6FF27585906004BAE04 /* ConfigurationView.swift */,
-				B4E96BC527EF6CFD00A2D4B1 /* ModelManager.swift */,
 				B4B8B8472879FF2000585DA5 /* ProcessConfig.swift */,
+				B4E96BC527EF6CFD00A2D4B1 /* ModelManager.swift */,
 			);
 			path = Configuration;
 			sourceTree = "<group>";
@@ -299,6 +298,7 @@
 		B4D8A3F02876A13A005E9A37 /* Waifu2x */ = {
 			isa = PBXGroup;
 			children = (
+				B4F1F3722876AB5000D6851F /* Developer Support */,
 				B4D8A3F12876A13A005E9A37 /* Waifu2x Models */,
 				B4D8A4112876A13A005E9A37 /* Waifu2x Core */,
 				B4D8A4222876A13A005E9A37 /* Model_Caffe.swift */,
@@ -739,7 +739,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = "5.0 Beta 7";
+				CURRENT_PROJECT_VERSION = 355;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"waifuExtension/Preview Content\"";
 				DEVELOPMENT_TEAM = UJK52W4D7G;
@@ -753,7 +753,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
-				MARKETING_VERSION = "5.0 Beta 7";
+				MARKETING_VERSION = "5.0 Beta 8";
 				PRODUCT_BUNDLE_IDENTIFIER = com.Vaida.waifuExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -771,7 +771,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = "5.0 Beta 7";
+				CURRENT_PROJECT_VERSION = 355;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"waifuExtension/Preview Content\"";
 				DEVELOPMENT_TEAM = UJK52W4D7G;
@@ -785,7 +785,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
-				MARKETING_VERSION = "5.0 Beta 7";
+				MARKETING_VERSION = "5.0 Beta 8";
 				PRODUCT_BUNDLE_IDENTIFIER = com.Vaida.waifuExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
